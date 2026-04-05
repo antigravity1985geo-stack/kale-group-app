@@ -57,7 +57,7 @@ export default function ContactSection() {
               ].map((c, i) => (
                 <div key={i} className="flex gap-6 items-center group transition-transform hover:translate-x-2">
                   <div className="w-14 h-14 rounded-2xl glass-dark flex items-center justify-center text-gold-400 border border-white/10 group-hover:border-gold-400/50 transition-colors">
-                    {React.cloneElement(c.icon as React.ReactElement, { size: 22 })}
+                    {React.cloneElement(c.icon as React.ReactElement<any>, { size: 22 })}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold tracking-widest text-white/40 uppercase mb-1">{c.title}</p>

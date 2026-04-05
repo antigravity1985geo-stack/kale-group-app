@@ -109,7 +109,7 @@ export function useProduct(id: string | undefined) {
           .eq('id', id)
           .single();
         if (err) throw err;
-        if (!cancelled) setProduct(data);
+        if (!cancelled) setProduct(data as unknown as Product);
       } catch (err: any) {
         console.error('[useProduct] Error:', err);
         if (!cancelled) setError(err.message ?? 'პროდუქტი ვერ მოიძებნა');

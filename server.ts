@@ -733,7 +733,7 @@ async function setupApp() {
       const { data: products } = await supabase.from('products').select('name, price, category, material, in_stock');
       
       const productContext = products && products.length > 0 
-        ? `CURRENT INVENTORY:\n${products.map(p => `- ${p.name} (${p.category}): ${p.price} GEL, Material: ${p.material}, Stock: ${p.in_stock ? 'Yes' : 'No'}`).join('\n')}`
+        ? `CURRENT INVENTORY:\n${products.map((p: any) => `- ${p.name} (${p.category}): ${p.price} GEL, Material: ${p.material}, Stock: ${p.in_stock ? 'Yes' : 'No'}`).join('\n')}`
         : 'Inventory data is currently unavailable.';
 
       const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი. 
