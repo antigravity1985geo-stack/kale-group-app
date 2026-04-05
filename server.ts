@@ -28,22 +28,32 @@ async function setupApp() {
   app.use(cors()); // Allow all origins for the Vercel serverless function to prevent blocking
   app.use(express.json({ limit: '10mb' }));
 
-  // Supabase Client for Backend (anon - for public queries)
-  const supabase = createClient(
-    process.env.VITE_SUPABASE_URL || "",
-    process.env.VITE_SUPABASE_ANON_KEY || ""
-  );
-
-  // Supabase Admin Client (service_role - for admin operations like inviting users)
-  const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  // Safely initialize Supabase clients
+  let supabase: any = null;
+  let supabaseAdmin: any = null;
+  
+  try {
+    if (process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
+      supabase = createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.VITE_SUPABASE_ANON_KEY
+      );
+    }
+    
+    if (process.env.VITE_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY)) {
+      supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+    }
+  } catch (err) {
+    console.error("Failed to initialize Supabase clients:", err);
+  }
 
   // Gemini AI Instance
   const genAI = new GoogleGenAI({ 
-    apiKey: process.env.GEMINI_API_KEY || "" 
+    apiKey: process.env.GEMINI_API_KEY || "dummy-key-to-prevent-crash"
   });
 
   // Helper: Extract user from Authorization header
@@ -370,8 +380,12 @@ async function setupApp() {
         return res.status(400).json({ error: "შეტყობინება ძალიან გრძელია ან ცარიელია." });
       }
 
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: "AI API key is missing on the server." });
+      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "dummy-key-to-prevent-crash") {
+        return res.status(500).json({ error: "API გასაღები არ არის დაყენებული (GEMINI_API_KEY)." });
+      }
+
+      if (!supabase) {
+        return res.status(500).json({ error: "Supabase კავშირი არ არის დაყენებული (VITE_SUPABASE_URL)." });
       }
 
       // 1. Fetch real-time products for context
