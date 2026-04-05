@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ka" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kale Group | Premium Furniture Design & Manufacturing | პრემიუმ ავეჯის დამზადება</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Kale Group - Exclusive & Premium Furniture in Georgia. High-quality kitchens, bedrooms, and living rooms. პრემიუმ ხარისხის ავეჯის წარმოება საქართველოში. შეუკვეთეთ სამზარეულოს, საძინებლისა და მისაღები ოთახის ავეჯი." />
+    <meta name="keywords" content="ავეჯი, პრემიუმ ავეჯი, ქართული ავეჯი, ავეჯის დამზადება, დიზაინი, ინტერიერი, სამზარეულო, საძინებელი, რბილი ავეჯი, aveji, Kale Group, furniture georgia, premium furniture, custom furniture tbilisi, modern interior design" />
+    <meta name="author" content="Kale Group" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Kale Group | Premium Quality Furniture | პრემიუმ ხარისხის ავეჯი" />
+    <meta property="og:description" content="Create your dream interior with Kale Group. Highest quality materials and sophisticated design. შექმენით თქვენი ოცნების ინტერიერი Kale Group-თან ერთად." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=1920" />
+    <meta property="og:url" content="https://kalegroup.ge" />
+    <meta property="og:site_name" content="Kale Group" />
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Kale Group | Premium Furniture" />
+    <meta name="twitter:description" content="Create your dream interior with Kale Group. შექმენით თქვენი ოცნების ინტერიერი ჩვენთან ერთად." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=1920" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        background-color: #1a1714;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+      }
+      .loader-spinner {
+        width: 50px;
+        height: 50px;
+        border: 2px solid rgba(201, 162, 39, 0.2);
+        border-top-color: #c9a227;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+      .loader-text {
+        font-family: 'Playfair Display', serif;
+        color: #fff;
+        font-size: 1.5rem;
+        letter-spacing: 0.1em;
+      }
+      .loader-text span {
+        color: #c9a227;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="initial-loader">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">KALE<span>GROUP</span></div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.addEventListener('load', () => {
+        const loader = document.getElementById('initial-loader');
+        if(loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.visibility = 'hidden', 800);
+        }
+      });
+    </script>
+  </body>
+</html>
