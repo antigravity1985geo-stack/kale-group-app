@@ -15,6 +15,7 @@ import ProductPage from './pages/ProductPage';
 import AdminPanel from './AdminPanel';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
 import AIChatBot from './components/ui/AIChatBot';
+import ReloadPrompt from './components/ui/ReloadPrompt';
 
 function ScrollToTopManager() {
   const { pathname, hash } = window.location;
@@ -66,6 +67,7 @@ export default function App() {
             <CartDrawer />
             <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <AIChatBot />
+            <ReloadPrompt />
           </div>
         </CartProvider>
       </WishlistProvider>
