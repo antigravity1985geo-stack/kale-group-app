@@ -18,7 +18,7 @@ async function setupApp() {
   const PORT = 3000;
 
   app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
-  app.use(cors({ origin: process.env.APP_URL || 'http://localhost:3000' }));
+  app.use(cors()); // Allow all origins for the Vercel serverless function to prevent blocking
   app.use(express.json({ limit: '10mb' }));
 
   // Supabase Client for Backend (anon - for public queries)
@@ -470,23 +470,22 @@ async function setupApp() {
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(__dirname, "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  // Only listen if not running as a Vercel function
+  // Handle front-end static files or Vite only if NOT running as Vercel serverless function
   if (!process.env.VERCEL) {
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(__dirname, "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
