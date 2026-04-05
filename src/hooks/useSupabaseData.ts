@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types/product';
 
@@ -6,7 +6,7 @@ import type { Product, Category } from '../types/product';
 // 🔧 Base Generic Hook (DRY)
 // ─────────────────────────────────────────────
 function useSupabaseQuery<T>(
-  queryFn: () => PromiseLike<{ data: T | null; error: any }>,
+  queryFn: () => PromiseLike<{ data: any; error: any }>,
   deps: React.DependencyList = []
 ) {
   const [data, setData] = useState<T | null>(null);

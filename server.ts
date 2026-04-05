@@ -25,8 +25,21 @@ async function setupApp() {
   const PORT = 3000;
 
   app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
-  app.use(cors()); // Allow all origins for the Vercel serverless function to prevent blocking
+  app.use(cors({
+    origin: process.env.APP_URL || 'http://localhost:3000',
+    credentials: true,
+  }));
   app.use(express.json({ limit: '10mb' }));
+
+  // ── General Rate Limiting: All API endpoints ──
+  const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 წუთი
+    max: 200,
+    message: { error: 'ძალიან ბევრი მოთხოვნა. გთხოვთ მოგვიანებით სცადოთ.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use('/api/', generalLimiter);
 
   // Safely initialize Supabase clients
   let supabase: any = null;
@@ -279,95 +292,423 @@ async function setupApp() {
     }
   });
 
-  // BOG Payment Initiation (Mocked structure for real integration)
+  // ══════════════════════════════════════════════
+  // ── BOG (Bank of Georgia) Payment Integration ──
+  // ══════════════════════════════════════════════
+
+  // BOG OAuth Token
+  async function getBOGToken(): Promise<string> {
+    const response = await fetch(
+      'https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: process.env.BOG_CLIENT_ID!,
+          client_secret: process.env.BOG_CLIENT_SECRET!,
+        }),
+      }
+    );
+    const data = await response.json();
+    if (!data.access_token) throw new Error('BOG Token მიღება ვერ მოხერხდა');
+    return data.access_token;
+  }
+
+  // BOG Payment — სრული გადახდა
   app.post("/api/pay/bog", async (req, res) => {
     try {
-      const { productId, amount } = req.body;
-      const clientId = process.env.BOG_CLIENT_ID;
-      const secret = process.env.BOG_SECRET;
+      const { orderId, amount, redirectUrl } = req.body;
 
-      if (!clientId || !secret) {
-        return res.status(500).json({ error: "BOG API keys are not configured in the environment." });
+      if (!process.env.BOG_CLIENT_ID || !process.env.BOG_CLIENT_SECRET) {
+        return res.status(503).json({ error: 'BOG გადახდა დროებით მიუწვდომელია' });
       }
 
-      // 1. Get OAuth Token
-      // const tokenResponse = await fetch('https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token', { ... });
-      // const token = await tokenResponse.json();
+      const token = await getBOGToken();
 
-      // 2. Create Order
-      // const orderResponse = await fetch('https://api.bog.ge/payments/v1/ecommerce/orders', { ... });
-      // const order = await orderResponse.json();
+      const orderResponse = await fetch(
+        'https://api.bog.ge/payments/v1/ecommerce/orders',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/bog/callback`,
+            external_order_id: orderId,
+            purchase_units: {
+              currency: 'GEL',
+              total_amount: amount,
+              basket: [{ quantity: 1, unit_price: amount, product_id: orderId }],
+            },
+            redirect_urls: {
+              fail: `${redirectUrl || process.env.APP_URL}?status=failed`,
+              success: `${redirectUrl || process.env.APP_URL}/payment/success?orderId=${orderId}`,
+            },
+          }),
+        }
+      );
 
-      // Mock response for now
-      console.log(`Initiating BOG payment for product ${productId}, amount: ${amount}`);
-      res.json({ 
-        success: true, 
-        redirectUrl: "https://ecommerce.bog.ge/payment/mock-redirect",
-        message: "BOG Payment initiated successfully" 
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.message || 'BOG შეკვეთის შექმნა ვერ მოხერხდა');
+      }
+
+      // Save payment record
+      await supabaseAdmin.from('payments').insert({
+        order_id: orderId,
+        provider: 'bog',
+        external_id: orderData.id,
+        amount,
+        status: 'pending',
       });
-    } catch (error) {
-      console.error("BOG Payment Error:", error);
-      res.status(500).json({ error: "Failed to initiate BOG payment" });
+
+      res.json({
+        success: true,
+        redirectUrl: orderData._links?.redirect?.href,
+      });
+    } catch (error: any) {
+      console.error('BOG Payment Error:', error);
+      res.status(500).json({ error: error.message || 'BOG გადახდის ინიცირება ვერ მოხერხდა' });
     }
   });
 
-  // TBC Payment Initiation (Mocked structure for real integration)
+  // BOG Callback (Webhook)
+  app.post("/api/pay/bog/callback", async (req, res) => {
+    try {
+      const { order_id, status, external_order_id } = req.body;
+      const isSuccess = status === 'completed';
+
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          status: isSuccess ? 'paid' : 'failed',
+          callback_data: req.body,
+          paid_at: isSuccess ? new Date().toISOString() : null,
+        })
+        .eq('external_id', order_id);
+
+      if (isSuccess) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'bog' })
+          .eq('id', external_order_id);
+
+        // RS.GE ავტომატური ინვოისი (გააქტიურდება credentials-ის შემდეგ)
+        await createRSInvoice(external_order_id);
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('BOG Callback Error:', error);
+      res.status(500).json({ error: 'Callback processing failed' });
+    }
+  });
+
+  // BOG განვადება (Installment)
+  app.post("/api/pay/bog/installment", async (req, res) => {
+    try {
+      const { orderId, amount } = req.body;
+
+      if (!process.env.BOG_CLIENT_ID || !process.env.BOG_CLIENT_SECRET) {
+        return res.status(503).json({ error: 'BOG განვადება დროებით მიუწვდომელია' });
+      }
+
+      const token = await getBOGToken();
+
+      const response = await fetch(
+        'https://api.bog.ge/loans/v1/online-installments',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            external_order_id: orderId,
+            loan_amount: amount,
+            campaign_id: process.env.BOG_CAMPAIGN_ID || null,
+            callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/bog/callback`,
+            redirect_url: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      await supabaseAdmin.from('payments').insert({
+        order_id: orderId,
+        provider: 'bog',
+        external_id: data.id || data.application_id,
+        amount,
+        payment_type: 'installment',
+        status: 'pending',
+      });
+
+      res.json({ success: true, redirectUrl: data.redirect_url });
+    } catch (error: any) {
+      console.error('BOG Installment Error:', error);
+      res.status(500).json({ error: error.message || 'BOG განვადების ინიცირება ვერ მოხერხდა' });
+    }
+  });
+
+  // ══════════════════════════════════════════════
+  // ── TBC Bank (tpay) Payment Integration ──
+  // ══════════════════════════════════════════════
+
+  // TBC Token Cache (1 day validity)
+  let tbcTokenCache: { token: string; expires: number } | null = null;
+
+  async function getTBCToken(): Promise<string> {
+    if (tbcTokenCache && Date.now() < tbcTokenCache.expires) {
+      return tbcTokenCache.token;
+    }
+
+    const response = await fetch('https://api.tbcbank.ge/v1/tpay/access-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'apikey': process.env.TBC_API_KEY!,
+      },
+      body: new URLSearchParams({
+        client_id: process.env.TBC_CLIENT_ID!,
+        client_secret: process.env.TBC_CLIENT_SECRET!,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.access_token) throw new Error('TBC Token მიღება ვერ მოხერხდა');
+
+    tbcTokenCache = {
+      token: data.access_token,
+      expires: Date.now() + (23 * 60 * 60 * 1000), // 23 საათი
+    };
+    return data.access_token;
+  }
+
+  // TBC Payment
   app.post("/api/pay/tbc", async (req, res) => {
     try {
-      const { productId, amount } = req.body;
-      const apiKey = process.env.TBC_API_KEY;
-      const clientId = process.env.TBC_CLIENT_ID;
-      const clientSecret = process.env.TBC_CLIENT_SECRET;
+      const { orderId, amount, methods = [5] } = req.body;
+      // methods: 4=QR, 5=Card, 6=Ertguli, 7=Internet Bank, 8=Installment, 9=Apple Pay
 
-      if (!apiKey || !clientId || !clientSecret) {
-        return res.status(500).json({ error: "TBC API keys are not configured in the environment." });
+      if (!process.env.TBC_CLIENT_ID || !process.env.TBC_API_KEY || !process.env.TBC_CLIENT_SECRET) {
+        return res.status(503).json({ error: 'TBC გადახდა დროებით მიუწვდომელია' });
       }
 
-      // 1. Get Access Token
-      // const tokenResponse = await fetch('https://api.tbcbank.ge/v1/tpay/access-token', { ... });
-      // const token = await tokenResponse.json();
+      const token = await getTBCToken();
 
-      // 2. Create Payment
-      // const paymentResponse = await fetch('https://api.tbcbank.ge/v1/tpay/payments', { ... });
-      // const payment = await paymentResponse.json();
-
-      // Mock response for now
-      console.log(`Initiating TBC payment for product ${productId}, amount: ${amount}`);
-      res.json({ 
-        success: true, 
-        redirectUrl: "https://tpay.tbcbank.ge/mock-redirect",
-        message: "TBC Payment initiated successfully" 
+      const response = await fetch('https://api.tbcbank.ge/v1/tpay/payments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'apikey': process.env.TBC_API_KEY!,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: { currency: 'GEL', total: amount, subTotal: amount, tax: 0, shipping: 0 },
+          returnurl: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+          extra: orderId,
+          expirationMinutes: 30,
+          methods,
+          installmentProducts: methods.includes(8) ? [{
+            Price: amount,
+            Quantity: 1,
+            Name: 'Kale Group შეკვეთა',
+          }] : undefined,
+          callbackUrl: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/tbc/callback`,
+        }),
       });
-    } catch (error) {
-      console.error("TBC Payment Error:", error);
-      res.status(500).json({ error: "Failed to initiate TBC payment" });
+
+      const data = await response.json();
+
+      await supabaseAdmin.from('payments').insert({
+        order_id: orderId,
+        provider: 'tbc',
+        external_id: data.payId,
+        amount,
+        payment_type: methods.includes(8) ? 'installment' : 'full',
+        status: 'pending',
+      });
+
+      const paymentRedirectUrl = data.links?.find((l: any) => l.rel === 'approval_url')?.uri;
+
+      res.json({ success: true, redirectUrl: paymentRedirectUrl, payId: data.payId });
+    } catch (error: any) {
+      console.error('TBC Payment Error:', error);
+      res.status(500).json({ error: error.message || 'TBC გადახდის ინიცირება ვერ მოხერხდა' });
     }
   });
 
-  // Credo Bank Installment Initiation (Mocked structure for real integration)
-  app.post("/api/pay/credo", async (req, res) => {
+  // TBC Callback
+  app.post("/api/pay/tbc/callback", async (req, res) => {
     try {
-      const { items, totalAmount } = req.body;
-      const apiKey = process.env.CREDO_API_KEY;
+      const { PayId, Status, Extra } = req.body;
+      const isSuccess = Status === 'Succeeded';
 
-      if (!apiKey) {
-        return res.status(500).json({ error: "Credo API key is not configured in the environment." });
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          status: isSuccess ? 'paid' : 'failed',
+          callback_data: req.body,
+          paid_at: isSuccess ? new Date().toISOString() : null,
+        })
+        .eq('external_id', PayId);
+
+      if (isSuccess) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'tbc' })
+          .eq('id', Extra);
+
+        await createRSInvoice(Extra);
       }
 
-      // 1. Initiate Installment Application
-      // const installmentResponse = await fetch('https://api.credo.ge/v1/installments/initiate', { ... });
-      // const installment = await installmentResponse.json();
-
-      // Mock response for now
-      console.log(`Initiating Credo installment for amount: ${totalAmount}`);
-      res.json({ 
-        success: true, 
-        redirectUrl: "https://installment.credobank.ge/mock-redirect",
-        message: "Credo Installment initiated successfully" 
-      });
+      res.status(200).json({ received: true });
     } catch (error) {
-      console.error("Credo Installment Error:", error);
-      res.status(500).json({ error: "Failed to initiate Credo installment" });
+      console.error('TBC Callback Error:', error);
+      res.status(500).json({ error: 'Callback processing failed' });
+    }
+  });
+
+  // ══════════════════════════════════════════════
+  // ── Credo Bank განვადება ──
+  // ══════════════════════════════════════════════
+
+  app.post("/api/pay/credo", async (req, res) => {
+    try {
+      const { orderId, items, amount } = req.body;
+
+      if (!process.env.CREDO_API_KEY) {
+        return res.status(503).json({ error: 'Credo განვადება დროებით მიუწვდომელია' });
+      }
+
+      const response = await fetch('https://api.credobank.ge/v1/installments/initiate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.CREDO_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          merchant_order_id: orderId,
+          amount,
+          currency: 'GEL',
+          items: items?.map((i: any) => ({
+            name: i.product_name,
+            quantity: i.quantity,
+            price: i.price_at_purchase || i.price,
+          })) || [],
+          callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/credo/callback`,
+          success_url: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+          fail_url: `${process.env.APP_URL || 'http://localhost:3000'}/checkout?error=payment_failed`,
+        }),
+      });
+
+      const data = await response.json();
+
+      await supabaseAdmin.from('payments').insert({
+        order_id: orderId,
+        provider: 'credo',
+        external_id: data.application_id,
+        amount,
+        payment_type: 'installment',
+        status: 'pending',
+      });
+
+      res.json({ success: true, redirectUrl: data.redirect_url });
+    } catch (error: any) {
+      console.error('Credo Payment Error:', error);
+      res.status(500).json({ error: error.message || 'Credo განვადების ინიცირება ვერ მოხერხდა' });
+    }
+  });
+
+  // Credo Callback
+  app.post("/api/pay/credo/callback", async (req, res) => {
+    try {
+      const { application_id, status, merchant_order_id } = req.body;
+      const isSuccess = status === 'approved' || status === 'completed';
+
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          status: isSuccess ? 'paid' : 'failed',
+          callback_data: req.body,
+          paid_at: isSuccess ? new Date().toISOString() : null,
+        })
+        .eq('external_id', application_id);
+
+      if (isSuccess) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'credo' })
+          .eq('id', merchant_order_id);
+
+        await createRSInvoice(merchant_order_id);
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('Credo Callback Error:', error);
+      res.status(500).json({ error: 'Callback processing failed' });
+    }
+  });
+
+  // ══════════════════════════════════════════════
+  // ── RS.GE ინვოისის ავტომატური შექმნა ──
+  // ══════════════════════════════════════════════
+  async function createRSInvoice(orderId: string): Promise<void> {
+    try {
+      if (!process.env.RS_USERNAME || !process.env.RS_PASSWORD) {
+        console.warn('RS.GE credentials not configured — skipping invoice creation');
+        return;
+      }
+
+      // RS.GE SOAP ინტეგრაცია გააქტიურდება credentials-ის შემდეგ
+      // იხ. kalegroup-fix/kale-group-full-integration-plan.md — ნაწილი 3
+      const { data: order } = await supabaseAdmin
+        .from('orders')
+        .select(`*, order_items(*, products(*))`)
+        .eq('id', orderId)
+        .single();
+
+      if (!order) {
+        console.warn(`RS.GE: Order not found: ${orderId}`);
+        return;
+      }
+
+      console.log(`RS.GE Invoice creation pending for order: ${orderId} — SOAP integration will be activated with RS.GE credentials`);
+
+      // Placeholder record — will be updated when SOAP is wired
+      await supabaseAdmin.from('rs_invoices').insert({
+        order_id: orderId,
+        status: 'pending',
+        invoice_data: { note: 'Awaiting RS.GE SOAP integration' },
+        created_at: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('RS.GE Invoice Error:', error);
+      await supabaseAdmin.from('rs_invoice_errors').insert({
+        order_id: orderId,
+        error: String(error),
+        created_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Admin: RS.GE ინვოისის ხელახლა გაგზავნა
+  app.post("/api/admin/rs/reinvoice/:orderId", async (req, res) => {
+    try {
+      const user = await getUserFromToken(req);
+      if (!user || !(await isUserAdmin(user.id))) {
+        return res.status(403).json({ error: 'წვდომა აკრძალულია' });
+      }
+      await createRSInvoice(req.params.orderId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
