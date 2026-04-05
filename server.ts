@@ -4,6 +4,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +16,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
+  app.use(cors({ origin: process.env.APP_URL || 'http://localhost:3000' }));
   app.use(express.json({ limit: '10mb' }));
 
   // Supabase Client for Backend (anon - for public queries)
@@ -52,6 +57,13 @@ async function startServer() {
   // API routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // Rate Limiting for AI Endpoint
+  const aiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // limit each IP to 20 requests per windowMs
+    message: { error: "დღიური ლიმიტი ამოიწურა, სცადეთ 15 წუთში" }
   });
 
   // ── Auth & Profile APIs ──
@@ -144,6 +156,85 @@ async function startServer() {
     } catch (error: any) {
       console.error("Invite Error:", error);
       res.status(500).json({ error: error.message || "მოწვევის გაგზავნა ვერ მოხერხდა" });
+    }
+  });
+
+  // ── Checkout / Orders API ──
+  app.post("/api/orders/create", async (req, res) => {
+    try {
+      const { customerInfo, items, paymentMethod, paymentType } = req.body;
+
+      if (!customerInfo || !items || items.length === 0) {
+        return res.status(400).json({ error: "არასწორი მოთხოვნა: მონაცემები აკლია" });
+      }
+
+      // Check prices against database to prevent fake pricing client-side
+      let calculatedTotal = 0;
+      const validItems = [];
+
+      for (const item of items) {
+        // Find product strictly from supabase
+        const { data: product } = await supabase
+          .from("products")
+          .select("id, name, price")
+          .eq("id", item.product.id)
+          .single();
+
+        if (!product) {
+          return res.status(404).json({ error: `პროდუქტი ვერ მოიძებნა ბაზაში (ID: ${item.product.id})` });
+        }
+
+        // Add to total cost
+        calculatedTotal += product.price * item.quantity;
+        
+        validItems.push({
+          product_id: product.id,
+          product_name: product.name,
+          quantity: item.quantity,
+          price_at_purchase: product.price
+        });
+      }
+
+      // 1. Create Order using Admin privileges to bypass Row Level Security if necessary, or just insert
+      const { data: orderData, error: orderError } = await supabaseAdmin
+        .from('orders')
+        .insert([{
+          customer_type: customerInfo.customerType,
+          personal_id: customerInfo.customerType === 'physical' ? customerInfo.personalId : null,
+          company_id: customerInfo.customerType === 'legal' ? customerInfo.companyId : null,
+          customer_first_name: customerInfo.firstName,
+          customer_last_name: customerInfo.lastName,
+          customer_phone: customerInfo.phone,
+          customer_email: customerInfo.email || null,
+          customer_address: customerInfo.address,
+          customer_city: customerInfo.city,
+          customer_note: customerInfo.note || null,
+          total_price: calculatedTotal,
+          payment_method: paymentMethod,
+          payment_type: paymentType,
+          status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Create Order Items
+      const orderItemsInsert = validItems.map(item => ({
+        ...item,
+        order_id: orderData.id,
+      }));
+
+      const { error: itemsError } = await supabaseAdmin
+        .from('order_items')
+        .insert(orderItemsInsert);
+
+      if (itemsError) throw itemsError;
+
+      res.json({ success: true, orderId: orderData.id, total_price: calculatedTotal });
+    } catch (error: any) {
+      console.error("Order Creation Error:", error);
+      res.status(500).json({ error: "შეკვეთის გაფორმებისას დაფიქსირდა შეცდომა." });
     }
   });
 
@@ -263,9 +354,13 @@ async function startServer() {
   });
 
   // AI Chat Assistant Route
-  app.post("/api/ai/chat", async (req, res) => {
+  app.post("/api/ai/chat", aiLimiter, async (req, res) => {
     try {
       const { userMessage, history } = req.body;
+
+      if (!userMessage || userMessage.length > 1000) {
+        return res.status(400).json({ error: "შეტყობინება ძალიან გრძელია ან ცარიელია." });
+      }
 
       if (!process.env.GEMINI_API_KEY) {
         return res.status(500).json({ error: "AI API key is missing on the server." });

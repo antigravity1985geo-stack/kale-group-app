@@ -84,50 +84,31 @@ export default function CheckoutPage() {
     setIsProcessingPayment(true);
     
     try {
-      // 1. Create Order in Supabase
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
-          customer_type: customerInfo.customerType,
-          personal_id: customerInfo.customerType === 'physical' ? customerInfo.personalId : null,
-          company_id: customerInfo.customerType === 'legal' ? customerInfo.companyId : null,
-          customer_first_name: customerInfo.firstName,
-          customer_last_name: customerInfo.lastName,
-          customer_phone: customerInfo.phone,
-          customer_email: customerInfo.email || null,
-          customer_address: customerInfo.address,
-          customer_city: customerInfo.city,
-          customer_note: customerInfo.note || null,
-          total_price: totalPrice,
-          payment_method: bank,
-          payment_type: type,
-          status: 'pending'
-        }])
-        .select()
-        .single();
+      // Create Secure Order via Backend API
+      const response = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerInfo,
+          items,
+          paymentMethod: bank,
+          paymentType: type
+        })
+      });
 
-      if (orderError) throw orderError;
+      const data = await response.json();
 
-      // 2. Create Order Items
-      const orderItems = items.map(item => ({
-        order_id: orderData.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        quantity: item.quantity,
-        price_at_purchase: item.product.price
-      }));
+      if (!response.ok) {
+        throw new Error(data.error || 'შეკვეთის გაფორმება ვერ მოხერხდა');
+      }
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // 3. Clear cart on success
+      // Clear cart on success
       clearCart();
       
       // Navigate to success page with orderId
-      navigate(`/payment/success?orderId=${orderData.id}`);
+      navigate(`/payment/success?orderId=${data.orderId}`);
       
     } catch (error) {
       console.error(error);
