@@ -9,8 +9,16 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import "dotenv/config";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Optional fallback for Vercel CJS build vs ESM
+let currentFileName = "";
+let currentDirName = "";
+try {
+  currentFileName = fileURLToPath(import.meta.url);
+  currentDirName = path.dirname(currentFileName);
+} catch (e) {
+  currentFileName = __filename;
+  currentDirName = __dirname;
+}
 
 const app = express();
 
@@ -479,7 +487,7 @@ async function setupApp() {
       });
       app.use(vite.middlewares);
     } else {
-      const distPath = path.join(__dirname, "dist");
+      const distPath = path.join(currentDirName, "dist");
       app.use(express.static(distPath));
       app.get("*", (req, res) => {
         res.sendFile(path.join(distPath, "index.html"));
