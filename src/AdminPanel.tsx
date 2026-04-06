@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -11,7 +11,7 @@ import type { Product, Category } from './types/product';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'orders' | 'team' | 'accounting'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'team' | 'accounting'>('dashboard');
 
   // Permission helpers
   const canAddProducts = isAdmin || isConsultant;
@@ -44,6 +44,8 @@ export default function AdminPanel() {
   // Inline Category State
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [newCategory, setNewCategory] = useState<Partial<Category>>({ name: '', image: '' });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isUploadingCategory, setIsUploadingCategory] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -208,7 +210,6 @@ export default function AdminPanel() {
     await fetchData();
   };
 
-  // ── Categories CRUD (Inline) ──
   const handleSaveInlineCategory = async () => {
     if (!newCategory.name || !newCategory.image) {
       alert('გთხოვთ მიუთითოთ კატეგორიის სახელი და ატვირთოთ სურათი.');
@@ -226,7 +227,66 @@ export default function AdminPanel() {
     setNewProduct({ ...newProduct, category: newCategory.name! });
     setNewCategory({ name: '', image: '' });
     setShowCategoryForm(false);
-    await fetchData(); // Refresh list to show in select
+    await fetchData();
+  };
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategory.name || !newCategory.image) {
+      alert('გთხოვთ მიუთითოთ კატეგორიის სახელი და ატვირთოთ სურათი.');
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        // Update category
+        const { error: catError } = await supabase.from('categories').update({
+          name: newCategory.name,
+          image: newCategory.image
+        }).eq('id', editingCategory.id);
+        
+        if (catError) throw catError;
+
+        // If name changed, update all products in this category
+        if (editingCategory.name !== newCategory.name) {
+          const { error: prodError } = await supabase.from('products')
+            .update({ category: newCategory.name })
+            .eq('category', editingCategory.name);
+          if (prodError) console.error('Error updating products category:', prodError);
+        }
+      } else {
+        // Insert category
+        const { error: catError } = await supabase.from('categories').insert([{
+          name: newCategory.name,
+          image: newCategory.image
+        }]);
+        if (catError) throw catError;
+      }
+
+      await fetchData();
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
+      setNewCategory({ name: '', image: '' });
+    } catch (err: any) {
+      alert('შეცდომა კატეგორიის შენახვისას: ' + err.message);
+    }
+  };
+
+  const handleDeleteCategory = async (cat: Category) => {
+    // Check if category has products
+    const hasProducts = products.some(p => p.category === cat.name);
+    if (hasProducts) {
+      if (!confirm(`ამ კატეგორიაში არის პროდუქტები. კატეგორიის წაშლა გამოიწვევს პროდუქტების კატეგორიის გარეშე დარჩენას. ნამდვილად გსურთ წაშლა?`)) return;
+    } else {
+      if (!confirm('ნამდვილად გსურთ კატეგორიის წაშლა?')) return;
+    }
+
+    const { error } = await supabase.from('categories').delete().eq('id', cat.id);
+    if (error) {
+      alert('შეცდომა: ' + error.message);
+      return;
+    }
+    await fetchData();
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
@@ -343,6 +403,7 @@ export default function AdminPanel() {
             { id: 'dashboard', icon: <TrendingUp size={18}/>, label: 'სტატისტიკა' },
             ...(!isAccountant ? [{ id: 'products', icon: <Package size={18}/>, label: 'პროდუქცია' }] : []),
             ...(!isAccountant ? [{ id: 'promotions', icon: <Tag size={18}/>, label: 'აქციები' }] : []),
+            ...(!isAccountant ? [{ id: 'categories', icon: <LayoutGrid size={18}/>, label: 'კატეგორიები' }] : []),
             { id: 'orders', icon: <ShoppingCart size={18}/>, label: 'შეკვეთები' },
             ...(canViewAccounting ? [{ id: 'accounting', icon: <Calculator size={18}/>, label: 'ბუღალტერია' }] : []),
             ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : [])
@@ -372,6 +433,7 @@ export default function AdminPanel() {
               {activeTab === 'dashboard' && 'ჯამური სტატისტიკა'}
               {activeTab === 'products' && 'პროდუქციის მართვა'}
               {activeTab === 'promotions' && 'აქციების მართვა'}
+              {activeTab === 'categories' && 'კატეგორიების მართვა'}
               {activeTab === 'orders' && 'შეკვეთების ისტორია'}
               {activeTab === 'accounting' && 'ბუღალტერია'}
               {activeTab === 'team' && 'თანამშრომლების მართვა'}
@@ -380,6 +442,7 @@ export default function AdminPanel() {
               {activeTab === 'dashboard' && 'გაყიდვების დიაგრამები და შეკვეთების მეტრიკა'}
               {activeTab === 'products' && `${products.length} აქტიური პროდუქტი სისტემაში`}
               {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale).length} აქტიური აქცია`}
+              {activeTab === 'categories' && `${categories.length} ძირითადი კატეგორია`}
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
               {activeTab === 'accounting' && 'ფინანსური ანალიტიკა და ბუღალტრული ჩანაწერები'}
               {activeTab === 'team' && 'ადმინისტრატორები, კონსულტანტები და ბუღალტრები'}
@@ -402,6 +465,11 @@ export default function AdminPanel() {
             </button>
             {activeTab === 'products' && canAddProducts && (
               <button onClick={openAddModal} className="flex items-center px-6 py-3 bg-brand-900 text-gold-400 rounded-xl hover:bg-brand-950 transition-all font-bold tracking-wider text-xs uppercase shadow-lg shadow-brand-900/20 outline-none border-none cursor-pointer">
+                <Plus size={16} className="mr-2" /> დამატება
+              </button>
+            )}
+            {activeTab === 'categories' && canAddProducts && (
+              <button onClick={() => { setEditingCategory(null); setNewCategory({name:'', image:''}); setIsCategoryModalOpen(true); }} className="flex items-center px-6 py-3 bg-brand-900 text-gold-400 rounded-xl hover:bg-brand-950 transition-all font-bold tracking-wider text-xs uppercase shadow-lg shadow-brand-900/20 outline-none border-none cursor-pointer">
                 <Plus size={16} className="mr-2" /> დამატება
               </button>
             )}
@@ -549,11 +617,58 @@ export default function AdminPanel() {
                 </div>
                 {products.filter(p => p.is_on_sale).length === 0 && (
                   <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                    <Tag size={56} className="mb-4 opacity-20" />
                     <p className="text-xl font-serif text-brand-800 uppercase tracking-widest">აქტიური აქციები არ არის</p>
                     <p className="text-sm mt-2 text-brand-400">გადადით "პროდუქციაში" აქციის დასამატებლად</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'categories' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {categories.map((cat) => (
+                  <div key={cat.id} className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden group hover:shadow-xl hover:shadow-brand-900/5 transition-all duration-500">
+                    <div className="aspect-[4/3] relative overflow-hidden bg-gray-100">
+                      <img 
+                        src={cat.image} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/800x600?text=Broken+Image';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6 bg-transparent">
+                        <div className="flex gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setEditingCategory(cat);
+                              setNewCategory({ name: cat.name, image: cat.image });
+                              setIsCategoryModalOpen(true);
+                            }}
+                            className="p-3 bg-white text-brand-900 rounded-xl hover:bg-gold-400 transition-colors shadow-lg border-none cursor-pointer outline-none"
+                          >
+                            <Edit3 size={18} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleDeleteCategory(cat)}
+                            className="p-3 bg-white text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors shadow-lg border-none cursor-pointer outline-none"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-lg font-serif text-brand-900 font-bold mb-1">{cat.name}</h3>
+                      <p className="text-xs text-brand-400 uppercase tracking-widest font-bold">
+                        {products.filter(p => p.category === cat.name).length} პროდუქტი
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -1161,6 +1276,78 @@ export default function AdminPanel() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Category Modal */}
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-950/60 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20">
+              <div className="p-8 pb-4 flex justify-between items-center border-b border-gray-50">
+                <div>
+                  <h3 className="text-2xl font-serif text-brand-900 mb-1">{editingCategory ? 'კატეგორიის რედაქტირება' : 'ახალი კატეგორია'}</h3>
+                  <p className="text-xs text-brand-400 uppercase tracking-widest font-bold">მიუთითეთ მონაცემები</p>
+                </div>
+                <button onClick={() => setIsCategoryModalOpen(false)} className="p-3 text-brand-400 hover:text-brand-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border-none outline-none cursor-pointer">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCategory} className="p-8 space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-3 px-1 italic">კატეგორიის დასახელება</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={newCategory.name} 
+                    onChange={e => setNewCategory({...newCategory, name: e.target.value})} 
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:border-gold-400 focus:bg-white focus:ring-4 focus:ring-gold-400/5 transition-all outline-none font-medium"
+                    placeholder="მაგ: სამზარეულო"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-3 px-1 italic">კატეგორიის ფოტო</label>
+                  <div className="space-y-4">
+                    <div className="relative group aspect-video rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50/50 hover:border-gold-400/50 hover:bg-gold-50/20 transition-all flex flex-col items-center justify-center cursor-pointer">
+                      {newCategory.image ? (
+                        <>
+                          <img src={newCategory.image} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-brand-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <RefreshCw className="text-white animate-spin-slow" size={32} />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <ImageIcon className="text-gray-300 mb-3" size={40} />
+                          <span className="text-xs font-bold text-brand-400 uppercase tracking-widest italic">ატვირთეთ ფოტო</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => handleImageUpload(e, 'category')} 
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        disabled={isUploadingCategory}
+                      />
+                    </div>
+                    {isUploadingCategory && (
+                      <div className="flex items-center space-x-2 text-xs font-bold text-gold-600 uppercase tracking-widest animate-pulse">
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>მიმდინარეობს ატვირთვა...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-6 flex gap-4">
+                  <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="flex-1 py-4 bg-gray-50 text-brand-600 rounded-2xl font-bold tracking-widest uppercase border-none outline-none cursor-pointer hover:bg-gray-100 transition-all">გაუქმება</button>
+                  <button type="submit" disabled={isUploadingCategory || !newCategory.name || !newCategory.image} className="flex-[2] py-4 bg-brand-900 text-gold-400 rounded-2xl font-black tracking-widest uppercase shadow-xl shadow-brand-900/30 border-none outline-none cursor-pointer hover:bg-brand-950 transition-all disabled:opacity-50">შენახვა</button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
