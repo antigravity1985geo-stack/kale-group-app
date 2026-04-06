@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -11,7 +11,7 @@ import type { Product, Category } from './types/product';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'team' | 'accounting'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'orders' | 'team' | 'accounting'>('dashboard');
 
   // Permission helpers
   const canAddProducts = isAdmin || isConsultant;
@@ -198,6 +198,16 @@ export default function AdminPanel() {
     await fetchData();
   };
 
+  const handleStopSale = async (id: string) => {
+    if (!confirm('ნამდვილად გსურთ აქციის შეწყვეტა?')) return;
+    const { error } = await supabase.from('products').update({ is_on_sale: false }).eq('id', id);
+    if (error) {
+      alert('შეცდომა: ' + error.message);
+      return;
+    }
+    await fetchData();
+  };
+
   // ── Categories CRUD (Inline) ──
   const handleSaveInlineCategory = async () => {
     if (!newCategory.name || !newCategory.image) {
@@ -332,6 +342,7 @@ export default function AdminPanel() {
           {[
             { id: 'dashboard', icon: <TrendingUp size={18}/>, label: 'სტატისტიკა' },
             ...(!isAccountant ? [{ id: 'products', icon: <Package size={18}/>, label: 'პროდუქცია' }] : []),
+            ...(!isAccountant ? [{ id: 'promotions', icon: <Tag size={18}/>, label: 'აქციები' }] : []),
             { id: 'orders', icon: <ShoppingCart size={18}/>, label: 'შეკვეთები' },
             ...(canViewAccounting ? [{ id: 'accounting', icon: <Calculator size={18}/>, label: 'ბუღალტერია' }] : []),
             ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : [])
@@ -360,6 +371,7 @@ export default function AdminPanel() {
             <h1 className="text-3xl font-serif text-brand-900 mb-1">
               {activeTab === 'dashboard' && 'ჯამური სტატისტიკა'}
               {activeTab === 'products' && 'პროდუქციის მართვა'}
+              {activeTab === 'promotions' && 'აქციების მართვა'}
               {activeTab === 'orders' && 'შეკვეთების ისტორია'}
               {activeTab === 'accounting' && 'ბუღალტერია'}
               {activeTab === 'team' && 'თანამშრომლების მართვა'}
@@ -367,6 +379,7 @@ export default function AdminPanel() {
             <p className="text-sm text-brand-400">
               {activeTab === 'dashboard' && 'გაყიდვების დიაგრამები და შეკვეთების მეტრიკა'}
               {activeTab === 'products' && `${products.length} აქტიური პროდუქტი სისტემაში`}
+              {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale).length} აქტიური აქცია`}
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
               {activeTab === 'accounting' && 'ფინანსური ანალიტიკა და ბუღალტრული ჩანაწერები'}
               {activeTab === 'team' && 'ადმინისტრატორები, კონსულტანტები და ბუღალტრები'}
@@ -437,8 +450,15 @@ export default function AdminPanel() {
                             {p.material && <p><span className="font-semibold text-brand-300">მასალა:</span> {p.material}</p>}
                             {p.warranty && <p><span className="font-semibold text-brand-300">გარანტია:</span> {p.warranty}</p>}
                           </td>
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-lg text-brand-900">₾{Number(p.price).toLocaleString()}</p>
+                           <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <p className="font-bold text-lg text-brand-900">₾{Number(p.price).toLocaleString()}</p>
+                              {p.is_on_sale && (
+                                <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter w-fit">
+                                  <Percent size={8}/> SALE
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right space-x-2">
                             {canEditProducts && (
@@ -462,6 +482,76 @@ export default function AdminPanel() {
                     <Package size={56} className="mb-4 opacity-20" />
                     <p className="text-xl font-serif text-brand-800">პროდუქტები ვერ მოიძებნა</p>
                     {searchQuery && <p className="text-sm mt-2 text-brand-400">სცადეთ სხვა საძიებო სიტყვა</p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'promotions' && (
+              <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] text-brand-400 uppercase tracking-widest">
+                        <th className="px-6 py-5 font-bold">იმიჯი</th>
+                        <th className="px-6 py-5 font-bold">პროდუქტი</th>
+                        <th className="px-6 py-5 font-bold">ფასდაკლება</th>
+                        <th className="px-6 py-5 font-bold">აქციის ფასი</th>
+                        <th className="px-6 py-5 font-bold">სრულდება</th>
+                        <th className="px-6 py-5 font-bold text-right">მოქმედება</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {products.filter(p => p.is_on_sale).map((p) => (
+                        <tr key={p.id} className="hover:bg-brand-50/30 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+                              <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="font-semibold text-brand-900 text-sm">{p.name}</p>
+                            <p className="text-[10px] text-brand-400 uppercase font-bold tracking-wider">{p.category}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                              -{p.discount_percentage}%
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-xs text-brand-300 line-through">₾{Number(p.price).toLocaleString()}</span>
+                              <span className="font-bold text-brand-900 text-base">₾{Number(p.sale_price).toLocaleString()}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1 italic">
+                                {p.sale_end_date ? new Date(p.sale_end_date).toLocaleDateString('ka-GE') : 'უვადო'}
+                              </span>
+                              <span className="text-[10px] text-brand-300">
+                                {p.sale_end_date ? new Date(p.sale_end_date).toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                             <button onClick={() => openEditModal(p)} className="inline-flex p-2 text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-none outline-none border-none cursor-pointer" title="რედაქტირება">
+                              <Edit3 size={16} />
+                            </button>
+                            <button onClick={() => handleStopSale(p.id)} className="inline-flex p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-none outline-none border-none cursor-pointer" title="აქციის შეწყვეტა">
+                              <X size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {products.filter(p => p.is_on_sale).length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+                    <Tag size={56} className="mb-4 opacity-20" />
+                    <p className="text-xl font-serif text-brand-800 uppercase tracking-widest">აქტიური აქციები არ არის</p>
+                    <p className="text-sm mt-2 text-brand-400">გადადით "პროდუქციაში" აქციის დასამატებლად</p>
                   </div>
                 )}
               </div>
