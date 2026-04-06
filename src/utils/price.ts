@@ -16,3 +16,10 @@ export const getEffectivePrice = (product: Product): number => {
   }
   return product.price;
 };
+
+/**
+ * Formats a number as a GEL price string (e.g., ₾1,200).
+ */
+export const formatPrice = (price: number): string => {
+  return `₾${price.toLocaleString()}`;
+};

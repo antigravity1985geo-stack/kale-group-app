@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Settings, ShoppingBag, Heart } from 'lucide-react';
+import { Menu, X, ShoppingBag, Heart, Facebook, Instagram, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useTranslation } from 'react-i18next';
+import SearchModal from '../ui/SearchModal';
+
+const TikTokIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 const LANGUAGES = [
   { code: 'ka', label: 'ქარ', flag: '🇬🇪' },
@@ -15,10 +32,22 @@ const LANGUAGES = [
 export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
   const { wishlist } = useWishlist();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const switchLang = (code: string) => {
     i18n.changeLanguage(code);
@@ -40,6 +69,12 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
     { name: t('nav.products'), href: '/#products' },
     { name: t('nav.aiDesign'), href: '/#ai-generator' },
     { name: t('nav.contact'), href: '/#contact' },
+  ];
+
+  const socialLinks = [
+    { icon: <Facebook size={20} />, href: "https://www.facebook.com/lasha.dolidze.1884", color: "hover:text-blue-600" },
+    { icon: <Instagram size={20} />, href: "#", color: "hover:text-pink-600" },
+    { icon: <TikTokIcon size={20} />, href: "#", color: "hover:text-black" },
   ];
 
 
@@ -91,6 +126,30 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
 
             
             <div className="flex items-center gap-4">
+              {/* Social Icons Desktop */}
+              <div className="flex items-center gap-3 border-r border-brand-100 pr-4 mr-2">
+                {socialLinks.map((social, idx) => (
+                  <a 
+                    key={idx} 
+                    href={social.href} 
+                    className={`text-brand-400 transition-all duration-300 hover:scale-110 ${social.color}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+
+              {/* Search Button */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 text-brand-900 hover:text-brand-600 transition-colors"
+                title={`${t('search.title', 'ძიება')} (Ctrl+K)`}
+              >
+                <Search size={22} />
+              </button>
+
               <button 
                 onClick={onOpenWishlist}
                 className="relative p-2 text-brand-900 hover:text-red-500 transition-colors"
@@ -114,18 +173,16 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
                   </span>
                 )}
               </button>
-
-              <Link
-                to="/admin"
-                className="flex items-center text-xs font-bold tracking-[0.1em] uppercase text-white bg-brand-900 px-6 py-2.5 rounded-full hover:bg-brand-800 transition-all shadow-md hover:shadow-lg active:scale-95"
-              >
-                <Settings className="w-3.5 h-3.5 mr-2" />
-                {t('nav.admin')}
-              </Link>
             </div>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 text-brand-900"
+            >
+              <Search size={22} />
+            </button>
             <button 
               onClick={onOpenWishlist}
               className="relative p-2 text-brand-900"
@@ -191,20 +248,30 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
                   {link.name}
                 </a>
               ))}
-              <div className="pt-8">
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-3 text-lg font-medium text-white bg-brand-900 py-5 rounded-2xl shadow-xl shadow-brand-900/20 active:scale-95 transition-all"
-                >
-                  <Settings className="w-5 h-5" />
-                  {t('nav.admin')}
-                </Link>
+              
+              {/* Social Icons Mobile */}
+              <div className="flex items-center justify-center gap-8 pt-8">
+                {socialLinks.map((social, idx) => (
+                  <a 
+                    key={idx} 
+                    href={social.href} 
+                    className="text-brand-900 p-4 bg-brand-50 rounded-2xl active:scale-95 transition-transform"
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    {React.cloneElement(social.icon as React.ReactElement<any>, { size: 28 })}
+                  </a>
+                ))}
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SearchModal 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+      />
     </>
   );
 }
