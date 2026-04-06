@@ -176,32 +176,32 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-0.5 sm:gap-2 md:hidden">
             <button 
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-brand-900"
+              className="p-1.5 sm:p-2 text-brand-900"
             >
-              <Search size={22} />
+              <Search size={20} />
             </button>
             <button 
               onClick={onOpenWishlist}
-              className="relative p-2 text-brand-900"
+              className="relative p-1.5 sm:p-2 text-brand-900"
             >
-              <Heart size={22} className={wishlist.length > 0 ? 'fill-red-500 text-red-500' : ''} />
+              <Heart size={20} className={wishlist.length > 0 ? 'fill-red-500 text-red-500' : ''} />
             </button>
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-brand-900"
+              className="relative p-1.5 sm:p-2 text-brand-900"
             >
-              <ShoppingBag size={24} />
+              <ShoppingBag size={22} />
               {totalItems > 0 && (
-                <span className="absolute top-0 right-0 w-5 h-5 bg-gold-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center -translate-y-1 translate-x-1">
+                <span className="absolute top-0 right-0 w-4 h-4 bg-gold-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center -translate-y-0.5 translate-x-0.5">
                   {totalItems}
                 </span>
               )}
             </button>
-            <button className="text-brand-900 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <button className="text-brand-900 p-1.5 sm:p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>

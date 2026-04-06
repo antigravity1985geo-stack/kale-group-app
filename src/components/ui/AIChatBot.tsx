@@ -53,14 +53,14 @@ export default function AIChatBot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-sans">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] font-sans">
       <AnimatePresence>
         {isOpen && !isMinimized && (
           <motion.div 
             initial={{ opacity: 0, y: 20, scale: 0.95, transformOrigin: 'bottom right' }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-4 w-[380px] h-[550px] bg-brand-950/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5"
+            className="mb-4 w-[calc(100vw-2rem)] sm:w-[380px] h-[500px] sm:h-[550px] bg-brand-950/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5"
           >
             {/* Header */}
             <div className="p-6 border-b border-white/10 bg-gradient-to-r from-brand-900 to-brand-950 flex items-center justify-between">
@@ -145,12 +145,12 @@ export default function AIChatBot() {
           setIsOpen(true);
           setIsMinimized(false);
         }}
-        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 relative ${
+        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 relative ${
           isOpen && !isMinimized ? 'bg-gold-400 text-brand-950 -rotate-90 opacity-0 pointer-events-none' : 'bg-brand-900 text-gold-400 ring-2 ring-gold-400/20 hover:ring-gold-400/50'
         }`}
       >
-        <MessageCircle size={28} />
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-brand-900 animate-pulse" />
+        <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full border-2 border-brand-900 animate-pulse" />
       </motion.button>
 
       {/* Minimized Bubble */}

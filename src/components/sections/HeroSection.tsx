@@ -23,7 +23,7 @@ export default function HeroSection() {
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/90">{t('hero.badge')}</span>
         </motion.div>
 
-        <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.2 }} className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 leading-none">
+        <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.2 }} className="text-3xl sm:text-4xl md:text-7xl lg:text-8xl font-serif text-white mb-6 leading-[1.1] md:leading-none">
           {t('hero.title')} <br />
           <span className="italic font-light text-shimmer">{t('hero.titleSpan')}</span>
         </motion.h1>
