@@ -1,17 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
 import DashboardMetrics from './components/admin/DashboardMetrics';
 import InviteConsultantModal from './components/admin/InviteConsultantModal';
 import ConsultantsList from './components/admin/ConsultantsList';
+import AccountingDashboard from './components/admin/accounting/AccountingDashboard';
+import JournalEntries from './components/admin/accounting/JournalEntries';
+import InvoicesList from './components/admin/accounting/InvoicesList';
+import InventoryModule from './components/admin/accounting/InventoryModule';
+import VatModule from './components/admin/accounting/VatModule';
+import HrPayroll from './components/admin/accounting/HrPayroll';
+import FinancialReports from './components/admin/accounting/FinancialReports';
+import AdminGuide from './components/admin/AdminGuide';
 import type { Product, Category } from './types/product';
+
+type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'reports';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'team' | 'accounting'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'team' | 'accounting' | 'guide'>('dashboard');
+  const [accSubTab, setAccSubTab] = useState<AccountingSubTab>('acc-dashboard');
 
   // Permission helpers
   const canAddProducts = isAdmin || isConsultant;
@@ -417,6 +428,18 @@ export default function AdminPanel() {
               <span className="text-sm font-semibold tracking-wide">{tab.label}</span>
             </button>
           ))}
+          
+          <button
+            onClick={() => setActiveTab('guide')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-medium ${
+              activeTab === 'guide'
+                ? 'bg-brand-900 shadow-xl shadow-brand-900/20 border border-brand-800 text-gold-400'
+                : 'text-stone-400 hover:text-white hover:bg-stone-800'
+            }`}
+          >
+            <Book size={20} />
+            <span>სახელმძღვანელო</span>
+          </button>
         </nav>
         <div className="p-6 border-t border-white/10 text-xs">
           <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-white/5 text-brand-200 hover:bg-red-500 hover:text-white transition-all outline-none border-none cursor-pointer">
@@ -732,101 +755,51 @@ export default function AdminPanel() {
             )}
 
             {activeTab === 'accounting' && canViewAccounting && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                      <Calculator size={28} className="text-emerald-500" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-serif text-brand-900">ბუღალტრული მოდული</h3>
-                      <p className="text-sm text-brand-400">ფინანსური ანალიტიკა და ჩანაწერები</p>
-                    </div>
-                  </div>
-
-                  {/* Financial Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 rounded-2xl border border-emerald-200/50">
-                      <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">ჯამური შემოსავალი</p>
-                      <p className="text-3xl font-bold text-emerald-700">₾{orders.reduce((sum: number, o: any) => sum + Number(o.total_price || 0), 0).toLocaleString()}</p>
-                      <p className="text-xs text-emerald-500 mt-1">{orders.filter((o: any) => o.status === 'delivered').length} დასრულებული შეკვეთა</p>
-                    </div>
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 p-6 rounded-2xl border border-amber-200/50">
-                      <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">მოლოდინში</p>
-                      <p className="text-3xl font-bold text-amber-700">₾{orders.filter((o: any) => o.status === 'pending' || o.status === 'processing').reduce((sum: number, o: any) => sum + Number(o.total_price || 0), 0).toLocaleString()}</p>
-                      <p className="text-xs text-amber-500 mt-1">{orders.filter((o: any) => o.status === 'pending' || o.status === 'processing').length} აქტიური შეკვეთა</p>
-                    </div>
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 rounded-2xl border border-blue-200/50">
-                      <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">პროდუქცია აქტ.</p>
-                      <p className="text-3xl font-bold text-blue-700">{products.filter((p: any) => p.in_stock).length}</p>
-                      <p className="text-xs text-blue-500 mt-1">{products.length} სულ პროდუქტი</p>
-                    </div>
-                  </div>
-
-                  {/* Orders Financial Table */}
-                  <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                    <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100">
-                      <h4 className="text-xs font-bold text-brand-400 uppercase tracking-widest">შეკვეთების ფინანსური ჩანაწერი</h4>
-                    </div>
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50/30 text-[10px] text-brand-400 uppercase tracking-widest">
-                          <th className="px-6 py-4 font-bold">შეკვეთა #</th>
-                          <th className="px-6 py-4 font-bold">კლიენტი</th>
-                          <th className="px-6 py-4 font-bold">თარიღი</th>
-                          <th className="px-6 py-4 font-bold">გადახდის მეთოდი</th>
-                          <th className="px-6 py-4 font-bold">სტატუსი</th>
-                          <th className="px-6 py-4 font-bold text-right">თანხა</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                        {orders.map((o: any) => (
-                          <tr key={o.id} className="hover:bg-brand-50/30 transition-colors text-sm">
-                            <td className="px-6 py-3 font-mono text-xs text-brand-400">#{o.id.slice(0, 8).toUpperCase()}</td>
-                            <td className="px-6 py-3 text-brand-900 font-medium">{o.customer_first_name} {o.customer_last_name}</td>
-                            <td className="px-6 py-3 text-brand-400 text-xs">{new Date(o.created_at).toLocaleDateString('ka-GE')}</td>
-                            <td className="px-6 py-3">
-                              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-brand-600">{o.payment_method || '—'}</span>
-                            </td>
-                            <td className="px-6 py-3">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(o.status)}`}>{getStatusLabel(o.status)}</span>
-                            </td>
-                            <td className="px-6 py-3 text-right font-bold text-brand-900">₾{Number(o.total_price).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-brand-50/50">
-                        <tr>
-                          <td colSpan={5} className="px-6 py-4 text-right text-sm font-bold text-brand-900 uppercase tracking-wider">ჯამი:</td>
-                          <td className="px-6 py-4 text-right text-xl font-bold text-brand-900">₾{orders.reduce((sum: number, o: any) => sum + Number(o.total_price || 0), 0).toLocaleString()}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                    {orders.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                        <Calculator size={48} className="mb-3 opacity-20" />
-                        <p className="text-lg font-serif text-brand-800">ჩანაწერები ჯერ არ არის</p>
-                        <p className="text-sm text-brand-400">შეკვეთების გაფორმების შემდეგ აქ გამოჩნდება ფინანსური მონაცემები</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* RS.ge Integration Placeholder */}
-                  <div className="mt-8 p-6 bg-gradient-to-r from-brand-50 to-brand-100/50 rounded-2xl border border-brand-200/50">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-brand-900 flex items-center justify-center text-gold-400 text-xs font-bold">RS</div>
-                      <div>
-                        <h4 className="font-bold text-brand-900">RS.ge ინტეგრაცია</h4>
-                        <p className="text-xs text-brand-400">შემოსავლების სამსახურთან ავტომატური სინქრონიზაცია</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-brand-500 leading-relaxed">
-                      RS.ge-ს სრული ინტეგრაცია მოიცავს: ზედნადების ავტომატურ გაცემას, საგადასახადო ანგარიშგებას, 
-                      და ფინანსური დოკუმენტაციის ელექტრონულ მართვას. <span className="font-bold text-brand-900">API გასაღების მიღების შემდეგ გააქტიურდება.</span>
-                    </p>
+              <div className="space-y-0">
+                {/* ── Accounting Sub-Navigation ── */}
+                <div className="bg-stone-950 rounded-2xl mb-6 p-2 flex flex-wrap gap-1 border border-stone-800">
+                  {([
+                    { id: 'acc-dashboard', label: '📊 დეშბორდი' },
+                    { id: 'journal',       label: '📒 ჟურნ.' },
+                    { id: 'invoices',      label: '🧾 ინვოის.' },
+                    { id: 'inventory',     label: '📦 მარაგი' },
+                    { id: 'vat',           label: '🏛 დღგ' },
+                    { id: 'hr',            label: '👥 HR/ხელფ.' },
+                    { id: 'reports',       label: '📈 ანგ.' },
+                  ] as { id: AccountingSubTab; label: string }[]).map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setAccSubTab(s.id)}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border-none outline-none cursor-pointer ${
+                        accSubTab === s.id
+                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/40'
+                          : 'text-stone-400 hover:text-white hover:bg-stone-800 bg-transparent'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                  {/* RS.ge badge */}
+                  <div className="ml-auto flex items-center px-3 py-1 rounded-xl bg-stone-900 border border-stone-700 text-[10px] text-stone-500 font-bold uppercase tracking-widest">
+                    RS.ge <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400">STUB</span>
                   </div>
                 </div>
+
+                {/* ── Sub-Module Content ── */}
+                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-6 min-h-[500px]">
+                  {accSubTab === 'acc-dashboard' && <AccountingDashboard />}
+                  {accSubTab === 'journal'       && <JournalEntries />}
+                  {accSubTab === 'invoices'      && <InvoicesList />}
+                  {accSubTab === 'inventory'     && <InventoryModule />}
+                  {accSubTab === 'vat'           && <VatModule />}
+                  {accSubTab === 'hr'            && <HrPayroll />}
+                  {accSubTab === 'reports'       && <FinancialReports />}
+                </div>
               </div>
+            )}
+
+            {activeTab === 'guide' && (
+              <AdminGuide />
             )}
 
             {activeTab === 'team' && canManageTeam && (

@@ -6,77 +6,110 @@
 
 ## 🚀 ტექნოლოგიური სთეკი (Tech Stack)
 
-- **Frontend:** [React](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) (ანიმაციები)
-- **Backend:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (Custom API)
-- **Database/Auth:** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage)
-- **AI:** [Google Gemini AI](https://ai.google.dev/) (Chat & Image Generation)
-- **State Management:** React Context API (Cart, Wishlist)
-- **Tools:** Lucide Icons, React Hot Toast, JSPDF (PDF გენერაცია), React Helmet Async (SEO)
+### Frontend (User Interface & Experience)
+- **Framework:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) (პრემიუმ ანიმაციები, სმუთ-ტექნოლოგიები)
+- **PWA (Progressive Web App):** `vite-plugin-pwa` ინტეგრაცია offline მხარდაჭერისა და აპლიკაციის სახით ინსტალაციისთვის.
+- **State Management:** React Context API (Cart, Wishlist, Language)
+- **Internationalization (i18n):** `i18next` + `react-i18next` (სრული მულტი-ენოვანი მხარდაჭერა - GEO, ENG, RUS)
+- **SEO & Head Management:** React Helmet Async (დინამიური მეტა ტეგებისთვის)
+
+### Backend & API
+- **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (Custom API)
+- **Deployment:** Vercel Serverless Functions (`server.ts` ოპტიმიზებული Vercel-ისთვის)
+- **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (გადატანილია Backend-ზე უსაფრთხოების მიზნით, იცავს API გასაღებს და ამცირებს Rate Limit/429 ერორებს).
+
+### Database, Auth & Storage
+- **BaaS (Backend as a Service):** [Supabase](https://supabase.com/) (ფოსტგრეს ბაზა, რეალურ-დროში სინქრონიზაცია)
+- **Authentication:** Supabase Auth (JWT, Row Level Security გაძლიერებული კონტროლით)
+- **Storage:** Supabase Storage bucket-ები სურათებისა და მედიის ასატვირთად უშუალოდ ადმინ-პანელიდან.
 
 ---
 
 ## ✨ ძირითადი ფუნქციონალი (Core Features)
 
 ### 1. მომხმარებლის ინტერფეისი (Storefront)
-- **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის, მასალისა და ფერის მიხედვით. ფასის სორტირება (ზრდადობით/კლებადობით).
-- **ჭკვიანი კალათა:** ნივთების დამატება, რაოდენობის მართვა და ჯამური ფასის ავტომატური კალკულაცია (Persistent - ინახება ბრაუზერში).
-- **Wishlist (რჩეულები):** სასურველი ნივთების შენახვის შესაძლებლობა რეგისტრაციის გარეშე.
-- **AI Generator UI:** მომავლის დიზაინის ვიზუალური პრეზენტაცია.
-- **Checkout სისტემა:** შეკვეთის გაფორმება (სახელი, ტელეფონი, მისამართი) და მონაცემების პირდაპირი სინქრონიზაცია Supabase ბაზასთან.
-- **PDF ქვითრები:** შეკვეთის დასრულებისას ბრენდირებული PDF ქვითრის გადმოწერის შესაძლებლობა ქართული შრიფტის მხარდაჭერით.
-- **AI ჩეთ-ასისტენტი:** პერსონალური დიზაინ-კონსულტანტი, რომელიც პასუხობს მომხმარებლის კითხვებს kalegroup.ge-ს ინვენტარის მიხედვით და ეხმარება ავეჯის შერჩევაში.
+- **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის (Category), მასალისა (Material) და ფერის მიხედვით. დახარისხება ფასის (ზრდადობით/კლებადობით) და პოპულარობის მიხედვით.
+- **ჭკვიანი კალათა (Smart Cart):** Persistent (Local Storage-ზე დაფუძნებული) შესყიდვების კალათა, რომელიც ავტომატურად ითვალისწინებს ავეჯის ფასდაკლებებს (`sale_price`) და გენერირებს ზუსტ ჯამურ ღირებულებას.
+- **რჩეულები (Wishlist):** მომხმარებლებს შეუძლიათ დაამატონ სასურველი ნივთები რეგისტრაციის გარეშე.
+- **მულტილინგვალური სისტემა:** მთლიანი პლატფორმის (Footer, Header, პროდუქტის გვერდი, Checkout, კატალოგი) მყისიერი თარგმნა სამ ენაზე.
+- **Premium UX/UI დეტალები:** "Glassmorphism" დიზაინი, Skeleton Loader-ები (ჩატვირთვის ანიმაციები), "Back to Top" ღილაკი, Inter/Outfit შრიფტების კოლაბორაცია.
+- **AI ჩეთ-ასისტენტი:** პროექტში ჩაშენებულია პერსონალური ინტერიერის დიზაინ-კონსულტანტი (Gemini-ზე დაფუძნებული), სადაც პასუხები გარანტირებულად ემყარება Kale Group-ის ინვენტარს. აპლიკაციის Backend უზრუნველყოფს უსაფრთხო კომუნიკაციას.
+- **Progressive Web App (PWA):** სისტემა მომხმარებელს სთავაზობს აპლიკაციის 홈-ეკრანზე ინსტალაციას (Desktop / Mobile), რაც აჩქარებს მუშაობას და ხდის ხელმისაწვდომს.
 
-### 2. ადმინ პანელი (Admin Dashboard)
-- **უსაფრთხოება და როლები:** Supabase Auth-ზე დაფუძნებული ავტორიზაცია და RBAC (როლებზე დაფუძნებული წვდომა - Admin, Consultant, Accountant, Guest).
-- **პროდუქციის მართვა (CRUD):** პროდუქტების დამატება, რედაქტირება (კონსულტანტებისთვისაც) და წაშლა (მხოლოდ ადმინისთვის). სურათების ატვირთვა Supabase Storage-ში.
-- **კატეგორიების მართვა:** ახალი კატეგორიების სწრაფი დამატება ფოტოს ატვირთვის ფუნქციით.
-- **შეკვეთების მენეჯმენტი:** შემოსული შეკვეთების სრული ისტორია, ძებნა (სახელით/ტელეფონით) და სტატუსის მართვა. კონსულტანტებს მხოლოდ ნახვის უფლება აქვთ.
-- **ბუღალტერია (Accounting):** ფინანსური ანალიტიკის მოდული და RS.ge ინტეგრაცია. (Phase 1: DB Schema & View დასრულებულია).
-- **მარაგების კონტროლი:** "In Stock" სტატუსის მართვა თითოეული პროდუქტისთვის.
-- **ბიზნეს ანალიტიკა (Dashboard):** ჯამური გაყიდვების, შეკვეთების რაოდენობისა და მარაგების სტატისტიკის ვიზუალიზაცია რეალურ დროში.
+### 2. შეკვეთის გაფორმება & Payments (Checkout System)
+- **Checkout Processing:** დახვეწილი ფორმა მარტივი შეკვეთისთვის. მონაცემების პირდაპირი ინტეგრაცია Supabase-ში.
+- **ფასდაკლებებისა და აქციების მენეჯმენტი:** ავტომატური კალკულაცია, რომელიც უპირატესობას ანიჭებს საპრომოციო ფასებს სტანდარტულთან შედარებით.
+- **PDF ქვითრები:** `jspdf`-ით გენერირებული ბრენდირებული PDF ინვოისი ქართული UTF-8 შრიფტის მხარდაჭერით.
+- **Payment Gateways (მომზადებული ინფრასტრუქტურა):** საფუძველი ჩაყრილია BOG (საქართველოს ბანკი), TBC (tpay), და Credo-ბანკის განვადებებისა და ბარათით გადახდების ინტეგრაციისთვის Webhook Callback-ებზე დაფუძნებით.
 
-### 3. გადახდის სისტემები & უსაფრთხოება (Payments & Security) - NEW Phase 1
-- **Real Payment Gateways:** სრული ინტეგრაცია BOG (ბარათით გადახდა & განვადება), TBC (tpay) და Credo (განვადება) სისტემებთან.
-- **Callback Webhooks:** ტრანზაქციების ავტომატური დადასტურება და შეკვეთის სტატუსის განახლება.
-- **უსაფრთხოების ფილტრები:** CORS შეზღუდვები და Rate Limiting (General & AI) ბოტის შეტევებისგან დასაცავად.
-- **Error Handling:** გლობალური Error Boundary კომპონენტი პრემიუმ ვიზუალით.
-
-### 4. SEO & UX ოპტიმიზაცია
-- **Dynamic Meta Tags:** თითოეულ გვერდს აქვს უნიკალური Title და Description (Geo + Eng).
-- **საძიებო სისტემები:** ინტეგრირებული `robots.txt` და `sitemap.xml`.
-- **Premium UX:** Skeleton Loaders (ჩატვირთვის ანიმაციები), Toast შეტყობინებები, "Back to Top" ღილაკი, სმუთ სკროლინგი.
+### 3. ადმინ პანელი (Admin Dashboard)
+- **როლებზე დაფუძნებული წვდომა (RBAC):** Supabase RLS-ით მართული 4 როლი:
+  - *Admin:* სრული უფლებები (წაშლა, მოდიფიკაცია, ფინანსები).
+  - *Consultant:* პროდუქტების რედაქტირების და შეკვეთების ნახვის უფლება (წაშლის გარეშე).
+  - *Accountant:* ფინანსების და ბუღალტერიის მოდულზე ორიენტირება.
+  - *Guest:* შესვლის გარეშე/მხოლოდ საჯარო მონაცემები.
+- **პროდუქციის სრული მართვა (CRUD):** Live სურათების ატვირთვა Storage-ში, ახალი პროდუქტის/კატეგორიის წამებში დამატება დინამიური ფორმების მეშვეობით.
+- **შეკვეთების მენეჯმენტი:** მომხმარებლის შეკვეთების აღრიცხვა, სტატუსების მართვა (Pending, Processing, Completed) გამოტანილი კომფორტული ცხრილის სახით.
+- **ბიზნეს ანალიტიკა და ბუღალტერია:** RS.ge და ფინანსური მოდულის მონაცემთა ბազების წინასწარი კონფიგურაცია, მარაგების რეალურ დროში ჩვენება (`in_stock`).
 
 ---
 
-## 📂 პროექტის სტრუქტურა
+## 📂 არქიტექტურა & პროექტის სტრუქტურა
 
 ```bash
-src/
-├── components/       # რეაქტ კომპონენტები (Layout, Sections, UI)
-├── context/          # Global State (Cart, Wishlist)
-├── hooks/            # Custom Hooks (Supabase Data Fetching, Translation)
-├── lib/              # კონფიგურაციები (Supabase Client)
-├── pages/            # მთავარი გვერდები (Home, Admin, Success)
-├── types/            # TypeScript ინტერფეისები
-└── utils/            # დამხმარე ფუნქციები (PDF Generator, SEO)
+KALE-GROUP--MAIN/
+├── api/             # Vercel Serverless Function entry point-ები 
+├── app/             # (Optional) Next.js/Mobile App components (თუ არსებობს)
+├── public/          # სტატიკური ფაილები, ფონტები, ლოგოები, robots.txt, sitemap.xml
+├── src/
+│   ├── components/  # მოდულარული React კომპონენტები
+│   │   ├── admin/   # ადმინ პანელის სექციები
+│   │   ├── cart/    # კალათის სექციები & ლოგიკა
+│   │   ├── layout/  # Header, Footer, Hero სექციები
+│   │   ├── modals/  # Popup-ები (Auth, AI Chat)
+│   │   ├── sections/# მთავარი გვერდის ბლოკები
+│   │   ├── ui/      # უნივერსალური კომპონენტები (Buttons, Inputs, Skeletons)
+│   │   └── wishlist/# რჩეულების მოდული
+│   ├── context/     # Global State (Context API Providers)
+│   ├── hooks/       # Custom React Hooks (Supabase Fetching, UI ლოგიკა)
+│   ├── lib/         # Client Configurations (Supabase Client და ა.შ.)
+│   ├── locales/     # i18n JSON ფაილები ტრანსლაციისთვის (en, ka, ru)
+│   ├── pages/       # მთავარი Pages (Admin, Home, Products, Checkout)
+│   ├── types/       # TypeScript Type/Interface დეფინიციები
+│   └── utils/       # Utility ფაილები (Currency formatting, Validation, PDF)
+├── server.ts        # Express Backend & AI Chat API Route-ები
+├── vite.config.ts   # Vite კონფიგურაცია (+ PWA)
+└── tailwind.config  # Tailwind v4 კონფიგურაცია
 ```
 
 ---
 
-## 🛠️ Roadmap (განვითარების გეგმა)
+## 🛠️ უახლესი განახლებები / მიღწეული პროგრესი
 
-- [x] **Phase 1: ინფრასტრუქტურა & გადახდები (Complete)**
-  - საბანკო ტერმინალები (BOG, TBC, Credo).
-  - მონაცემთა ბაზის გაფართოება (Accounting & RS.ge tables).
-  - უსაფრთხოების სისტემის გაძლიერება.
-- [ ] **Phase 2: RS.ge & ფისკალური ინტეგრაცია** (ხვალ)
-  - სრული ინტეგრაცია RS.ge-სთან (SOAP API).
-  - ზედნადებებისა და ინვოისების ავტომატური გენერაცია.
-- [ ] **Phase 3: ბუღალტერიის მოდული UI**
-  - ფინანსური რეპორტების ვიზუალიზაცია ადმინ პანელში.
-  - PDF/Excel ექსპორტი.
-- [ ] **Phase 4: ენების სრული მხარდაჭერა**
-  - i18n სისტემის დასრულება ყველა გვერდზე.
-- [ ] **SMS შეტყობინებები:** შეკვეთის დასრულებისას მომხმარებლისთვის SMS-ის გაგზავნა.
+1. **მთლიანი Backend მიგრაცია Supabase-ზე:** სრულად იქნა ჩანაცვლებული მოკ-მონაცემები რეალური, დინამიური მონაცემთა ბაზით. ამუშავდა Row Level Security.
+2. **AI ასისტენტის რეფაქტორინგი:** Gemini AI კოდი კლიენტიდან მიგრირდა Node.js სერვერზე `server.ts`-ში, რამაც დაფარა API Keys და მოაგვარა Rate Limiting ერორები. გამართულია Vercel-ზე დეპლოის ფუნქცია.
+3. **მულტილინგვალური მხარდაჭერა (i18next):** პლატფორმა ახლა 3 ენოვანია 100%-ით (ყველა UI კომპონენტითა და Alert შეტყობინებით).
+4. **ფასდაკლების ლოგიკის გამართვა:** კალათასა და დეშბორდში სრულად გასწორდა ფასდაკლებული პროდუქციის კალკულაცია, რომელიც ახლა ზუსტად აღრიცხავს სააქციო პროდუქციას.
+5. **ვიზუალური პრემიუმ-შტრიხები:** წარმატებით ჩაეშვა Premium UI, Smooth Scroll, Toast Notifications, Skeleton Loaders-ები მოლოდინის დროს, რაც აუმჯობესებს User Retention Rate-ს.
 
+---
+
+## 🔮 Roadmap (სამომავლო განვითარების გეგმა)
+
+- [x] **Phase 1: Database, Security & Premium UI (Completed)**
+  - Supabase-ზე სრული მიგრაცია. AI გადატანა Backend-ზე.
+  - როლებზე დაფუძნებული წვდომა და ფასდაკლების სისტემა.
+  - PWA და 3-ენოვანი (i18n) მხარდაჭერა.
+  
+- [ ] **Phase 2: Payment Gateways (In Progress)**
+  - TBC, BOG, და Credo API-საბოლოო ტესტირება და Sandbox-იდან Production-ში გატანა.
+  - Webhook ენდპოინტების დაცვა თაღლითური მოთხოვნებისგან.
+
+- [ ] **Phase 3: RS.ge & ფისკალური ინტეგრაცია**
+  - RS.ge-ს SOAP API-სთან ინტეგრაცია ბუღალტერიისთვის.
+  - ზედნადებებისა და ინვოისების ავტომატური გენერაცია ადმინ-პანელიდან ერთი კლიკით.
+
+- [ ] **Phase 4: გაფართოებული ბიზნეს-ანალიტიკა**
+  - ფინანსური რეპორტების ვიზუალიზაცია ადმინ პანელში (გრაფიკები, Chart.js/Recharts).
+  - მოგება/ზარალისა და გაყიდვების დინამიკის ექსპორტი PDF/Excel-ში.
