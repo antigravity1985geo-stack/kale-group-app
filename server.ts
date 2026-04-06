@@ -204,10 +204,10 @@ async function setupApp() {
       const validItems = [];
 
       for (const item of items) {
-        // Find product strictly from supabase
+        // Find product strictly from supabase — including sale fields to correctly apply discounts
         const { data: product } = await supabase
           .from("products")
-          .select("id, name, price")
+          .select("id, name, price, is_on_sale, sale_price")
           .eq("id", item.product.id)
           .single();
 
@@ -215,14 +215,20 @@ async function setupApp() {
           return res.status(404).json({ error: `პროდუქტი ვერ მოიძებნა ბაზაში (ID: ${item.product.id})` });
         }
 
-        // Add to total cost
-        calculatedTotal += product.price * item.quantity;
+        // Use sale_price if product is on sale and has a valid sale_price (mirrors frontend getEffectivePrice logic)
+        const effectivePrice =
+          product.is_on_sale && product.sale_price != null && product.sale_price > 0
+            ? product.sale_price
+            : product.price;
+
+        // Add to total cost using effective (discounted) price
+        calculatedTotal += effectivePrice * item.quantity;
         
         validItems.push({
           product_id: product.id,
           product_name: product.name,
           quantity: item.quantity,
-          price_at_purchase: product.price
+          price_at_purchase: effectivePrice  // records the actual price paid (sale or regular)
         });
       }
 

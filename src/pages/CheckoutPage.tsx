@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useCart } from '../context/CartContext';
 import type { CustomerInfo } from '../types/product';
 import { useTranslation } from 'react-i18next';
+import { getEffectivePrice } from '../utils/price';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -297,7 +298,12 @@ export default function CheckoutPage() {
                     <div className="flex-1">
                       <p className="font-medium text-brand-900 text-sm">{item.product.name}</p>
                       <p className="text-[10px] text-brand-400 uppercase tracking-widest mt-1 mb-2">{t('checkout.quantity')}: {item.quantity}</p>
-                      <p className="font-bold text-brand-900 text-sm">₾{(item.product.price * item.quantity).toLocaleString()}</p>
+                      {item.product.is_on_sale && item.product.sale_price && (
+                        <p className="text-[11px] text-brand-300 line-through">
+                          ₾{(item.product.price * item.quantity).toLocaleString()}
+                        </p>
+                      )}
+                      <p className="font-bold text-brand-900 text-sm">₾{(getEffectivePrice(item.product) * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { getEffectivePrice } from '../../utils/price';
 
 export default function CartDrawer() {
   const { items, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
@@ -90,7 +91,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
                         
-                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center justify-between mt-4">
                           <div className="flex items-center bg-white rounded-lg border border-brand-100 px-2 py-1">
                             <button 
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
@@ -108,9 +109,16 @@ export default function CartDrawer() {
                               <Plus size={14} />
                             </button>
                           </div>
-                          <p className="font-bold text-brand-900 text-lg">
-                            ₾{(item.product.price * item.quantity).toLocaleString()}
-                          </p>
+                          <div className="text-right">
+                            {item.product.is_on_sale && item.product.sale_price && (
+                              <p className="text-xs text-brand-300 line-through">
+                                ₾{(item.product.price * item.quantity).toLocaleString()}
+                              </p>
+                            )}
+                            <p className="font-bold text-brand-900 text-lg">
+                              ₾{(getEffectivePrice(item.product) * item.quantity).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
