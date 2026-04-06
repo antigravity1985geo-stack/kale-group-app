@@ -47,6 +47,8 @@ const PRODUCT_FIELDS = [
   'in_stock', 'description',
   'warranty', 'delivery', 'manufacturing',
   'created_at',
+  'is_on_sale', 'discount_percentage', 'sale_price',
+  'sale_start_date', 'sale_end_date'
 ].join(', ');
 
 // ─────────────────────────────────────────────

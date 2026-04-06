@@ -9,8 +9,33 @@ import { useNavigate } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import { useTranslation } from 'react-i18next';
 
+export const Countdown = ({ endDate }: { endDate: string }) => {
+  const [timeLeft, setTimeLeft] = React.useState('');
+
+  React.useEffect(() => {
+    const calc = () => {
+      const end = new Date(endDate).getTime();
+      const now = new Date().getTime();
+      const diff = end - now;
+      if (diff <= 0) return 'დასრულდა';
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      if (d > 0) return `${d} დღე ${h} სთ`;
+      return `${h} სთ ${m} წთ`;
+    };
+    setTimeLeft(calc());
+    const interval = setInterval(() => setTimeLeft(calc()), 60000);
+    return () => clearInterval(interval);
+  }, [endDate]);
+
+  if (!timeLeft) return null;
+  return <span className="bg-red-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> {timeLeft}</span>;
+};
+
 interface ProductsSectionProps {
   activeCategory: string;
+
   setActiveCategory: (category: string) => void;
 }
 
@@ -221,6 +246,22 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                         {t('products.outOfStock')}
                       </div>
                     )}
+
+                    {/* Sale Badge */}
+                    {product.is_on_sale && product.discount_percentage ? (
+                      <div className="absolute top-6 left-6 z-10">
+                        <span className="bg-red-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest shadow-lg">
+                          -{product.discount_percentage}%
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {/* End Date Countdown */}
+                    {product.is_on_sale && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
+                       <div className="absolute bottom-6 right-6 z-10">
+                          <Countdown endDate={product.sale_end_date} />
+                       </div>
+                    )}
                   </div>
                   
                   <div className="mt-6 flex justify-between items-start">
@@ -242,7 +283,14 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-brand-900">₾{product.price.toLocaleString()}</p>
+                      {product.is_on_sale && product.sale_price ? (
+                        <>
+                          <p className="text-sm font-bold text-gray-400 line-through">₾{product.price.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-red-600">₾{product.sale_price.toLocaleString()}</p>
+                        </>
+                      ) : (
+                        <p className="text-lg font-bold text-brand-900">₾{product.price.toLocaleString()}</p>
+                      )}
                     </div>
                   </div>
                 </motion.div>

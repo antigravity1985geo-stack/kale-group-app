@@ -38,7 +38,7 @@ export default function AdminPanel() {
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    name: '', category: '', price: 0, images: [], colors: [], description: '', material: '', warranty: '', delivery: '', manufacturing: '', in_stock: true
+    name: '', category: '', price: 0, images: [], colors: [], description: '', material: '', warranty: '', delivery: '', manufacturing: '', in_stock: true, is_on_sale: false, discount_percentage: 0, sale_price: 0, sale_start_date: '', sale_end_date: ''
   });
   
   // Inline Category State
@@ -161,6 +161,11 @@ export default function AdminPanel() {
       delivery: newProduct.delivery || null,
       manufacturing: newProduct.manufacturing || null,
       in_stock: newProduct.in_stock ?? true,
+      is_on_sale: newProduct.is_on_sale ?? false,
+      discount_percentage: newProduct.discount_percentage || 0,
+      sale_price: newProduct.sale_price || null,
+      sale_start_date: newProduct.sale_start_date || null,
+      sale_end_date: newProduct.sale_end_date || null,
       images: imageArray,
       colors: newProduct.colors || [],
     };
@@ -782,10 +787,88 @@ export default function AdminPanel() {
                     </div>
                   </div>
 
-                  {/* Media */}
+                  {/* Promotions */}
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 mb-4 text-brand-900 border-b border-gray-100 pb-2">
                       <div className="w-6 h-6 rounded-full bg-gold-400/20 text-gold-600 flex items-center justify-center text-xs font-bold">3</div>
+                      <h4 className="font-bold text-sm tracking-widest uppercase">აქციები</h4>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-brand-50/30 p-4 rounded-xl border border-brand-100/50">
+                      <input 
+                        type="checkbox" 
+                        id="is_on_sale"
+                        checked={newProduct.is_on_sale} 
+                        onChange={e => setNewProduct({...newProduct, is_on_sale: e.target.checked})}
+                        className="w-5 h-5 accent-brand-900 rounded cursor-pointer"
+                      />
+                      <label htmlFor="is_on_sale" className="text-sm font-bold text-brand-900 cursor-pointer uppercase tracking-widest">პროდუქტი მონაწილეობს აქციაში</label>
+                    </div>
+
+                    {newProduct.is_on_sale && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-brand-50/50 border border-brand-100/50 rounded-2xl">
+                        <div>
+                          <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">ფასდაკლება (%)</label>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value={newProduct.discount_percentage || ''} 
+                            onChange={e => {
+                              const pct = Number(e.target.value);
+                              const oldPrice = Number(newProduct.price) || 0;
+                              const newSalePrice = oldPrice - Math.round(oldPrice * (pct / 100));
+                              setNewProduct({...newProduct, discount_percentage: pct, sale_price: newSalePrice > 0 ? newSalePrice : 0});
+                            }} 
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:border-gold-400 transition-all outline-none" 
+                            placeholder="მაგ: 20" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">აქციის ფასი (₾)</label>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            value={newProduct.sale_price || ''} 
+                            onChange={e => {
+                              const sprice = Number(e.target.value);
+                              const oldPrice = Number(newProduct.price) || 0;
+                              let pct = 0;
+                              if (oldPrice > 0 && sprice <= oldPrice) {
+                                pct = Math.round(((oldPrice - sprice) / oldPrice) * 100);
+                              }
+                              setNewProduct({...newProduct, sale_price: sprice, discount_percentage: pct});
+                            }} 
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:border-gold-400 transition-all outline-none" 
+                            placeholder="მაგ: 1500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">აქციის დაწყება</label>
+                          <input 
+                            type="datetime-local" 
+                            value={newProduct.sale_start_date ? new Date(newProduct.sale_start_date).toISOString().slice(0,16) : ''} 
+                            onChange={e => setNewProduct({...newProduct, sale_start_date: new Date(e.target.value).toISOString()})} 
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:border-gold-400 transition-all outline-none" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">აქციის დასრულება</label>
+                          <input 
+                            type="datetime-local" 
+                            value={newProduct.sale_end_date ? new Date(newProduct.sale_end_date).toISOString().slice(0,16) : ''} 
+                            onChange={e => setNewProduct({...newProduct, sale_end_date: new Date(e.target.value).toISOString()})} 
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:border-gold-400 transition-all outline-none" 
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Media */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-4 text-brand-900 border-b border-gray-100 pb-2">
+                      <div className="w-6 h-6 rounded-full bg-gold-400/20 text-gold-600 flex items-center justify-center text-xs font-bold">4</div>
                       <h4 className="font-bold text-sm tracking-widest uppercase">მედია (სურათი)</h4>
                     </div>
                     

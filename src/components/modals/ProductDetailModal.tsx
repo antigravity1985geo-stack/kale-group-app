@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { Countdown } from '../sections/ProductsSection';
 import type { Product } from '../../types/product';
 
 interface ProductDetailModalProps {
@@ -72,6 +73,19 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 />
               </AnimatePresence>
               
+              {product.is_on_sale && product.discount_percentage ? (
+                <div className="absolute top-6 left-6 z-10">
+                  <span className="bg-red-500 text-white text-[13px] font-bold px-4 py-2 rounded-xl uppercase tracking-widest shadow-xl">
+                    -{product.discount_percentage}%
+                  </span>
+                </div>
+              ) : null}
+
+              {product.is_on_sale && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
+                 <div className="absolute top-6 right-6 z-10">
+                    <Countdown endDate={product.sale_end_date} />
+                 </div>
+              )}
               {product.images.length > 1 && (
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-6">
                   <button onClick={() => setActiveImageIndex(p => p === 0 ? product.images.length - 1 : p - 1)} className="w-12 h-12 glass rounded-full flex items-center justify-center text-brand-900 hover:bg-white shadow-xl transition-all"><ChevronLeft size={20}/></button>
@@ -100,7 +114,14 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             </div>
 
             <div className="space-y-8 mb-16">
-              <p className="text-2xl font-bold text-brand-900">₾{product.price.toLocaleString()}</p>
+              {product.is_on_sale && product.sale_price ? (
+                <div>
+                  <p className="text-xl font-bold text-gray-400 line-through mb-1">₾{product.price.toLocaleString()}</p>
+                  <p className="text-4xl font-bold text-red-600">₾{product.sale_price.toLocaleString()}</p>
+                </div>
+              ) : (
+                <p className="text-4xl font-bold text-brand-900">₾{product.price.toLocaleString()}</p>
+              )}
               <p className="text-brand-500 leading-relaxed text-lg">
                 {product.description || 'ეს მოდელი გამოირჩევა თავისი დახვეწილი ხაზებით და უმაღლესი კომფორტით. თითოეული დეტალი არის საგულდაგულოდ დამუშავებული საუკეთესო ხის მასალისგან.'}
               </p>
