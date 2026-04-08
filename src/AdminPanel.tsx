@@ -15,9 +15,11 @@ import VatModule from './components/admin/accounting/VatModule';
 import HrPayroll from './components/admin/accounting/HrPayroll';
 import FinancialReports from './components/admin/accounting/FinancialReports';
 import AdminGuide from './components/admin/AdminGuide';
+import ManufacturingModule from './components/admin/accounting/ManufacturingModule';
+import ReturnsModule from './components/admin/accounting/ReturnsModule';
 import type { Product, Category } from './types/product';
 
-type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'reports';
+type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'reports' | 'manufacturing' | 'returns';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
@@ -765,6 +767,8 @@ export default function AdminPanel() {
                     { id: 'inventory',     label: '📦 მარაგი' },
                     { id: 'vat',           label: '🏛 დღგ' },
                     { id: 'hr',            label: '👥 HR/ხელფ.' },
+                    { id: 'manufacturing', label: '🏭 წარმოება' },
+                    { id: 'returns',       label: '🔁 დაბრუნ.' },
                     { id: 'reports',       label: '📈 ანგ.' },
                   ] as { id: AccountingSubTab; label: string }[]).map(s => (
                     <button
@@ -792,8 +796,10 @@ export default function AdminPanel() {
                   {accSubTab === 'invoices'      && <InvoicesList />}
                   {accSubTab === 'inventory'     && <InventoryModule />}
                   {accSubTab === 'vat'           && <VatModule />}
-                  {accSubTab === 'hr'            && <HrPayroll />}
-                  {accSubTab === 'reports'       && <FinancialReports />}
+                  { accSubTab === 'hr'            && <HrPayroll /> }
+                  { accSubTab === 'manufacturing' && <ManufacturingModule /> }
+                  { accSubTab === 'returns'       && <ReturnsModule /> }
+                  { accSubTab === 'reports'       && <FinancialReports /> }
                 </div>
               </div>
             )}

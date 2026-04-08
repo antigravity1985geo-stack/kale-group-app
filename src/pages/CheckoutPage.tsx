@@ -85,7 +85,7 @@ export default function CheckoutPage() {
     setIsProcessingPayment(true);
     
     try {
-      // Create Secure Order via Backend API
+      // 1. Create Secure Order via Backend API
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: {
@@ -105,10 +105,56 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'შეკვეთის გაფორმება ვერ მოხერხდა');
       }
 
-      // Clear cart on success
+      // 2. Initialize Payment based on Bank & Type
+      let payResponse;
+      if (bank === 'bog' && type === 'full') {
+        payResponse = await fetch('/api/pay/bog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: data.orderId,
+            amount: data.total_price,
+            redirectUrl: window.location.origin
+          })
+        });
+      } else if (bank === 'bog' && type === 'installment') {
+        payResponse = await fetch('/api/pay/bog/installment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price })
+        });
+      } else if (bank === 'tbc') {
+        payResponse = await fetch('/api/pay/tbc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            orderId: data.orderId, 
+            amount: data.total_price,
+            methods: type === 'installment' ? [8] : [5] // 8: Installment, 5: Card
+          })
+        });
+      } else if (bank === 'credo' && type === 'installment') {
+        payResponse = await fetch('/api/pay/credo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, items })
+        });
+      }
+
+      if (payResponse) {
+        const payData = await payResponse.json();
+        if (!payResponse.ok) throw new Error(payData.error);
+        
+        clearCart();
+        // Redirect user to the bank's checkout page Let the bank callback handle completion.
+        if (payData.redirectUrl) {
+          window.location.href = payData.redirectUrl;
+          return;
+        }
+      }
+
+      // Fallback if no redirect link (or cash on delivery in future)
       clearCart();
-      
-      // Navigate to success page with orderId
       navigate(`/payment/success?orderId=${data.orderId}`);
       
     } catch (error) {

@@ -332,6 +332,11 @@ async function setupApp() {
 
       const token = await getBOGToken();
 
+      // Ensure HTTPS and non-localhost for BOG Validation
+      const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+      const baseUrl = isDev ? 'https://kalegroup.vercel.app' : (process.env.APP_URL || 'https://kalegroup.ge').replace(/^http:/, 'https:');
+      const safeRedirectUrl = isDev ? 'https://kalegroup.vercel.app' : (redirectUrl || baseUrl).replace(/^http:/, 'https:');
+
       const orderResponse = await fetch(
         'https://api.bog.ge/payments/v1/ecommerce/orders',
         {
@@ -339,9 +344,10 @@ async function setupApp() {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Accept-Language': 'ka',
           },
           body: JSON.stringify({
-            callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/bog/callback`,
+            callback_url: `${baseUrl}/api/pay/bog/callback`,
             external_order_id: orderId,
             purchase_units: {
               currency: 'GEL',
@@ -349,8 +355,8 @@ async function setupApp() {
               basket: [{ quantity: 1, unit_price: amount, product_id: orderId }],
             },
             redirect_urls: {
-              fail: `${redirectUrl || process.env.APP_URL}?status=failed`,
-              success: `${redirectUrl || process.env.APP_URL}/payment/success?orderId=${orderId}`,
+              fail: `${safeRedirectUrl}?status=failed`,
+              success: `${safeRedirectUrl}/payment/success?orderId=${orderId}`,
             },
           }),
         }
@@ -424,6 +430,10 @@ async function setupApp() {
 
       const token = await getBOGToken();
 
+      // Ensure HTTPS and non-localhost for BOG Validation
+      const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+      const baseUrl = isDev ? 'https://kalegroup.vercel.app' : (process.env.APP_URL || 'https://kalegroup.ge').replace(/^http:/, 'https:');
+
       const response = await fetch(
         'https://api.bog.ge/loans/v1/online-installments',
         {
@@ -431,13 +441,14 @@ async function setupApp() {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Accept-Language': 'ka',
           },
           body: JSON.stringify({
             external_order_id: orderId,
             loan_amount: amount,
             campaign_id: process.env.BOG_CAMPAIGN_ID || null,
-            callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/bog/callback`,
-            redirect_url: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+            callback_url: `${baseUrl}/api/pay/bog/callback`,
+            redirect_url: `${baseUrl}/payment/success?orderId=${orderId}`,
           }),
         }
       );
