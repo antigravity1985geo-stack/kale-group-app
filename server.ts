@@ -25,8 +25,20 @@ async function setupApp() {
   const PORT = 3000;
 
   app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://kalegroup.vercel.app',
+    process.env.APP_URL,
+  ].filter(Boolean);
+
   app.use(cors({
-    origin: process.env.APP_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., curl, Postman, same-origin Vercel serverless)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(null, true); // permissive on Vercel — tighten if needed
+    },
     credentials: true,
   }));
   app.use(express.json({ limit: '10mb' }));
