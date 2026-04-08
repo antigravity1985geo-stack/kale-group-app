@@ -622,7 +622,12 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
             .join("\n")}`
         : "Inventory data is currently unavailable.";
 
-    const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი.`;
+    const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი.
+ჩვენს ვებგვერდზე მომხმარებლებს შეუძლიათ შეიძინონ უმაღლესი ხარისხის ავეჯი.
+გადახდის მეთოდები მოიცავს:
+- ონლაინ გადახდა: საქართველოს ბანკი (BOG Pay) და თიბისი ბანკი (TBC Pay) სრული გადახდით.
+- ონლაინ განვადება: Credo Bank (0%-იანი განვადება).
+ყველა გადახდა ხორციელდება დაცულად და მარტივად პირდაპირ საიტიდან (Checkout გვერდიდან). მიწოდება ხორციელდება საქართველოს მასშტაბით.`;
 
     const contents = [...history, { role: "user", parts: [{ text: userMessage }] }];
     const result = await genAI.models.generateContent({
