@@ -286,37 +286,70 @@ export default function CheckoutPage() {
                        <div>
                          <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlinePayment')}</h3>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button 
-                              onClick={() => handlePayment('bog', 'full')} 
-                              disabled={isProcessingPayment} 
-                              className="flex items-center justify-between p-6 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#ff6b00] hover:shadow-md group transition-all disabled:opacity-50"
-                            >
-                              <span className="font-bold text-brand-900 group-hover:text-[#ff6b00] transition-colors">BOG Pay</span>
-                              <ChevronRight size={20} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#ff6b00] transition-all"/>
-                            </button>
-                            
-                            <button 
-                              onClick={() => handlePayment('tbc', 'full')} 
-                              disabled={isProcessingPayment} 
-                              className="flex items-center justify-between p-6 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#00a3e0] hover:shadow-md group transition-all disabled:opacity-50"
-                            >
-                              <span className="font-bold text-brand-900 group-hover:text-[#00a3e0] transition-colors">TBC Pay</span>
-                              <ChevronRight size={20} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#00a3e0] transition-all"/>
-                            </button>
+                            {/* BOG Pay */}
+                            <button 
+                              onClick={() => handlePayment('bog', 'full')} 
+                              disabled={isProcessingPayment} 
+                              className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#E8480C] hover:shadow-lg group transition-all disabled:opacity-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                                  <rect width="130" height="85" rx="6" fill="#E8480C"/>
+                                  <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">BOG</text>
+                                  <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">საქართველოს ბანკი</text>
+                                </svg>
+                                <div className="text-left">
+                                  <p className="font-bold text-brand-900 text-sm">BOG Pay</p>
+                                  <p className="text-[10px] text-brand-400">სრული გადახდა</p>
+                                </div>
+                              </div>
+                              <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#E8480C] transition-all flex-shrink-0"/>
+                            </button>
+                            
+                            {/* TBC Pay */}
+                            <button 
+                              onClick={() => handlePayment('tbc', 'full')} 
+                              disabled={isProcessingPayment} 
+                              className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#00AEEF] hover:shadow-lg group transition-all disabled:opacity-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                                  <rect width="130" height="85" rx="6" fill="#00AEEF"/>
+                                  <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">TBC</text>
+                                  <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">TBC Bank</text>
+                                </svg>
+                                <div className="text-left">
+                                  <p className="font-bold text-brand-900 text-sm">TBC Pay</p>
+                                  <p className="text-[10px] text-brand-400">სრული გადახდა</p>
+                                </div>
+                              </div>
+                              <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#00AEEF] transition-all flex-shrink-0"/>
+                            </button>
                          </div>
                        </div>
 
                        {/* Installment */}
                        <div>
                          <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlineInstallment')}</h3>
-                         <button 
-                            onClick={() => handlePayment('credo', 'installment')} 
-                            disabled={isProcessingPayment} 
-                            className="w-full flex items-center justify-between p-6 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#0081c5] hover:shadow-md group transition-all disabled:opacity-50"
-                          >
-                            <span className="font-bold text-brand-900 group-hover:text-[#0081c5] transition-colors">Credo Bank განვადება</span>
-                            <ChevronRight size={20} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#0081c5] transition-all"/>
-                          </button>
+                         {/* Credo Bank */}
+                         <button 
+                            onClick={() => handlePayment('credo', 'installment')} 
+                            disabled={isProcessingPayment} 
+                            className="w-full flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#0081C5] hover:shadow-lg group transition-all disabled:opacity-50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                                <rect width="130" height="85" rx="6" fill="#0081C5"/>
+                                <text x="65" y="36" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="22">CREDO</text>
+                                <text x="65" y="63" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">Bank</text>
+                              </svg>
+                              <div className="text-left">
+                                <p className="font-bold text-brand-900 text-sm">Credo Bank განვადება</p>
+                                <p className="text-[10px] text-brand-400">განვადება — 0%</p>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#0081C5] transition-all flex-shrink-0"/>
+                          </button>
                        </div>
                      </div>
 
