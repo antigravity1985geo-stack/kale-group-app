@@ -139,7 +139,7 @@ const requireAccountingRead = async (req: any, res: any, next: any) => {
 // ════════════════════════════════════
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", time: new Date().toISOString() });
+  res.json({ status: "ok", version: "3.0", time: new Date().toISOString() });
 });
 
 // ── Auth / Profile ──
