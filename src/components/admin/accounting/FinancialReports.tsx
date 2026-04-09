@@ -344,21 +344,4 @@ export default function FinancialReports() {
       </div>
     </div>
   );
-}       <td className="py-3 px-4 text-right text-red-300">{GEL(data.totalCredit)}</td>
-                  <td className="py-3 px-4 text-right" />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {!loading && !data && (
-        <div className="text-center py-16 text-slate-400">
-          <BarChart2 size={40} className="mx-auto mb-3 opacity-30" />
-          <p>ანგ. ჩანაწ. ჯ. არ არის. შექმ. Journal Entry-ები.</p>
-        </div>
-      )}
-    </div>
-  );
 }

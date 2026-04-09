@@ -1192,9 +1192,9 @@ app.post("/api/accounting/payroll/run", requireAccounting, async (req: any, res)
     if (!employees || employees.length === 0) throw new Error("აქტიური თანამშრომელი ვერ მოიძებნა");
 
     const { data: accounts } = await supabaseAdmin.from("accounts").select("id, code");
-    const account8100 = accounts?.find(a => a.code === '8100')?.id;
-    const account3310 = accounts?.find(a => a.code === '3310')?.id;
-    const account1110 = accounts?.find(a => a.code === '1110')?.id;
+    const account8100 = accounts?.find((a: any) => a.code === '8100')?.id;
+    const account3310 = accounts?.find((a: any) => a.code === '3310')?.id;
+    const account1110 = accounts?.find((a: any) => a.code === '1110')?.id;
     
     if (!account8100 || !account3310 || !account1110) {
       throw new Error("დარწმუნდით რომ 8100, 3310, 1110 ანგარიშები უკვე არსებობს ჩარტში.");
@@ -1204,7 +1204,7 @@ app.post("/api/accounting/payroll/run", requireAccounting, async (req: any, res)
     let totalTax = 0;
     let totalNet = 0;
 
-    const itemsToInsert = employees.map(emp => {
+    const itemsToInsert = employees.map((emp: any) => {
       const gross = Number(emp.gross_salary || 0);
       const tax = gross * 0.20; // 20% Income Tax
       const net = gross - tax;
@@ -1255,7 +1255,7 @@ app.post("/api/accounting/payroll/run", requireAccounting, async (req: any, res)
     }).select().single();
     if (runErr) throw runErr;
 
-    await supabaseAdmin.from("payroll_items").insert(itemsToInsert.map(i => ({ ...i, payroll_run_id: run.id })));
+    await supabaseAdmin.from("payroll_items").insert(itemsToInsert.map((i: any) => ({ ...i, payroll_run_id: run.id })));
 
     res.json({ success: true, run_code: runCode, total_net: totalNet, total_tax: totalTax });
   } catch (err: any) {
@@ -1274,10 +1274,10 @@ app.post("/api/accounting/dividends/declare", requireAccounting, async (req: any
     const profitTax = (distributeAmount / 0.85) * 0.15;
 
     const { data: accounts } = await supabaseAdmin.from("accounts").select("id, code");
-    const account5200 = accounts?.find(a => a.code === '5200')?.id; 
-    const account3320 = accounts?.find(a => a.code === '3320')?.id; 
-    const account3330 = accounts?.find(a => a.code === '3330')?.id; 
-    const account8950 = accounts?.find(a => a.code === '8950')?.id; 
+    const account5200 = accounts?.find((a: any) => a.code === '5200')?.id; 
+    const account3320 = accounts?.find((a: any) => a.code === '3320')?.id; 
+    const account3330 = accounts?.find((a: any) => a.code === '3330')?.id; 
+    const account8950 = accounts?.find((a: any) => a.code === '8950')?.id; 
 
     if (!account5200 || !account3320 || !account3330 || !account8950) {
       throw new Error("დარწმუნდით რომ 5200, 3320, 3330, 8950 ანგარიშები უკვე არსებობს ჩარტში.");
@@ -1533,8 +1533,8 @@ app.post("/api/rs-ge/waybill/incoming/accept", requireAccountingRead, async (req
     if (period) {
       // Find accounts
       const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', ['1600', '3100']);
-      const invAccount = accounts?.find(a => a.code === '1600')?.id; // ნედლეული შემოვიდა
-      const apAccount = accounts?.find(a => a.code === '3100')?.id;  // მომწოდებლის ვალი
+      const invAccount = accounts?.find((a: any) => a.code === '1600')?.id; // ნედლეული შემოვიდა
+      const apAccount = accounts?.find((a: any) => a.code === '3100')?.id;  // მომწოდებლის ვალი
 
       if (invAccount && apAccount) {
         const { data: journalEntry, error: jError } = await supabaseAdmin
