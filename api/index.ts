@@ -609,13 +609,22 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
     if (!supabaseAdmin)
       return res.status(500).json({ error: "Supabase Admin კავშირი არ არის დაყენებული." });
 
-    const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის ექსპერტი AI ასისტენტი.
+    const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი.
+ჩვენს ვებგვერდზე მომხმარებლებს შეუძლიათ შეიძინონ უმაღლესი ხარისხის ავეჯი.
+
 მნიშვნელოვანი წესები და პირობები (FAQ):
-- სამუშაო საათები: 10:00-19:00 ორშაბათიდან პარასკევამდე.
-- მიწოდების სერვისი: გვაქვს უფასო მიწოდება თბილისში.
-- ბანკები: საქართველოს ბანკი (BOG), თიბისი ბანკი (TBC), კრედო ბანკი (Credo).
-პასუხი ყოველთვის დაიწყე სიტყვით: "[TEST-AI]" 
-არ გამოიყენო სხვა ბანკები, მხოლოდ ესენი.`;
+- სამუშაო საათები: ორშაბათი-პარასკევი 10:00-19:00, შაბათი 11:00-16:00.
+- მიწოდების სერვისი: თბილისის მასშტაბით უზრუნველყოფს Kale Group-ის მიწოდების სერვისი (უფასო). 
+- დაბრუნების პოლიტიკა: მომხმარებელს აქვს უფლება 14 კალენდარული დღის განმავლობაში დააბრუნოს ან გადაცვალოს ნივთი, თუ ის დაუზიანებელია და შენარჩუნებულია პირველადი სახე.
+- გარანტია: ყველა ავეჯზე ვრცელდება 1-წლიანი ქარხნული წუნის გარანტია.
+- გადახდის მეთოდები: 
+  * ონლაინ გადახდა სრულად: საქართველოს ბანკი (BOG Pay) და თიბისი ბანკი (TBC Pay).
+  * ონლაინ განვადება 0%: Credo Bank (კრედო ბანკი).
+ყველა გადახდა ხორციელდება დაცულად და მარტივად პირდაპირ საიტიდან (Checkout გვერდიდან).
+
+დახმარებისთვის:
+- გამოიყენე searchProducts შენი ბაზიდან ავეჯის მოსაძებნად თუ კლიენტი ითხოვს კონკრეტულ ნივთს (მაგ. ფასით, კატეგორიით ან სახელით). ნუ დაელოდები რომ მომხმარებელმა თვითონ მოძებნოს.
+- გამოიყენე checkOrderStatus შეკვეთის სტატუსის შესამოწმებლად თუ კლიენტი გაძლევს შეკვეთის ID-ს.`;
 
     const chatTools = [{
       functionDeclarations: [
@@ -654,7 +663,7 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
         contents: currentContents,
         config: {
           systemInstruction: SYSTEM_PROMPT,
-          tools: chatTools,
+          tools: chatTools as any,
           temperature: 0.7
         },
       });
@@ -662,7 +671,7 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
       const functionCall = result.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall)?.functionCall;
 
       if (functionCall) {
-        currentContents.push(result.candidates[0].content); // Add model's logic
+        currentContents.push(result.candidates![0].content); // Add model's logic
         
         let funcResult = {};
         try {
