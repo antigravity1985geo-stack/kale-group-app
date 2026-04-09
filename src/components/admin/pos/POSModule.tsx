@@ -125,8 +125,11 @@ export default function POSModule() {
           installment_surcharge: installmentSurcharge,
           notes: notes || `შოურუმის გაყიდვა — ${PAYMENT_LABELS[paymentMethod]}`,
           consultant_id: user?.id,
-          shipping_address: 'შოურუმი',
-          city: 'თბილისი',
+          customer_address: 'შოურუმი',
+          customer_city: 'თბილისი',
+          payment_type: paymentMethod === 'installment' ? 'installment' : 'full',
+          payment_status: paymentMethod === 'installment' ? 'pending' : 'paid',
+          customer_type: 'physical',
         })
         .select()
         .single();
@@ -139,8 +142,7 @@ export default function POSModule() {
         product_id: i.product.id,
         product_name: i.product.name,
         quantity: i.quantity,
-        unit_price: getProductPrice(i.product),
-        total_price: getProductPrice(i.product) * i.quantity,
+        price_at_purchase: getProductPrice(i.product),
       }));
 
       const { error: itemErr } = await supabase.from('order_items').insert(items);

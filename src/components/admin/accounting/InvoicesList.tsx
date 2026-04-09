@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, CheckCircle, Clock, XCircle, Send } from 'lucide-react';
+import { Search, FileText, CheckCircle, Clock, XCircle, Send, RefreshCcw, UploadCloud } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { autoCreateAndSendEInvoice, syncInvoiceStatus } from '../../../services/rsge/rsge.service';
 
 const GEL = (v: number | string) => Number(v).toLocaleString('ka-GE', { minimumFractionDigits: 2 }) + ' ₾';
 
@@ -22,6 +23,27 @@ export default function InvoicesList() {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const handleSendToRsge = async (e: React.MouseEvent, inv: any) => {
+    e.stopPropagation();
+    if (!inv.customer_tin && !window.confirm(`ეს ინვოისი ფიზიკურ პირზეა/TIN-ის გარეშეა. ნამდვილად გსურთ RS.ge-ზე გაგზავნა 00000000000 კოდით?`)) return;
+    
+    setActionLoadingId(inv.id);
+    const res = await autoCreateAndSendEInvoice(inv.order_id, inv.id);
+    setActionLoadingId(null);
+    if (!res.success) alert(res.message);
+    else fetchInvoices();
+  };
+
+  const handleSyncRsge = async (e: React.MouseEvent, inv: any) => {
+    e.stopPropagation();
+    setActionLoadingId(inv.id);
+    const res = await syncInvoiceStatus(inv.id);
+    setActionLoadingId(null);
+    if (!res.success) alert(res.message);
+    else fetchInvoices();
+  };
 
   const getToken = async () => (await supabase.auth.getSession()).data.session?.access_token || '';
 
@@ -119,6 +141,31 @@ export default function InvoicesList() {
                     )}
                   </div>
                   <div className="flex items-center gap-4 ml-4 shrink-0">
+                    <div className="flex items-center gap-2 mr-2">
+                      {actionLoadingId === inv.id ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+                      ) : (
+                        <>
+                          {inv.rsge_invoice_id ? (
+                            <button
+                              onClick={(e) => handleSyncRsge(e, inv)}
+                              className="p-1.5 text-slate-400 hover:text-blue-500 bg-slate-100/50 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="RS.ge სტატუსის განახლება"
+                            >
+                              <RefreshCcw size={16} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => handleSendToRsge(e, inv)}
+                              className="p-1.5 text-slate-400 hover:text-emerald-500 bg-slate-100/50 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title="RS.ge-ზე ფაქტურის გაგზავნა"
+                            >
+                              <UploadCloud size={16} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                     <div className="text-right">
                       <p className="text-slate-800 font-semibold text-sm">{GEL(inv.total_amount)}</p>
                       <p className="text-slate-400 text-xs">{inv.invoice_date}</p>

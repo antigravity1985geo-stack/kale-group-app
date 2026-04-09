@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, Check, RotateCcw, ChevronDown, X, BookOpen, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, Check, RotateCcw, ChevronDown, X, BookOpen, AlertCircle, Upload } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import BankStatementImporter from './BankStatementImporter';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
 
@@ -25,6 +26,7 @@ export default function JournalEntries() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -32,12 +34,15 @@ export default function JournalEntries() {
     description: '',
     reference_type: 'MANUAL',
     fiscal_period_id: '',
+    currency: 'GEL',
+    exchange_rate: '1.0000'
   });
   const [lines, setLines] = useState([
-    { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' },
-    { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' },
+    { account_id: '', debit: '', credit: '', description: '' },
+    { account_id: '', debit: '', credit: '', description: '' },
   ]);
   const [periods, setPeriods] = useState<any[]>([]);
+  const [nbgRates, setNbgRates] = useState<any[]>([]);
 
   const getToken = async () => (await supabase.auth.getSession()).data.session?.access_token || '';
 
@@ -56,11 +61,13 @@ export default function JournalEntries() {
 
   useEffect(() => {
     getToken().then(async (token) => {
-      const [accRes, perRes] = await Promise.all([
+      const [accRes, perRes, nbgRes] = await Promise.all([
         fetch('/api/accounting/accounts', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/accounting/fiscal-periods', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/accounting/nbg-rates', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       const accJson = await accRes.json(); setAccounts(accJson.accounts || []);
+      const nbgJson = await nbgRes.json(); if (nbgJson.success) setNbgRates(nbgJson.rates || []);
       const perJson = await perRes.json();
       const open = (perJson.periods || []).filter((p: any) => p.status === 'OPEN');
       setPeriods(open);
@@ -114,8 +121,8 @@ export default function JournalEntries() {
     showToast(`ჩანაწ. შეიქმნა: ${json.entry_number} ✓`, 'ok');
     setShowForm(false);
     setLines([
-      { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' },
-      { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' },
+      { account_id: '', debit: '', credit: '', description: '' },
+      { account_id: '', debit: '', credit: '', description: '' },
     ]);
     fetchEntries();
   };
@@ -140,10 +147,22 @@ export default function JournalEntries() {
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BookOpen size={22} /> სააღრიცხვო ჟურნალი</h2>
           <p className="text-slate-500 text-sm mt-1">Double-entry bookkeeping — Debit / Credit</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-800 rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
-          <Plus size={16} /> {showForm ? 'გაკეთება' : 'ახალი ჩანაწ.'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsImporterOpen(true)} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all shadow-sm border border-slate-200">
+            <Upload size={16} /> საბანკო ამონაწერი (CSV)
+          </button>
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-800 rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
+            <Plus size={16} /> {showForm ? 'გაკეთება' : 'ახალი ჩანაწ.'}
+          </button>
+        </div>
       </div>
+
+      {isImporterOpen && (
+        <BankStatementImporter 
+          onClose={() => setIsImporterOpen(false)} 
+          onImportSuccess={() => { setIsImporterOpen(false); fetchEntries(); showToast('იმპორტი წარმატებით დასრულდა ✓', 'ok'); }} 
+        />
+      )}
 
       {/* New Entry Form */}
       {showForm && (
@@ -171,6 +190,23 @@ export default function JournalEntries() {
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
+            <div><label className="text-slate-500 text-xs mb-1 block">ვალუტა</label>
+              <div className="flex gap-2">
+                <select value={form.currency} onChange={e => {
+                  const curr = e.target.value;
+                  const rate = curr === 'GEL' ? '1.0000' : (nbgRates.find(r => r.code === curr)?.rate?.toFixed(4) || '1.0000');
+                  setForm({ ...form, currency: curr, exchange_rate: rate });
+                }} className="w-1/2 bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600">
+                  <option value="GEL">GEL (₾)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+                <input type="number" step="0.0001" disabled={form.currency === 'GEL'} value={form.exchange_rate} 
+                  onChange={e => setForm({ ...form, exchange_rate: e.target.value })}
+                  className="w-1/2 bg-stone-800 border border-slate-300 disabled:opacity-60 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" title="NBG ეროვნული ბანკის კურსი" />
+              </div>
+            </div>
           </div>
           <div><label className="text-slate-500 text-xs mb-1 block">აღწერა *</label>
             <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
@@ -181,8 +217,8 @@ export default function JournalEntries() {
           {/* Journal Lines */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">ხაზები</span>
-              <button type="button" onClick={() => setLines([...lines, { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' }])}
+              <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">ხაზები {form.currency !== 'GEL' && `(თანხები შეიყვანეთ ეროვნულ ვალუტაში: GEL)`}</span>
+              <button type="button" onClick={() => setLines([...lines, { account_id: '', debit: '', credit: '', description: '' }])}
                 className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1"><Plus size={12} /> ხაზის დამ.</button>
             </div>
             <div className="space-y-2">

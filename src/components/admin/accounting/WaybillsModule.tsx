@@ -20,8 +20,20 @@ interface Waybill {
   } | null;
 }
 
+interface IncomingWaybill {
+  id: string;
+  supplier_name: string;
+  supplier_tin: string;
+  rs_waybill_id: string;
+  total_amount: number;
+  status: 'PENDING_ACCEPTANCE' | 'ACCEPTED' | 'REJECTED';
+  received_at: string;
+}
+
 export default function WaybillsModule() {
+  const [activeTab, setActiveTab] = useState<'outgoing' | 'incoming'>('outgoing');
   const [waybills, setWaybills] = useState<Waybill[]>([]);
+  const [incomingWaybills, setIncomingWaybills] = useState<IncomingWaybill[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
@@ -46,7 +58,7 @@ export default function WaybillsModule() {
       // 2. Fetch completed orders that DO NOT have a waybill yet
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, customer_first_name, customer_last_name, total_price, shipping_address, city, created_at')
+        .select('id, customer_first_name, customer_last_name, total_price, customer_address, customer_city, created_at')
         .in('status', ['confirmed', 'shipped', 'delivered', 'completed'])
         .order('created_at', { ascending: false })
         .limit(50);
@@ -57,6 +69,14 @@ export default function WaybillsModule() {
         const pendingOrders = ords.filter(o => !waybillOrderIds.includes(o.id));
         setOrders(pendingOrders);
       }
+
+      // 3. Fetch incoming waybills
+      const { data: incoming } = await supabase
+        .from('rs_incoming_waybills')
+        .select('*')
+        .order('received_at', { ascending: false });
+      if (incoming) setIncomingWaybills(incoming as IncomingWaybill[]);
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -75,7 +95,7 @@ export default function WaybillsModule() {
         },
         body: JSON.stringify({
           order_id: order.id,
-          end_address: `${order.city || ''}, ${order.shipping_address || ''}`.trim(),
+          end_address: `${order.customer_city || ''}, ${order.customer_address || ''}`.trim(),
         })
       });
       const data = await res.json();
@@ -111,6 +131,25 @@ export default function WaybillsModule() {
     }
   };
 
+  const acceptIncoming = async (id: string) => {
+    try {
+      const res = await fetch('/api/rs-ge/waybill/incoming/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      alert('მიღება დადასტურებულია!');
+      fetchData();
+    } catch (err: any) {
+      alert('შეცდომა: ' + err.message);
+    }
+  };
+
   if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-brand-400" /></div>;
 
   return (
@@ -120,14 +159,36 @@ export default function WaybillsModule() {
           <h2 className="text-2xl font-serif text-slate-800 flex items-center gap-2 mb-1">
             <Truck size={24} /> RS.ge ზედნადებები
           </h2>
-          <p className="text-sm text-slate-500">მზა პროდუქციის ტრანსპორტირების ზედნადებების მართვა</p>
+          <p className="text-sm text-slate-500">მზა პროდუქციის და ნედლეულის ტრანსპორტირების მართვა</p>
         </div>
-        <button onClick={fetchData} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-200 transition border-none cursor-pointer flex items-center gap-2">
-          <RefreshCw size={16} /> განახლება
+        <div className="flex gap-2">
+          <button onClick={fetchData} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-200 transition border-none cursor-pointer flex items-center gap-2">
+            <RefreshCw size={16} /> Update
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-2 bg-slate-50 border border-slate-200 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('outgoing')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition border-none cursor-pointer ${
+            activeTab === 'outgoing' ? 'bg-white shadow text-slate-800' : 'bg-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          📤 გამავალი (გაყიდვები)
+        </button>
+        <button
+          onClick={() => setActiveTab('incoming')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition border-none cursor-pointer ${
+            activeTab === 'incoming' ? 'bg-white shadow text-slate-800' : 'bg-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          📥 შემომავალი (შესყიდვები)
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {activeTab === 'outgoing' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Outstanding Orders */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -145,7 +206,7 @@ export default function WaybillsModule() {
                   <div>
                     <p className="text-xs text-slate-400 uppercase tracking-wider mb-0.5">#{o.id.split('-')[0]}</p>
                     <p className="text-sm font-semibold text-slate-800">{o.customer_first_name} {o.customer_last_name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate w-48" title={o.shipping_address}>{o.city || '—'} / {o.shipping_address || '—'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate w-48" title={o.customer_address}>{o.customer_city || '—'} / {o.customer_address || '—'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-teal-600 mb-2">₾{(o.total_price || 0).toLocaleString()}</p>
@@ -228,7 +289,66 @@ export default function WaybillsModule() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <Truck size={18} className="text-brand-500" /> მომწოდებლებისგან მიღებული ზედნადებები (RS.ge)
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 text-sm text-slate-500">
+                  <th className="pb-3 text-xs uppercase tracking-wider font-semibold">RS Waybill ID</th>
+                  <th className="pb-3 text-xs uppercase tracking-wider font-semibold">მომწოდებელი</th>
+                  <th className="pb-3 text-xs uppercase tracking-wider font-semibold text-right">თანხა</th>
+                  <th className="pb-3 text-xs uppercase tracking-wider font-semibold text-center">სტატუსი</th>
+                  <th className="pb-3 text-xs uppercase tracking-wider font-semibold">თარიღი</th>
+                  <th className="pb-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {incomingWaybills.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">შემომავალი ზედნადებები არ მოიძებნა</td>
+                  </tr>
+                ) : (
+                  incomingWaybills.map(w => (
+                    <tr key={w.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                      <td className="py-3 font-mono text-sm text-slate-600">{w.rs_waybill_id}</td>
+                      <td className="py-3">
+                        <div className="text-sm font-bold text-slate-800">{w.supplier_name}</div>
+                        <div className="text-xs text-slate-500">ს/ნ: {w.supplier_tin}</div>
+                      </td>
+                      <td className="py-3 text-right font-bold text-slate-800">₾{w.total_amount.toLocaleString()}</td>
+                      <td className="py-3 text-center">
+                        {w.status === 'ACCEPTED' ? (
+                          <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100">დადასტურებული</span>
+                        ) : w.status === 'PENDING_ACCEPTANCE' ? (
+                          <span className="px-2 py-1 bg-amber-50 text-amber-600 rounded text-xs font-bold border border-amber-100">მოლოდინში</span>
+                        ) : (
+                          <span className="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs font-bold border border-rose-100">უარყოფილი</span>
+                        )}
+                      </td>
+                      <td className="py-3 text-sm text-slate-500">{new Date(w.received_at).toLocaleDateString('ka-GE')}</td>
+                      <td className="py-3 text-right">
+                        {w.status === 'PENDING_ACCEPTANCE' && (
+                          <button
+                            onClick={() => acceptIncoming(w.id)}
+                            className="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition border-none cursor-pointer"
+                          >
+                            მიღება
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

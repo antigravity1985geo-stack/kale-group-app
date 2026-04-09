@@ -1053,6 +1053,72 @@ app.get("/api/accounting/inventory/levels", requireAccountingRead, async (_req: 
   }
 });
 
+app.get("/api/accounting/inventory/transactions", requireAccountingRead, async (req: any, res) => {
+  try {
+    const { limit = "50" } = req.query;
+    const { data, error } = await supabaseAdmin
+      .from("inventory_transactions")
+      .select("*, products(name)")
+      .order("created_at", { ascending: false })
+      .limit(Number(limit));
+    if (error) throw error;
+    res.json({ transactions: data || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/accounting/inventory/adjustment", requireAccounting, async (req: any, res) => {
+  try {
+    const { product_id, quantity, type, unit_cost, notes } = req.body;
+    if (!product_id || !quantity || !type) throw new Error("აუცილებელი ველები ცარიელია");
+
+    const { data: trx, error: trxErr } = await supabaseAdmin.from("inventory_transactions").insert({
+      product_id,
+      transaction_type: type,
+      quantity,
+      unit_cost: unit_cost || 0,
+      total_cost: quantity * (unit_cost || 0),
+      notes,
+      created_by: req.user?.id
+    }).select().single();
+    if (trxErr) throw trxErr;
+
+    const isIncoming = type.includes("IN") || type === "OPENING";
+    const delta = isIncoming ? quantity : -quantity;
+    
+    const { data: stock } = await supabaseAdmin.from("stock_levels").select("*").eq("product_id", product_id).single();
+    if (stock) {
+      await supabaseAdmin.from("stock_levels").update({
+        quantity_on_hand: Math.max(stock.quantity_on_hand + delta, 0),
+        quantity_available: Math.max(stock.quantity_available + delta, 0),
+        updated_at: new Date().toISOString()
+      }).eq("product_id", product_id);
+    } else if (isIncoming) {
+      await supabaseAdmin.from("stock_levels").insert({
+        product_id,
+        quantity_on_hand: delta,
+        quantity_available: delta,
+        reorder_point: 10
+      });
+    }
+
+    if (isIncoming && unit_cost >= 0) {
+      await supabaseAdmin.from("inventory_cost_layers").insert({
+        product_id,
+        purchase_date: new Date().toISOString().split('T')[0],
+        quantity_original: quantity,
+        quantity_remaining: quantity,
+        unit_cost: unit_cost || 0
+      });
+    }
+
+    res.json({ success: true, transaction: trx });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/api/accounting/vat/summary", requireAccountingRead, async (_req: any, res) => {
   try {
     const { data, error } = await supabaseAdmin.from("v_vat_summary").select("*");
@@ -1073,9 +1139,184 @@ app.get("/api/accounting/employees", requireAccounting, async (_req: any, res) =
   }
 });
 
-app.get("/api/accounting/reports/trial-balance", requireAccountingRead, async (_req: any, res) => {
+app.post("/api/accounting/employees", requireAccounting, async (req: any, res) => {
   try {
-    const { data, error } = await supabaseAdmin.from("v_trial_balance").select("*");
+    const { full_name, personal_id, position, department, gross_salary, hire_date, email, phone } = req.body;
+    
+    const { count } = await supabaseAdmin.from("employees").select("*", { count: 'exact', head: true });
+    const employee_code = `EMP-${String((count || 0) + 1).padStart(3, '0')}`;
+
+    const { data, error } = await supabaseAdmin.from("employees").insert({
+      employee_code,
+      full_name,
+      personal_id,
+      position,
+      department,
+      gross_salary,
+      hire_date,
+      email,
+      phone,
+      status: 'ACTIVE'
+    }).select().single();
+    
+    if (error) throw error;
+    res.json({ success: true, employee: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/accounting/payroll/runs", requireAccounting, async (_req: any, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("payroll_runs")
+      .select("*, payroll_items(*, employees(full_name, position))")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ runs: data || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/accounting/payroll/run", requireAccounting, async (req: any, res) => {
+  try {
+    const { period_month, period_year, fiscal_period_id } = req.body;
+    if (!period_month || !period_year || !fiscal_period_id) throw new Error("Missing period data");
+
+    const { data: employees, error: empErr } = await supabaseAdmin
+      .from("employees")
+      .select("*")
+      .eq("status", "ACTIVE");
+    if (empErr) throw empErr;
+    if (!employees || employees.length === 0) throw new Error("აქტიური თანამშრომელი ვერ მოიძებნა");
+
+    const { data: accounts } = await supabaseAdmin.from("accounts").select("id, code");
+    const account8100 = accounts?.find(a => a.code === '8100')?.id;
+    const account3310 = accounts?.find(a => a.code === '3310')?.id;
+    const account1110 = accounts?.find(a => a.code === '1110')?.id;
+    
+    if (!account8100 || !account3310 || !account1110) {
+      throw new Error("დარწმუნდით რომ 8100, 3310, 1110 ანგარიშები უკვე არსებობს ჩარტში.");
+    }
+
+    let totalGross = 0;
+    let totalTax = 0;
+    let totalNet = 0;
+
+    const itemsToInsert = employees.map(emp => {
+      const gross = Number(emp.gross_salary || 0);
+      const tax = gross * 0.20; // 20% Income Tax
+      const net = gross - tax;
+      
+      totalGross += gross;
+      totalTax += tax;
+      totalNet += net;
+
+      return {
+        employee_id: emp.id,
+        gross_salary: gross,
+        income_tax_rate: 20,
+        income_tax: tax,
+        net_salary: net,
+        paid_date: new Date().toISOString().split('T')[0]
+      };
+    });
+
+    const { data: je, error: jeErr } = await supabaseAdmin.from("journal_entries").insert({
+      entry_number: `PR-${period_year}-${period_month}-${Math.floor(Date.now()/1000)}`,
+      entry_date: new Date().toISOString().split('T')[0],
+      description: `ხელფასები და საშემოსავლო - ${period_month}/${period_year}`,
+      fiscal_period_id,
+      status: 'POSTED',
+      created_by: req.user?.id
+    }).select().single();
+    if (jeErr) throw jeErr;
+
+    await supabaseAdmin.from("journal_lines").insert([
+      { journal_entry_id: je.id, account_id: account8100, debit: totalGross, credit: 0, description: "დარიცხული ხელფასი (Gross)", cost_center: 'HR_PAYROLL' },
+      { journal_entry_id: je.id, account_id: account3310, debit: 0, credit: totalTax, description: "საშემოსავლო 20%", cost_center: 'HR_PAYROLL' },
+      { journal_entry_id: je.id, account_id: account1110, debit: 0, credit: totalNet, description: "გაცემული ხელფასი (Net)", cost_center: 'HR_PAYROLL' }
+    ]);
+
+    const runCode = `PAY-${period_year}${String(period_month).padStart(2, '0')}`;
+    const { data: run, error: runErr } = await supabaseAdmin.from("payroll_runs").insert({
+      run_code: runCode,
+      period_month,
+      period_year,
+      fiscal_period_id,
+      status: 'PAID',
+      total_gross: totalGross,
+      total_tax: totalTax,
+      total_net: totalNet,
+      journal_entry_id: je.id,
+      processed_by: req.user?.id,
+      paid_at: new Date().toISOString()
+    }).select().single();
+    if (runErr) throw runErr;
+
+    await supabaseAdmin.from("payroll_items").insert(itemsToInsert.map(i => ({ ...i, payroll_run_id: run.id })));
+
+    res.json({ success: true, run_code: runCode, total_net: totalNet, total_tax: totalTax });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/accounting/dividends/declare", requireAccounting, async (req: any, res) => {
+  try {
+    const { amount, date, fiscal_period_id } = req.body;
+    if (!amount || !date || !fiscal_period_id) throw new Error("Missing data (amount, date, period)");
+
+    const distributeAmount = Number(amount);
+    if (distributeAmount <= 0) throw new Error("დივიდენდის თანხა უნდა იყოს > 0");
+
+    const profitTax = (distributeAmount / 0.85) * 0.15;
+
+    const { data: accounts } = await supabaseAdmin.from("accounts").select("id, code");
+    const account5200 = accounts?.find(a => a.code === '5200')?.id; 
+    const account3320 = accounts?.find(a => a.code === '3320')?.id; 
+    const account3330 = accounts?.find(a => a.code === '3330')?.id; 
+    const account8950 = accounts?.find(a => a.code === '8950')?.id; 
+
+    if (!account5200 || !account3320 || !account3330 || !account8950) {
+      throw new Error("დარწმუნდით რომ 5200, 3320, 3330, 8950 ანგარიშები უკვე არსებობს ჩარტში.");
+    }
+
+    const { data: je, error: jeErr } = await supabaseAdmin.from("journal_entries").insert({
+      entry_number: `DIV-${date.split('-').join('').substring(0,8)}-${Math.floor(Date.now()/1000)}`,
+      entry_date: date,
+      description: `მოგების განაწილება დეკლარირება - (ესტონური მოდელი, 15% მოგ. 8950)`,
+      fiscal_period_id,
+      status: 'POSTED',
+      created_by: req.user?.id
+    }).select().single();
+    if (jeErr) throw jeErr;
+
+    await supabaseAdmin.from("journal_lines").insert([
+      { journal_entry_id: je.id, account_id: account5200, debit: distributeAmount, credit: 0, description: "დივიდენდის განაწილება", cost_center: 'MANAGEMENT' },
+      { journal_entry_id: je.id, account_id: account8950, debit: profitTax, credit: 0, description: "მოგების გადასახადის ხარჯი (ესტონური მოდელი)", cost_center: 'MANAGEMENT' },
+      { journal_entry_id: je.id, account_id: account3330, debit: 0, credit: distributeAmount, description: "შვილობილზე გადასახდელი დივიდენდი", cost_center: 'MANAGEMENT' },
+      { journal_entry_id: je.id, account_id: account3320, debit: 0, credit: profitTax, description: "სახელმწიფო მოგების გადასახადი 15%", cost_center: 'MANAGEMENT' }
+    ]);
+
+    res.json({ success: true, entry: je, profit_tax: profitTax });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/accounting/reports/trial-balance", requireAccountingRead, async (req: any, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const start = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    const end = endDate || new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabaseAdmin.rpc("get_trial_balance_report", {
+      p_start_date: start,
+      p_end_date: end
+    });
+    
     if (error) throw error;
     const totalDebit = (data || []).reduce((s: number, r: any) => s + Number(r.total_debit), 0);
     const totalCredit = (data || []).reduce((s: number, r: any) => s + Number(r.total_credit), 0);
@@ -1085,9 +1326,17 @@ app.get("/api/accounting/reports/trial-balance", requireAccountingRead, async (_
   }
 });
 
-app.get("/api/accounting/reports/profit-loss", requireAccountingRead, async (_req: any, res) => {
+app.get("/api/accounting/reports/profit-loss", requireAccountingRead, async (req: any, res) => {
   try {
-    const { data, error } = await supabaseAdmin.from("v_profit_loss").select("*");
+    const { startDate, endDate } = req.query;
+    const start = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    const end = endDate || new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabaseAdmin.rpc("get_profit_loss_report", {
+      p_start_date: start,
+      p_end_date: end
+    });
+
     if (error) throw error;
     const revenue = (data || []).filter((r: any) => r.account_type === "REVENUE").reduce((s: number, r: any) => s + Number(r.amount), 0);
     const cogs = (data || []).filter((r: any) => r.account_type === "COGS").reduce((s: number, r: any) => s + Number(r.amount), 0);
@@ -1098,14 +1347,39 @@ app.get("/api/accounting/reports/profit-loss", requireAccountingRead, async (_re
   }
 });
 
-app.get("/api/accounting/reports/balance-sheet", requireAccountingRead, async (_req: any, res) => {
+app.get("/api/accounting/reports/balance-sheet", requireAccountingRead, async (req: any, res) => {
   try {
-    const { data, error } = await supabaseAdmin.from("v_balance_sheet").select("*");
+    const { date } = req.query;
+    const targetDate = date || new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabaseAdmin.rpc("get_balance_sheet_report", {
+      p_date: targetDate
+    });
+
     if (error) throw error;
-    const assets = (data || []).filter((r: any) => r.account_type === "ASSET").reduce((s: number, r: any) => s + Number(r.balance), 0);
-    const liabilities = (data || []).filter((r: any) => r.account_type === "LIABILITY").reduce((s: number, r: any) => s + Number(r.balance), 0);
-    const equity = (data || []).filter((r: any) => r.account_type === "EQUITY").reduce((s: number, r: any) => s + Number(r.balance), 0);
-    res.json({ lines: data || [], summary: { assets, liabilities, equity, balanced: Math.abs(assets - liabilities - equity) < 0.01 } });
+    
+    // We need to calculate retained earnings (previous years + current year P&L up to this date)
+    // Actually our RPC returns all accounts including Revenue/Expense up to p_date.
+    // To show a proper balance sheet, we usually group Rev/Exp into a single "Current Period P&L" line.
+    
+    const assets = (data || []).filter((r: any) => r.account_type === "ASSET").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    const liabilities = (data || []).filter((r: any) => r.account_type === "LIABILITY").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    const equityBase = (data || []).filter((r: any) => r.account_type === "EQUITY").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    
+    const revTotal = (data || []).filter((r: any) => r.account_type === "REVENUE").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    const cogsTotal = (data || []).filter((r: any) => r.account_type === "COGS").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    const expTotal = (data || []).filter((r: any) => r.account_type === "EXPENSE").reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+    
+    const currentPL = revTotal - cogsTotal - expTotal;
+    const totalEquity = equityBase + currentPL;
+
+    // Filter out Rev/Exp from the lines for display in Balance Sheet, but add a virtual line for Current P&L
+    const filteredLines = [
+      ...(data || []).filter((r: any) => ["ASSET", "LIABILITY", "EQUITY"].includes(r.account_type)),
+      { account_type: "EQUITY", code: "5300", name_ka: "მიმდინარე პერიოდის მოგება/ზარალი", balance: currentPL }
+    ];
+
+    res.json({ lines: filteredLines, summary: { assets, liabilities, equity: totalEquity, balanced: Math.abs(assets - liabilities - totalEquity) < 0.01 } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1218,6 +1492,93 @@ app.post("/api/rs-ge/waybill/send", requireAccountingRead, async (req: any, res)
 
     if (error) throw error;
     res.json({ success: true, message: "ზედნადები წარმატებით გაიგზავნა RS.ge-ზე", waybill: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/rs-ge/waybill/incoming/accept", requireAccountingRead, async (req: any, res) => {
+  try {
+    const { id } = req.body;
+    
+    // 1. Get the waybill
+    const { data: waybill, error: wError } = await supabaseAdmin
+      .from('rs_incoming_waybills')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (wError || !waybill) throw new Error("ზედნადები ვერ მოიძებნა");
+    if (waybill.status === 'ACCEPTED') throw new Error("უკვე მიღებულია");
+
+    // 2. Update status to ACCEPTED
+    const { error: updateError } = await supabaseAdmin
+      .from('rs_incoming_waybills')
+      .update({ status: 'ACCEPTED' })
+      .eq('id', id);
+      
+    if (updateError) throw updateError;
+    
+    // 3. Optional: Create Journal Entry for the purchase (Debit: Inventory/Raw Materials, Credit: Accounts Payable)
+    // We get the active fiscal period
+    const { data: period } = await supabaseAdmin
+      .from('fiscal_periods')
+      .select('id')
+      .eq('status', 'OPEN')
+      .order('period_year', { ascending: false })
+      .order('period_month', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (period) {
+      // Find accounts
+      const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', ['1600', '3100']);
+      const invAccount = accounts?.find(a => a.code === '1600')?.id; // ნედლეული შემოვიდა
+      const apAccount = accounts?.find(a => a.code === '3100')?.id;  // მომწოდებლის ვალი
+
+      if (invAccount && apAccount) {
+        const { data: journalEntry, error: jError } = await supabaseAdmin
+          .from('journal_entries')
+          .insert({
+            entry_number: `RS-IN-${Math.floor(Date.now() / 1000)}`,
+            entry_date: new Date().toISOString().split('T')[0],
+            description: `შემომავალი ზედნადები RS.ge: ${waybill.rs_waybill_id} (${waybill.supplier_name})`,
+            reference_type: 'WAYBILL_IN',
+            reference_id: waybill.id,
+            fiscal_period_id: period.id,
+            status: 'POSTED',
+            created_by: req.user?.id || null
+          })
+          .select()
+          .single();
+
+        if (!jError && journalEntry) {
+          await supabaseAdmin.from('journal_lines').insert([
+            { journal_entry_id: journalEntry.id, account_id: invAccount, debit: waybill.total_amount, credit: 0 },
+            { journal_entry_id: journalEntry.id, account_id: apAccount, debit: 0, credit: waybill.total_amount }
+          ]);
+        }
+      }
+    }
+
+    res.json({ success: true, message: "მიღება დადასტურებულია" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/accounting/nbg-rates", requireAccountingRead, async (req, res) => {
+  try {
+    const nbgRes = await fetch("https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/ka/json");
+    if (!nbgRes.ok) throw new Error("ეროვნული ბანკის API მიუწვდომელია");
+    const data = await nbgRes.json();
+    
+    // NBG format is usually [{ date: "...", currencies: [{ code: "USD", rate: 2.7 }, { code: "EUR", rate: 3.0 }] }]
+    if (data && data.length > 0 && data[0].currencies) {
+      res.json({ success: true, rates: data[0].currencies });
+    } else {
+      res.status(500).json({ error: "არასწორი პასუხი ეროვნული ბანკიდან" });
+    }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
