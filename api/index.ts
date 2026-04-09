@@ -2,7 +2,7 @@
 // This re-exports the Express app from server.ts as a serverless handler
 
 import express from "express";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import helmet from "helmet";
 import cors from "cors";
@@ -606,42 +606,118 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
       return res.status(400).json({ error: "შეტყობინება ძალიან გრძელია ან ცარიელია." });
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "dummy-key-to-prevent-crash")
       return res.status(500).json({ error: "API გასაღები არ არის დაყენებული." });
-    if (!supabase)
-      return res.status(500).json({ error: "Supabase კავშირი არ არის დაყენებული." });
-
-    const { data: products } = await supabase
-      .from("products")
-      .select("name, price, category, material, in_stock");
-    const productContext =
-      products && products.length > 0
-        ? `CURRENT INVENTORY:\n${products
-            .map(
-              (p: any) =>
-                `- ${p.name} (${p.category}): ${p.price} GEL, Material: ${p.material}, Stock: ${p.in_stock ? "Yes" : "No"}`
-            )
-            .join("\n")}`
-        : "Inventory data is currently unavailable.";
+    if (!supabaseAdmin)
+      return res.status(500).json({ error: "Supabase Admin კავშირი არ არის დაყენებული." });
 
     const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი.
 ჩვენს ვებგვერდზე მომხმარებლებს შეუძლიათ შეიძინონ უმაღლესი ხარისხის ავეჯი.
-გადახდის მეთოდები მოიცავს:
-- ონლაინ გადახდა: საქართველოს ბანკი (BOG Pay) და თიბისი ბანკი (TBC Pay) სრული გადახდით.
-- ონლაინ განვადება: Credo Bank (0%-იანი განვადება).
-ყველა გადახდა ხორციელდება დაცულად და მარტივად პირდაპირ საიტიდან (Checkout გვერდიდან). მიწოდების სერვისი გვაქვს თბილისის მასშტაბით (Kale Group-ს აქვს მიწოდების სერვისი თბილისის მასშტაბით).`;
+
+მნიშვნელოვანი წესები და პირობები (FAQ):
+- სამუშაო საათები: ორშაბათი-პარასკევი 10:00-19:00, შაბათი 11:00-16:00.
+- მიწოდების სერვისი: თბილისის მასშტაბით უზრუნველყოფს Kale Group-ის მიწოდების სერვისი (უფასო). 
+- დაბრუნების პოლიტიკა: მომხმარებელს აქვს უფლება 14 კალენდარული დღის განმავლობაში დააბრუნოს ან გადაცვალოს ნივთი, თუ ის დაუზიანებელია და შენარჩუნებულია პირველადი სახე.
+- გარანტია: ყველა ავეჯზე ვრცელდება 1-წლიანი ქარხნული წუნის გარანტია.
+- გადახდის მეთოდები: 
+  * ონლაინ გადახდა სრულად: საქართველოს ბანკი (BOG Pay) და თიბისი ბანკი (TBC Pay).
+  * ონლაინ განვადება 0%: Credo Bank (კრედო ბანკი).
+ყველა გადახდა ხორციელდება დაცულად და მარტივად პირდაპირ საიტიდან (Checkout გვერდიდან).
+
+დახმარებისთვის:
+- გამოიყენე searchProducts შენი ბაზიდან ავეჯის მოსაძებნად თუ კლიენტი ითხოვს კონკრეტულ ნივთს (მაგ. ფასით, კატეგორიით ან სახელით). ნუ დაელოდები რომ მომხმარებელმა თვითონ მოძებნოს.
+- გამოიყენე checkOrderStatus შეკვეთის სტატუსის შესამოწმებლად თუ კლიენტი გაძლევს შეკვეთის ID-ს.`;
+
+    const chatTools = [{
+      functionDeclarations: [
+        {
+          name: "searchProducts",
+          description: "Search the inventory database for furniture products. Returns name, price, category, and stock status.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              query: { type: Type.STRING, description: "Optional name or keyword to search for" },
+              category: { type: Type.STRING, description: "Optional category filter (e.g., 'კომოდები', 'დივნები', 'სავარძლები')" },
+              maxPrice: { type: Type.NUMBER, description: "Optional max price in GEL to filter" }
+            }
+          }
+        },
+        {
+          name: "checkOrderStatus",
+          description: "Check the status of a user's order using its alphanumeric ID or UUID.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              orderId: { type: Type.STRING, description: "The ID of the order" }
+            },
+            required: ["orderId"]
+          }
+        }
+      ]
+    }];
 
     const contents = [...history, { role: "user", parts: [{ text: userMessage }] }];
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents,
-      config: {
-        systemInstruction: `${SYSTEM_PROMPT}\n\n=== LIVE INVENTORY ===\n${productContext}\n======================`,
-      },
-    });
+    
+    // Recursive function to handle function calling
+    const callGemini = async (currentContents: any[]): Promise<string> => {
+      const result = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: currentContents,
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          tools: chatTools,
+          temperature: 0.7
+        },
+      });
 
-    const responseText =
-      result.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "ბოდიშს გიხდით, პასუხის მომზადება ვერ მოხერხდა.";
+      const functionCall = result.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall)?.functionCall;
+
+      if (functionCall) {
+        currentContents.push(result.candidates[0].content); // Add model's logic
+        
+        let funcResult = {};
+        try {
+          if (functionCall.name === "searchProducts") {
+            const args = functionCall.args as any;
+            let queryObj = supabaseAdmin.from("products").select("id, name, price, is_on_sale, sale_price, category, in_stock").limit(10);
+            if (args.query) queryObj = queryObj.ilike('name', `%${args.query}%`);
+            if (args.category) queryObj = queryObj.eq('category', args.category);
+            if (args.maxPrice) queryObj = queryObj.lte('price', args.maxPrice);
+            
+            const { data } = await queryObj;
+            funcResult = { status: "success", products: data || [] };
+          } 
+          else if (functionCall.name === "checkOrderStatus") {
+            const args = functionCall.args as any;
+            const { data } = await supabaseAdmin.from("orders").select("id, status, total_price, payment_status, created_at").eq("id", args.orderId).single();
+            if (data) {
+              funcResult = { status: "success", order: data };
+            } else {
+              funcResult = { status: "not_found", message: "Order not found. Please ask the user to double check the ID." };
+            }
+          }
+        } catch (e: any) {
+           funcResult = { status: "error", message: e.message };
+        }
+
+        currentContents.push({
+          role: "user",
+          parts: [{
+            functionResponse: {
+              name: functionCall.name,
+              response: funcResult
+            }
+          }]
+        });
+
+        // Run Gemini again with the function response
+        return await callGemini(currentContents);
+      }
+
+      return result.candidates?.[0]?.content?.parts?.[0]?.text || "ბოდიშს გიხდით, პასუხის მომზადება ვერ მოხერხდა.";
+    };
+
+    const responseText = await callGemini(contents);
     res.json({ text: responseText });
+    
   } catch (error: any) {
     console.error("AI Chat Error:", error.message || error);
     const isQuotaError = error.status === 429 || error.message?.includes("429");
