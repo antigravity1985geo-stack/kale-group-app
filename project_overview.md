@@ -16,15 +16,15 @@
 
 ### Backend & API
 - **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (`server.ts` — Custom Secured API)
-- **Deployment:** Vercel Serverless Functions (ოპტიმიზებული Vercel-ისთვის)
-- **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (Backend-ზე — API Key დაცული, Rate Limiting კონტროლი)
-- **Payment Gateways:** BOG (Bank of Georgia), TBC (tpay), Credo Bank — სრული Webhook ინტეგრაცია
-- **Auto Accounting Engine:** `processSuccessfulOrder()` — ავტომატური გატარება, ინვოისი, COGS, VAT, Stock sync
+- **Deployment:** Vercel Serverless Functions (`api/index.ts` ოპტიმიზებული Vercel-ისთვის სრული საბუღალტრო სინქრონიზაციით)
+- **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (Backend-ზე — API Key დაცული)
+- **Payment Gateways:** BOG (Bank of Georgia), TBC (tpay), Credo Bank — სრული Webhook ინტეგრაცია + HMAC HMAC-SHA256 ვერიფიკაცია
+- **Auto Accounting Engine:** `processSuccessfulOrder()` — ავტომატური გატარება, ინვოისი, COGS, VAT, Stock sync (მუშაობს Vercel-ზეც)
 
-### Database, Auth & Storage
+### Database, Auth & Security
 - **BaaS:** [Supabase](https://supabase.com/) (PostgreSQL v2.0 სქემა, 37 ცხრილი, 9 View, 16 Trigger)
 - **Authentication:** Supabase Auth (JWT + Row Level Security — 22 RLS პოლიტიკა)
-- **Storage:** Supabase Storage bucket-ები სურათებისა და მედიის ასატვირთად
+- **Security:** Git ისტორიის სრული გაწმენდა მგრძნობიარე მონაცემებისგან, დაცული Edge Environment Variables, API keys როტაცია. 
 
 ---
 
@@ -33,93 +33,35 @@
 ### 1. მომხმარებლის ინტერფეისი (Storefront)
 - **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის, მასალისა და ფერის მიხედვით. დახარისხება ფასის (ზრდადობით/კლებადობით) და პოპულარობის მიხედვით.
 - **ჭკვიანი კალათა (Smart Cart):** Persistent (Local Storage) შესყიდვების კალათა — ავტომატური ფასდაკლების კალკულაცია (`sale_price`).
-- **რჩეულები (Wishlist):** სასურველი ნივთების შენახვა რეგისტრაციის გარეშე.
 - **მულტილინგვალური სისტემა:** მთლიანი პლატფორმის მყისიერი თარგმნა 3 ენაზე (ქართული, English, Русский).
-- **Premium UX/UI:** Glassmorphism დიზაინი, Skeleton Loaders, Toast Notifications, Back-to-Top, Inter/Outfit შრიფტები.
-- **AI ჩეთ-ასისტენტი:** Gemini-ზე დაფუძნებული ინტერიერ-დიზაინ კონსულტანტი — Kale Group-ის სინამდვილის ინვენტარზე მირჩეულია.
-- **Progressive Web App (PWA):** Home Screen ინსტალაცია, Offline მხარდაჭერა.
+- **AI ჩეთ-ასისტენტი:** Gemini-ზე დაფუძნებული ინტერიერ-დიზაინ კონსულტანტი — Kale Group-ის სინამდვილის ინვენტარზე მორგებული.
 
-### 2. შეკვეთა & გადახდა (Checkout & Payments)
-- **Checkout:** სრული ფორმა ფიზიკური/იურიდიული პირისთვის, Supabase-ში წერა.
-- **ფასდაკლების ლოგიკა:** ავტომატური `sale_price` VS `price` პრიორიტეტი Backend-ზე (Server-side ვალიდაცია).
-- **PDF ქვითრები:** `jspdf`-ით ბრენდირებული ინვოისი ქართული UTF-8 შრიფტით.
-- **Payment Gateways (Live):**
-  - **BOG (Bank of Georgia):** სრული გადახდა + განვადება (OAuth2)
-  - **TBC (tpay):** ბარათი, QR, Apple Pay, განვადება
-  - **Credo Bank:** Installment
+### 2. შიდა ERP და ავტომატური ბუღალტერია (Auto Accounting Engine)
 
-### 3. ავტომატური საბუღალტრო სისტემა (Auto Accounting Engine)
+გადახდის დადასტურებისას (`Webhook Callback` BOG/TBC) სისტემა ავტომატურად ასრულებს:
 
-გადახდის დადასტურებისას (`Webhook Callback`) სისტემა ავტომატურად ასრულებს:
-
-1. **შეკვეთის დადასტურება** → `status: confirmed`, `payment_status: paid`
-2. **გაყიდვების ინვოისის გენერაცია** → `invoices` ცხრილი (18% VAT-ის ჩათვლით)
-3. **COGS კალკულაცია** → `cost_price`-ზე დაყრდნობით
+1. **Webhook ვერიფიკაცია** → ბაზაში გადახდის არსებობისა და Signature-ის შემოწმება.
+2. **შეკვეთის დადასტურება** → `status: confirmed`, `payment_status: paid`
+3. **გაყიდვების ინვოისის გენერაცია** → `invoices` ცხრილი (18% VAT-ის ჩათვლით)
 4. **ორმაგი საბუღალტრო გატარება** → `journal_entries` + `journal_lines`:
-   - 📥 **Debit:** ბანკის ანგარიში (Cash/Bank) + COGS ხარჯი
-   - 📤 **Credit:** გაყიდვების შემოსავალი + დღგ-ს ვალი + ინვენტარი
-5. **საწყობიდან ჩამოწერა** → `inventory_transactions` → `sync_stock_levels` Trigger
+   - 📥 **Debit:** Cash/Bank + COGS 
+   - 📤 **Credit:** Sales + VAT + Inventory
+5. **საწყობიდან ჩამოწერა** → `inventory_transactions` ავტომატური რეზერვირება
 
-### 4. ადმინ პანელი & ERP მოდულები (Admin Dashboard)
+### 3. ადმინ პანელი & მოდულები (Admin Dashboard)
 
-**როლებზე დაფუძნებული წვდომა (RBAC):** 4 როლი — Admin, Consultant, Accountant, Guest.
-
-| მოდული | ჩანართი | ფუნქციონალი |
-|--------|---------|------------|
-| 📊 დეშბორდი | `acc-dashboard` | KPI ბარათები, Revenue, Gross Profit, VAT, Inventory Value |
-| 📒 ჟურნალი | `journal` | Double-entry ჩანაწერები — DRAFT/POST/REVERSE |
-| 🧾 ინვოისები | `invoices` | Sales & Purchase ინვოისები |
-| 📦 ინვენტარი | `inventory` | Stock Levels, Transactions, Manual Adjustments |
-| 🛒 შესყიდვები | `purchases` | Suppliers CRUD, Purchase Orders, GRN (3-way match) |
-| 🏛 დღგ | `vat` | VAT Transactions, Summary, Declarations |
-| 👥 HR/ხელფასი | `hr` | Employees, Payroll Runs, Slips |
-| 🏭 წარმოება | `manufacturing` | BOM (Bill of Materials), Production Runs |
-| 🔁 დაბრუნება | `returns` | RMA — Refused/Damaged/Resellable ავტო-გატარებები |
-| 📈 რეპორტები | `reports` | Trial Balance, P&L, Balance Sheet, Cash Flow |
-| 🛡 აუდიტი | `audit` | `audit_log` — ყველა INSERT/UPDATE/DELETE-ის ვინ/როდის/Diffs |
-
----
-
-## 📂 არქიტექტურა & პროექტის სტრუქტურა
-
-```bash
-KALE-GROUP--MAIN/
-├── api/             # Vercel Serverless Function entry point-ები
-├── public/          # სტატიკური ფაილები, PWA icons, robots.txt, sitemap.xml
-├── src/
-│   ├── components/
-│   │   ├── admin/
-│   │   │   └── accounting/   # ბუღალტრული მოდულების კომპონენტები
-│   │   │       ├── AccountingDashboard.tsx
-│   │   │       ├── JournalEntries.tsx
-│   │   │       ├── InvoicesModule.tsx
-│   │   │       ├── InventoryModule.tsx
-│   │   │       ├── PurchasesModule.tsx     ← Suppliers/PO/GRN
-│   │   │       ├── VATModule.tsx
-│   │   │       ├── HRPayrollModule.tsx
-│   │   │       ├── RSGeModule.tsx          ← RS.ge SOAP Integration
-│   │   │       ├── ReturnsModule.tsx       ← RMA/Auto Journal
-│   │   │       ├── FinancialReports.tsx
-│   │   │       └── AuditLogViewer.tsx      ← System Audit Log
-│   │   ├── cart/
-│   │   ├── layout/
-│   │   ├── modals/
-│   │   ├── sections/
-│   │   ├── ui/
-│   │   └── wishlist/
-│   ├── context/     # Global State (Cart, Wishlist, Auth, Language)
-│   ├── hooks/       # Custom React Hooks
-│   ├── lib/         # Supabase Client
-│   ├── locales/     # i18n JSON (en, ka, ru)
-│   ├── pages/       # Routes (Home, Products, Checkout, Admin)
-│   ├── services/
-│   │   └── rsge/    # RS.ge SOAP (mock & live) + Service Logics
-│   ├── types/       # TypeScript Interfaces
-│   └── utils/       # Helpers (Currency, PDF, getEffectivePrice)
-├── server.ts        # Express Backend — AI, Payments, Accounting API, RS.ge Auth
-├── vite.config.ts   # Vite + PWA Config
-└── tailwind.config  # Tailwind v4 Config
-```
+| მოდული | ფუნქციონალი |
+|--------|------------|
+| 📊 დეშბორდი | KPI ბარათები, Revenue, Gross Profit, VAT, Inventory Value |
+| 📒 ჟურნალი | Double-entry ჩანაწერები — DRAFT/POST/REVERSE |
+| 🧾 ინვოისები | Sales & Purchase ინვოისები |
+| 📦 ინვენტარი | Stock Levels, Transactions, Manual Adjustments |
+| 🛒 შესყიდვები | Suppliers CRUD, Purchase Orders, GRN (3-way match) |
+| 🏛 დღგ | VAT Transactions, Summary, Declarations |
+| 👥 HR/ხელფასი | Employees, Payroll Runs, Slips |
+| 🏭 წარმოება | BOM (Bill of Materials), Production Runs |
+| 🔁 დაბრუნება | RMA — Refused/Damaged/Resellable ავტო-გატარებები |
+| 🛡 აუდიტი | `audit_log` — ყველა მოქმედების ვინ/როდის ჩაწერა |
 
 ---
 
@@ -128,15 +70,11 @@ KALE-GROUP--MAIN/
 | ვერსია | ცვლილება |
 |--------|---------|
 | v1.0 | Supabase მიგრაცია, Auth/RLS, პრემიუმ UI |
-| v1.1 | AI Backend-ზე გადატანა, Gemini Rate Limit მოგვარება |
-| v1.2 | i18n (3-ენა), PWA, ფასდაკლების ლოგიკის გამართვა |
-| v2.0 | Double-Entry Accounting Schema (37 ცხრილი, 9 View, 16 Trigger) |
+| v2.0 | Double-Entry Accounting Schema |
 | v2.1 | Payment Gateways — BOG, TBC, Credo Webhooks |
-| v2.2 | Manufacturing (BOM) & Returns (RMA) მოდულები |
-| v2.3 | `PurchasesModule` — Suppliers, PO, GRN (3-way matching) |
-| v2.4 | `AuditLogViewer` — სისტემური აუდიტ-ჟურნალი |
-| v2.4 | `processSuccessfulOrder()` — ავტომატური ინვოისი + Double-Entry + COGS + VAT + Stock |
-| **v2.5** | **RS.ge SOAP Integration — ელ-ინვოისებისა და ზედნადებების სრული ავტომატიზაცია (Phase 4)** |
+| v2.2 - 2.4 | მოდულები: Manufacturing, Purchases, Returns, Audit Log |
+| v2.5 | RS.ge SOAP Integration — ელ-ინვოისებისა და ზედნადებების ინტეგრაცია |
+| **v2.6** | **Security Hardening (P0): API Secret Rotation, GitHub Audit (Git-Filter-Repo), Vercel Production Sync & Webhook Verification (HMAC).** |
 
 ---
 
@@ -144,5 +82,7 @@ KALE-GROUP--MAIN/
 
 - [x] **Phase 1:** Database, Security, Premium UI, PWA, i18n ✅
 - [x] **Phase 2:** Payment Gateways (BOG, TBC, Credo) + Webhooks ✅
-- [x] **Phase 3:** სრული ERP/Accounting Engine, Manufacturing, RMA, Audit, Auto Journal ✅
-- [x] **Phase 4:** RS.ge SOAP Integration — ელ-ინვოისი, ზედნადები, VAT დეკლარაციები (Mock -> Live) ✅
+- [x] **Phase 3:** ERP/Accounting Engine, Manufacturing, RMA, Audit ✅
+- [x] **Phase 4:** Securing the Platform (Secrets Rotation, Vercel Environment, Payment Validation) ✅
+- [ ] **Phase 5:** Rate Limiting with Upstash Redis (Vercel-ზე `express-rate-limit` მიგრაცია) ⏳
+- [ ] **Phase 6:** PWA Icons/Manifest ოპტიმიზაცია (SVG -> PNG) ⏳

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -17,13 +17,15 @@ import FinancialReports from './components/admin/accounting/FinancialReports';
 import AdminGuide from './components/admin/AdminGuide';
 import ManufacturingModule from './components/admin/accounting/ManufacturingModule';
 import ReturnsModule from './components/admin/accounting/ReturnsModule';
+import POSModule from './components/admin/pos/POSModule';
+import CompanySettings from './components/admin/settings/CompanySettings';
 import type { Product, Category } from './types/product';
 
 type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'reports' | 'manufacturing' | 'returns';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'team' | 'accounting' | 'guide'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'settings' | 'guide'>('dashboard');
   const [accSubTab, setAccSubTab] = useState<AccountingSubTab>('acc-dashboard');
 
   // Permission helpers
@@ -439,8 +441,10 @@ export default function AdminPanel() {
             ...(!isAccountant ? [{ id: 'promotions', icon: <Tag size={18}/>, label: 'აქციები' }] : []),
             ...(!isAccountant ? [{ id: 'categories', icon: <LayoutGrid size={18}/>, label: 'კატეგორიები' }] : []),
             { id: 'orders', icon: <ShoppingCart size={18}/>, label: 'შეკვეთები' },
+            ...(!isAccountant ? [{ id: 'pos', icon: <Store size={18}/>, label: 'შოურუმი (POS)' }] : []),
             ...(canViewAccounting ? [{ id: 'accounting', icon: <Calculator size={18}/>, label: 'ბუღალტერია' }] : []),
-            ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : [])
+            ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : []),
+            ...(isAdmin ? [{ id: 'settings', icon: <Settings size={18}/>, label: 'პარამეტრები' }] : [])
           ].map(tab => (
             <button 
               key={tab.id}
@@ -481,8 +485,10 @@ export default function AdminPanel() {
               {activeTab === 'promotions' && 'აქციების მართვა'}
               {activeTab === 'categories' && 'კატეგორიების მართვა'}
               {activeTab === 'orders' && 'შეკვეთების ისტორია'}
+              {activeTab === 'pos' && 'შოურუმი — პირდაპირი გაყიდვა'}
               {activeTab === 'accounting' && 'ბუღალტერია'}
               {activeTab === 'team' && 'თანამშრომლების მართვა'}
+              {activeTab === 'settings' && 'კომპანიის პარამეტრები'}
             </h1>
             <p className="text-sm text-brand-400">
               {activeTab === 'dashboard' && 'გაყიდვების დიაგრამები და შეკვეთების მეტრიკა'}
@@ -490,8 +496,10 @@ export default function AdminPanel() {
               {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale).length} აქტიური აქცია`}
               {activeTab === 'categories' && `${categories.length} ძირითადი კატეგორია`}
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
+              {activeTab === 'pos' && 'კონსულტანტის პირდაპირი გაყიდვა — ქეში, ბარათი, განვადება'}
               {activeTab === 'accounting' && 'ფინანსური ანალიტიკა და ბუღალტრული ჩანაწერები'}
               {activeTab === 'team' && 'ადმინისტრატორები, კონსულტანტები და ბუღალტრები'}
+              {activeTab === 'settings' && 'დღგ, განვადება და სხვა გლობალური პარამეტრები'}
             </p>
           </div>
           
@@ -531,6 +539,14 @@ export default function AdminPanel() {
           <>
             {activeTab === 'dashboard' && (
               <DashboardMetrics orders={orders} products={products} />
+            )}
+
+            {activeTab === 'pos' && (
+              <POSModule />
+            )}
+
+            {activeTab === 'settings' && isAdmin && (
+              <CompanySettings />
             )}
 
             {activeTab === 'products' && (
