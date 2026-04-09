@@ -69,7 +69,17 @@ export default function AdminGuide() {
       content: (
         <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
           <div className="bg-gradient-to-r from-amber-500/10 to-transparent p-5 rounded-2xl border-l-4 border-amber-500 mb-8">
-            <p className="text-[15px]">KALE GROUP ERP ფინანსური მოდული დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე. სისტემა სრულად იყენებს <span className="text-amber-400 font-mono px-2 py-0.5 bg-amber-500/20 rounded">FIFO</span> (First-In, First-Out) მეთოდს მარაგების (COGS - რეალიზებულის თვითღირებულება) გამოსათვლელად.</p>
+            <p className="text-[15px]">KALE GROUP ERP ფინანსური მოდული v3.0 დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე. სისტემა სრულად ინტეგრირებულია <strong>ესტონური მოდელის</strong> მოგების გადასახადთან, ავტომატიზებულ პეიროლთან და დინამიურ ფინანსურ რეპორტინგთან.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-800/50">
+              <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> FIFO მეთოდი</h5>
+              <p className="text-xs text-stone-400">მარაგების თვითღირებულება (COGS) ითვლება ავტომატურად, რაც უზრუნველყოფს მოგების ზუსტ ასახვას.</p>
+            </div>
+            <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-800/50">
+              <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> საგადასახადო ავტომატიზაცია</h5>
+              <p className="text-xs text-stone-400">დღგ, საშემოსავლო და მოგების გადასახადი ითვლება და ირიცხება ავტომატურად ტრანზაქციების დროს.</p>
+            </div>
           </div>
           <p className="text-stone-500 text-xs uppercase tracking-[0.2em] font-bold mt-8 mb-4">მოდულების დეტალური აღწერა</p>
         </div>
@@ -91,7 +101,7 @@ export default function AdminGuide() {
     {
       title: '🧾 ინვოისები (Invoices)',
       icon: <Receipt size={18} className="text-emerald-500" />,
-      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან. თითოეულ ინვოისს აქვს თავისი სტატუსი (PENDING, PAID). PAID-ზე გადასვლისას სისტემა ავტომატურად წარმოქმნის შიდა გატარებებს. მომავალში აქედან მოხდება RS.ge-სთან ინტეგრაცია.'
+      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან. თითოეულ ინვოისს აქვს თავისი სტატუსი (PENDING, PAID). PAID-ზე გადასვლისას სისტემა ავტომატურად წარმოქმნის შიდა გატარებებს. ინტეგრირებულია RS.ge-სთან B2B ინვოისების ასატვირთად.'
     },
     {
       title: '🛒 შესყიდვები (Purchases)',
@@ -101,7 +111,12 @@ export default function AdminGuide() {
     {
       title: '📦 სასაქონლო მარაგი (Inventory)',
       icon: <Warehouse size={18} className="text-brand-400" />,
-      text: 'მარაგების რეალურ დროში მართვა. თითოეული პროდუქტისთვის დათვლილია "საშუალო ღირებულება" და "ხელმისაწვდომი რაოდენობა". ხელით კორექტირების (Adjustment) დროს იქმნება შესაბამისი ფინანსური ტრანზაქციაც.'
+      text: 'მარაგების რეალურ დროში მართვა FIFO მეთოდით. თითოეული პროდუქტისთვის დათვლილია "საშუალო ღირებულება" და "ხელმისაწვდომი რაოდენობა". RS.ge-დან შემოსული ზედნადებები ავტომატურად უკავშირდება პროდუქტებს და ქმნის თვითღირებულების ფენებს (Cost Layers).'
+    },
+    {
+      title: '📈 ფინანსური რეპორტინგი (Reports)',
+      icon: <BarChart2 size={18} className="text-emerald-400" />,
+      text: 'დინამიური ფინანსური ანგარიშგება: მოგება-ზარალი (P&L), ბალანსი და საცდელი ბალანსი. რეპორტების გაფილტვრა შესაძლებელია ნებისმიერი თარიღების შუალედით. ინტეგრირებულია CSV/Excel ექსპორტის ფუნქციონალი სიღრმისეული ანალიზისთვის.'
     },
     {
       title: '🏭 წარმოება (Manufacturing)',
@@ -116,12 +131,17 @@ export default function AdminGuide() {
     {
       title: '🏛 დღგ მოდული (VAT)',
       icon: <Percent size={18} className="text-teal-400" />,
-      text: 'ფიქსირდება ყველა შემომავალი (Input) და გამომავალი (Output) დღგ. "ყოველთვ. შეჯამების" (Summary) გვერდზე იხილავთ კონკრეტული თვის სანეტო დღგ-ს: სახელმწიფოსთვის გაქვთ გადასახდელი (წითლად) თუ ჩასათვლელი (მწვანედ).'
+      text: 'ფიქსირდება ყველა შემომავალი (Input) და გამომავალი (Output) დღგ. "ყოველთვ. შეჯამების" (Summary) გვერდზე იხილავთ კონკრეტული თვის სანეტო დღგ-ს. სისტემა ავტომატურად გამოყოფს პროფორმებსა და დაბრუნებებს სწორი დეკლარირებისთვის.'
+    },
+    {
+      title: '💎 ესტონური მოდელი (Profit Tax)',
+      icon: <Calculator size={18} className="text-amber-400" />,
+      text: 'ესტონური მოდელის მიხედვით მოგების გადასახადის (15%) მართვა. დივიდენდების გაცემისას სისტემა ავტომატურად ითვლის გადასახადს ფორმულით Amounts / 0.85 * 0.15 და ქმნის შესაბამის საბუღალტრო გატარებებს.'
     },
     {
       title: '👥 HR / ხელფასები (Payroll)',
       icon: <Users size={18} className="text-indigo-400" />,
-      text: 'კადრების, თანამშრომლობის მონაცემთა ბაზა. თვის ბოლოს გაუშვით "პეიროლი" (Payroll Run). სისტემა ავტომატურად გამოითვლის 20%-იან საშემოსავლოს და ასაღებ (Net) ხელფასს. გაშვების შემდგომ იქმნება Journal Entry სახელფასო ვალდებულების აღსარიცხად.'
+      text: 'კადრების მართვა და ხელფასების ავტომატიზაცია. Payroll Run-ის გაშვებისას სისტემა ავტომატურად ითვლის 20%-იან საშემოსავლო გადასახადს და აგენერირებს Journal Entry-ს სახელფასო ვალდებულებების ასახვით.'
     },
     {
       title: '🛡 სისტემური აუდიტი (Audit Log)',
