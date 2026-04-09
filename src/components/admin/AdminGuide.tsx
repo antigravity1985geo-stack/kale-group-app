@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Package, ShoppingCart, Calculator, Book, Receipt, Warehouse, Percent, Users, BarChart2, ShieldAlert, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookOpen, Package, ShoppingCart, Calculator, Book, Receipt, Warehouse, Percent, Users, BarChart2, ShieldAlert, ChevronDown, ChevronRight, Workflow, RefreshCcw, Factory, FileSignature } from 'lucide-react';
 
 interface GuideSection {
   id: string;
@@ -17,27 +17,23 @@ export default function AdminGuide() {
       title: 'ზოგადი მიმოხილვა',
       icon: BookOpen,
       content: (
-        <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
-          <p>კეთილი იყოს თქვენი მობრძანება აღრიცხვის და მართვის პანელში. პანელზე წვდომა დაყოფილია 3 როლად:</p>
-          <ul className="list-disc pl-5 space-y-2">
-            <li><strong className="text-white">ადმინისტრატორი</strong>: აქვს სრული წვდომა ყველა მოდულზე (პროდუქცია, ბუღალტერია, HR).</li>
-            <li><strong className="text-white">ბუღალტერი</strong>: უყურებს და მართავს მხოლოდ ფინანსებს და შეკვეთებს. ვერ ცვლის პროდუქტებს.</li>
-            <li><strong className="text-white">კონსულტანტი</strong>: შეუძლია მხოლოდ პროდუქტების და შეკვეთების მართვა. ბუღალტერიის მოდული მისთვის დაფარულია.</li>
-          </ul>
-        </div>
-      )
-    },
-    {
-      id: 'products',
-      title: 'პროდუქცია და კატეგორიები',
-      icon: Package,
-      content: (
-        <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
-          <p>ადმინისტრატორებს და კონსულტანტებს შეუძლიათ "პროდუქცია" და "კატეგორიები" ტაბებიდან მართონ კატალოგი.</p>
-          <ul className="list-disc pl-5 space-y-2">
-            <li><strong>პროდუქტის დამატება</strong>: აუცილებელია განისაზღვროს კატეგორია. თუ კატეგორია არ არსებობს, ჯერ შექმენით კატეგორია შესაბამის ტაბში.</li>
-            <li><strong>აქციები (Promotions)</strong>: პროდუქტის რედაქტირებისას შეგიძლიათ მონიშნოთ 'აქციაშია' ნიშნული, მიუთითოთ ფასდაკლების პროცენტი და აქციის ვადა. ის ავტომატურად გამოჩნდება "აქციები" ტაბში.</li>
-          </ul>
+        <div className="space-y-5 text-[15px] text-stone-300 leading-relaxed">
+          <p className="text-xl font-medium text-white mb-2">კეთილი იყოს თქვენი მობრძანება KALE GROUP ERP სისტემაში.</p>
+          <p>აღრიცხვისა და მართვის პანელზე წვდომა დაყოფილია ინდივიდუალურ როლებად, რათა უზრუნველყოფილი იყოს მონაცემთა მაქსიმალური უსაფრთხოება:</p>
+          <div className="grid gap-4 mt-6">
+            <div className="p-5 bg-stone-900/40 rounded-2xl border border-stone-800/80 backdrop-blur-sm">
+              <strong className="text-amber-400 flex items-center gap-2 mb-2"><ShieldAlert size={18}/> ადმინისტრატორი (Admin)</strong>
+              <span className="text-stone-400 text-sm leading-relaxed block">სრული წვდომა ყველა მოდულზე (პროდუქცია, ფინანსები, HR, სისტემური აუდიტი, მომხმარებელთა მართვა).</span>
+            </div>
+            <div className="p-5 bg-stone-900/40 rounded-2xl border border-stone-800/80 backdrop-blur-sm">
+              <strong className="text-blue-400 flex items-center gap-2 mb-2"><Calculator size={18}/> ბუღალტერი (Accountant)</strong>
+              <span className="text-stone-400 text-sm leading-relaxed block">მართავს ფინანსურ მოდულს, შეკვეთებს, თუმცა შეზღუდული აქვს პროდუქციის წაშლისა და სისტემური აუდიტის უფლება.</span>
+            </div>
+            <div className="p-5 bg-stone-900/40 rounded-2xl border border-stone-800/80 backdrop-blur-sm">
+              <strong className="text-emerald-400 flex items-center gap-2 mb-2"><Package size={18}/> კონსულტანტი (Consultant)</strong>
+              <span className="text-stone-400 text-sm leading-relaxed block">აქვს წვდომა მხოლოდ პროდუქციის მართვისა და შემოსული შეკვეთების სექციაზე. ბუღალტერია სრულად დაფარულია.</span>
+            </div>
+          </div>
         </div>
       )
     },
@@ -46,26 +42,36 @@ export default function AdminGuide() {
       title: 'შეკვეთების მართვა',
       icon: ShoppingCart,
       content: (
-        <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
-          <p>კლიენტების მიერ ვებსაიტიდან შემოტანილი შეკვეთები ავტომატურად ვარდება ამ სექციაში სტატუსით <strong>pending</strong>. </p>
-          <p>შეკვეთის დამუშავების ეტაპები:</p>
-          <ol className="list-decimal pl-5 space-y-2">
-            <li>დაადასტურეთ შეკვეთა კლიენტთან და შეცვალეთ სტატუსი <strong>processing</strong>.</li>
-            <li>კურიერის გამოსვლის შემდეგ მიუთითეთ <strong>shipped</strong>.</li>
-            <li>ჩაბარების შემდგომ — <strong>delivered</strong>. ამ ეტაპზე შეკვეთა აისახება ბუღალტრული შემოსავლების ჯამში.</li>
-          </ol>
+        <div className="space-y-4 text-[15px] text-stone-300 leading-relaxed">
+          <p>შეკვეთების მიღება და დამუშავება არის სრულად ავტომატიზირებული BOG, TBC და Credo ბანკების სინქრონიზაციის გზით.</p>
+          
+          <div className="mt-8 border-l-2 border-amber-500 pl-6 py-2 space-y-3 relative before:absolute before:left-[calc(-0.45rem-1px)] before:top-4 before:w-4 before:h-4 before:bg-stone-950 before:border-2 before:border-amber-500 before:rounded-full">
+            <h4 className="text-white font-bold text-lg flex items-center gap-2">ეტაპი 1: შეკვეთის შემოსვლა</h4>
+            <p className="text-sm text-stone-400">როდესაც კლიენტი წარმატებით იხდის ვებსაიტზე, შეკვეთის სტატუსი ავტომატურად ხდება <strong className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">Confirmed (Paid)</strong>. ჩვენი ERP სისტემა ამ დროს ავტომატურად აკეთებს შესაბამის ბუღალტრულ გატარებას.</p>
+          </div>
+          
+          <div className="border-l-2 border-brand-500 pl-6 py-2 space-y-3 relative before:absolute before:left-[calc(-0.45rem-1px)] before:top-4 before:w-4 before:h-4 before:bg-stone-950 before:border-2 before:border-brand-500 before:rounded-full">
+            <h4 className="text-white font-bold text-lg flex items-center gap-2">ეტაპი 2: ლოჯისტიკა</h4>
+            <p className="text-sm text-stone-400">კურიერის გამოსვლის შემდეგ გადაიყვანეთ შეკვეთა <strong className="text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded">Shipped</strong> სტატუსზე. RS.ge კრედენციალების შეყვანის შემდეგ, ზედნადების გენერირება მოხდება ერთი კლიკით.</p>
+          </div>
+          
+          <div className="pl-6 py-2 pb-6 space-y-3 relative before:absolute before:left-[calc(-0.4rem-1px)] before:top-4 before:w-[17px] before:h-[17px] before:bg-emerald-500 before:rounded-full">
+            <h4 className="text-white font-bold text-lg flex items-center gap-2">ეტაპი 3: დასრულება</h4>
+            <p className="text-sm text-stone-400">პროდუქციის კლიენტზე ჩაბარების შემდგომ მიუთითეთ <strong className="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">Delivered</strong> სტატუსი.</p>
+          </div>
         </div>
       )
     },
     {
       id: 'accounting',
-      title: 'ბუღალტერია: ძირითადი მიმოხილვა',
-      icon: Calculator,
+      title: 'ბუღალტერია და მოდულები',
+      icon: Workflow,
       content: (
         <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
-          <p>KALE GROUP-ის ბუღალტერიის მოდული დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე, ყოველ ტრანზაქციას აქვს დებეტი (Debit) და კრედიტი (Credit). ეს უზრუნველყოფს ფინანსური მონაცემების აბსოლუტურ სიზუსტეს.</p>
-          <p>სისტემა იყენებს <span className="text-amber-400 font-mono">FIFO (First-In, First-Out)</span> მეთოდს მარაგების (COGS - თვითღირებულება) დასათვლელად.</p>
-          <p>აირჩიეთ ქვემოთ არსებული სექციებიდან დეტალური ინსტრუქციის სანახავად:</p>
+          <div className="bg-gradient-to-r from-amber-500/10 to-transparent p-5 rounded-2xl border-l-4 border-amber-500 mb-8">
+            <p className="text-[15px]">KALE GROUP ERP ფინანსური მოდული დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე. სისტემა სრულად იყენებს <span className="text-amber-400 font-mono px-2 py-0.5 bg-amber-500/20 rounded">FIFO</span> (First-In, First-Out) მეთოდს მარაგების (COGS - რეალიზებულის თვითღირებულება) გამოსათვლელად.</p>
+          </div>
+          <p className="text-stone-500 text-xs uppercase tracking-[0.2em] font-bold mt-8 mb-4">მოდულების დეტალური აღწერა</p>
         </div>
       )
     },
@@ -74,81 +80,132 @@ export default function AdminGuide() {
   const ACCOUNTING_MODULES = [
     {
       title: '📊 დეშბორდი (Dashboard)',
+      icon: <BarChart2 size={18} className="text-amber-500" />,
       text: 'ფინანსური მდგომარეობის მყისიერი მიმოხილვა. აჩვენებს: ჯამურ შემოსავალს, COGS (რეალიზებულის თვითღირებულებას), მთლიან და ნეტო მოგებას, მარაგების ნაშთს და დღგ-ს. დიაგრამაზე შეგიძლიათ ადევნოთ თვალი შემოსავლებისა და ნეტო მოგების დინამიკას თვეების მიხედვით.'
     },
     {
       title: '📒 ჟურნალი (Journal Entries)',
-      text: 'აქ გროვდება ყველა ფინანსური ტრანზაქცია. შეგიძლიათ მექანიკურადაც დაამატოთ ჩანაწერი ("ახალი ჩანაწ."). აუცილებელია, რომ დებეტისა და კრედიტის ჯამი ერთმანეთს უდრიდეს, სხვაგვარად სვეტი არ შეინახება. ჩანაწერები თავდაპირველად არის DRAFT (მოლოდინში) სტატუსით. განთავსების (Post) შემდეგ ისინი აისახებიან ფინანსურ რეპორტებში.',
+      icon: <Book size={18} className="text-blue-400" />,
+      text: 'აქ გროვდება ყველა ფინანსური ტრანზაქცია. შეგიძლიათ მექანიკურადაც დაამატოთ ჩანაწერი. აუცილებელია, რომ დებეტისა და კრედიტის ჯამი ერთმანეთს უდრიდეს, სხვაგვარად სვეტი არ შეინახება. ვების (საიტის) მეშვეობით განხორციელებული შესყიდვები აქ ავტომატურად (POSTED) ისახება.',
     },
     {
       title: '🧾 ინვოისები (Invoices)',
-      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან. თითოეულ ინვოისს აქვს თავისი სტატუსი (PENDING, PAID). PAID-ზე გადასვლისას, სისტემა ავტომატურად წარმოქმნის დღგ-ს (Output VAT) და ახდენს შემოსავლის აღიარებას. ინტეგრირებულია RS.ge-ს სტატუსებიც (მომავალი სრული სინქრონიზაციისთვის).'
+      icon: <Receipt size={18} className="text-emerald-500" />,
+      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან. თითოეულ ინვოისს აქვს თავისი სტატუსი (PENDING, PAID). PAID-ზე გადასვლისას სისტემა ავტომატურად წარმოქმნის შიდა გატარებებს. მომავალში აქედან მოხდება RS.ge-სთან ინტეგრაცია.'
+    },
+    {
+      title: '🛒 შესყიდვები (Purchases)',
+      icon: <ShoppingCart size={18} className="text-purple-400" />,
+      text: 'მოდული Suppliers, Purchase Orders (PO) და Goods Receipts (GRN) სამართავად. 3-Way Matching სისტემა უზრუნველყოფს, რომ მიღებული საქონელი (GRN) ზუსტად ემთხვეოდეს შეკვეთილსა (PO) და მოწოდებულ ინვოისს. GRN-ის დადასტურებისას საქონელი ავტომატურად აისახება მარაგებში.'
     },
     {
       title: '📦 სასაქონლო მარაგი (Inventory)',
-      text: 'მარაგების რეალურ დროში მართვა. თითოეული პროდუქტისთვის დათვლილია "საშუალო ღირებულება" და "ხელმისაწვდომი რაოდენობა". სისტემა ავტომატურად გაფრთხილებთ სიგნალით, თუ მარაგი მინიმალურ ზღვარს ჩამოსცდება. კორექტირებისას შეგიძლიათ დაამატოთ/ჩამოწეროთ პროდუქცია (Adjustments).'
+      icon: <Warehouse size={18} className="text-brand-400" />,
+      text: 'მარაგების რეალურ დროში მართვა. თითოეული პროდუქტისთვის დათვლილია "საშუალო ღირებულება" და "ხელმისაწვდომი რაოდენობა". ხელით კორექტირების (Adjustment) დროს იქმნება შესაბამისი ფინანსური ტრანზაქციაც.'
+    },
+    {
+      title: '🏭 წარმოება (Manufacturing)',
+      icon: <Factory size={18} className="text-orange-400" />,
+      text: 'ავეჯის წარმოების პროცესის მართვა. საშუალებას გაძლევთ შექმნათ BOM (Bill of Materials), ანუ მასალების რეცეპტი. Production Run-ის გაშვებისას სისტემა საწყობიდან ავტომატურად ჩამოწერს ნედლეულს და ბალანსზე დასვამს მზა პროდუქციას (მასალის ხარჯების დამატებით).'
+    },
+    {
+      title: '🔁 დაბრუნებები (RMA)',
+      icon: <RefreshCcw size={18} className="text-rose-400" />,
+      text: 'მომხმარებელთა დაბრუნებების ავტომატიზაცია. ირჩევთ მიზეზს (Damaged, Refused). თუ პროდუქტი გამოსადეგია (Resellable), ის ისევ ჯდება საწყობში, ხოლო დაზიანებულის შემთხვევაში უქმდება (Write-off). ორივე შემთხვევაში ავტომატურად კეთდება საპირისპირო ბუღალტრული დოკუმენტი (Reversal).'
     },
     {
       title: '🏛 დღგ მოდული (VAT)',
-      text: 'ფიქსირდება ყველა შემომავალი (Input) და გამომავალი (Output) დღგ. "ყოველთვ. შეჯ." (Summary) გვერდზე იხილავთ კონკრეტული თვის სანეტო დღგ-ს: სახელმწიფოსთვის გაქვთ გადასახდელი (წითლად) თუ ჩასათვლელი. YTD ინდიკატორები აჩვენებენ მიმდინარე წლის ჯამურ მაჩვენებლებს.'
+      icon: <Percent size={18} className="text-teal-400" />,
+      text: 'ფიქსირდება ყველა შემომავალი (Input) და გამომავალი (Output) დღგ. "ყოველთვ. შეჯამების" (Summary) გვერდზე იხილავთ კონკრეტული თვის სანეტო დღგ-ს: სახელმწიფოსთვის გაქვთ გადასახდელი (წითლად) თუ ჩასათვლელი (მწვანედ).'
     },
     {
       title: '👥 HR / ხელფასები (Payroll)',
-      text: 'თანამშრომლობის მონაცემთა ბაზა. ყოველი თვის ბოლოს შეგიძლიათ გაუშვათ "პეიროლი" (Payroll Run). სისტემა ავტომატურად აკავებს 20%-იან საშემოსავლოს და ითვლის ასაღებ (Net) ხელფასს. გაშვების შემდგომ ავტომატურად იქმნება Journal Entry ბიუჯეტის აღსარიცხად.'
+      icon: <Users size={18} className="text-indigo-400" />,
+      text: 'კადრების, თანამშრომლობის მონაცემთა ბაზა. თვის ბოლოს გაუშვით "პეიროლი" (Payroll Run). სისტემა ავტომატურად გამოითვლის 20%-იან საშემოსავლოს და ასაღებ (Net) ხელფასს. გაშვების შემდგომ იქმნება Journal Entry სახელფასო ვალდებულების აღსარიცხად.'
     },
     {
-      title: '📈 ანგარიშგება (Financial Reports)',
-      text: 'ამ ტაბში განთავსებულია 3 კლასიკური რეპორტი: P&L (მოგება-ზარალი), ბალანსი (Balance Sheet) და საბრუნავი უწყისი (Trial Balance). P&L-ზე ავტომატურად ითვლება Gross Margin-ის პროცენტულობა. ბალანსი ყოველთვის უნდა იძლეოდეს ტოლობას (Assets = Liabilities + Equity), რასაც სისტემა სიმწვანით გიდასტურებთ.'
+      title: '🛡 სისტემური აუდიტი (Audit Log)',
+      icon: <ShieldAlert size={18} className="text-red-500" />,
+      text: 'უსაფრთხოების კრიტიკული კომპონენტი, განკუთვნილი მხოლოდ ადმინისტრატორებისთვის. იწერება ყველა INSERT, UPDATE და DELETE მოქმედება ფინანსურ ტრანზაქციებზე. გიჩვენებთ ძველ და ახალ მონაცემებს (Diff), ცვლილების დროს და პასუხისმგებელი მომხმარებლის ვინაობას.'
     }
   ];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2"><Book size={24} /> სისტემის სახელმძღვანელო</h2>
-        <p className="text-stone-400 text-sm mt-1">ინსტრუქციები P&L მოდულის, ფუნქციონალების და აღრიცხვის მეთოდოლოგიის შესახებ.</p>
+    <div className="space-y-8 max-w-7xl mx-auto px-4 pb-12">
+      {/* Header Profile - Premium Glassmorphism */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-stone-900 via-stone-900/90 to-black border border-stone-800 p-8 md:p-12 rounded-[2rem] shadow-2xl">
+        {/* Abstract Background Element */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 p-8 md:p-12 opacity-[0.03] pointer-events-none transform -rotate-12">
+          <BookOpen strokeWidth={0.5} size={250} />
+        </div>
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full text-[11px] font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">
+            <FileSignature size={14} /> Documentation & User Manual
+          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
+            სისტემის <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600">
+              სახელმძღვანელო
+            </span>
+          </h2>
+          <p className="text-stone-400 text-lg mt-5 max-w-2xl leading-relaxed">
+            დეტალური ინსტრუქციები ტერმინოლოგიაზე, ERP მოდულების ფუნქციონალებზე და აღრიცხვის ავტომატიზებულ მეთოდოლოგიურ პროცესებზე.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Navigation Sidebar */}
-        <div className="w-full md:w-64 shrink-0 space-y-1">
+        <div className="w-full lg:w-80 shrink-0 space-y-3 sticky top-6">
           {SECTIONS.map(sec => (
             <button
               key={sec.id}
               onClick={() => setActiveSection(sec.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all font-medium ${
+              className={`w-full group flex items-center justify-between px-6 py-4 rounded-2xl text-left transition-all duration-300 font-medium border ${
                 activeSection === sec.id 
-                  ? 'bg-brand-900 border border-brand-800 text-gold-400' 
-                  : 'bg-stone-900 border border-stone-800 text-stone-400 hover:text-white hover:bg-stone-800'
+                  ? 'bg-gradient-to-r from-brand-900/40 to-stone-900/40 border-brand-700/50 text-amber-400 shadow-[0_0_30px_rgba(217,119,6,0.1)]' 
+                  : 'bg-stone-900/40 border-stone-800/50 text-stone-400 hover:text-white hover:bg-stone-800 hover:border-stone-700'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <sec.icon size={18} />
-                <span className="text-sm">{sec.title}</span>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-all duration-300 ${activeSection === sec.id ? 'bg-brand-500/20 text-amber-400 scale-110' : 'bg-stone-800 text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
+                  <sec.icon size={20} />
+                </div>
+                <span className="text-base font-semibold">{sec.title}</span>
               </div>
-              <ChevronRight size={16} className={`transition-transform opacity-50 ${activeSection === sec.id ? 'opacity-100' : ''}`} />
+              <ChevronRight size={18} className={`transition-transform duration-300 ${activeSection === sec.id ? 'opacity-100 translate-x-1 text-amber-500' : 'opacity-0 -translate-x-4'}`} />
             </button>
           ))}
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-stone-900/50 border border-stone-800 p-6 md:p-8 rounded-3xl min-h-[500px]">
+        <div className="flex-1 bg-stone-950/60 backdrop-blur-xl border border-stone-800/80 p-6 md:p-10 rounded-[2rem] min-h-[600px] shadow-2xl relative overflow-hidden">
+          {/* Subtle noise/gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-900/10 via-transparent to-black/20 pointer-events-none"></div>
+
           {SECTIONS.map(sec => (
-            <div key={sec.id} className={activeSection === sec.id ? 'block animate-in fade-in slide-in-from-bottom-2' : 'hidden'}>
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-stone-800">
-                <div className="w-12 h-12 rounded-2xl bg-brand-900/50 flex items-center justify-center border border-brand-800 text-gold-400">
-                  <sec.icon size={24} />
+            <div key={sec.id} className={`relative z-10 ${activeSection === sec.id ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'} h-full`}>
+              <div className="flex flex-col md:flex-row md:items-center gap-5 mb-10 pb-8 border-b border-stone-800/80">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-900/80 to-stone-900 flex items-center justify-center border border-brand-800/80 text-amber-400 shadow-[0_0_30px_rgba(217,119,6,0.15)] shrink-0">
+                  <sec.icon size={32} strokeWidth={1.5} />
                 </div>
-                <h3 className="text-2xl font-bold text-white">{sec.title}</h3>
+                <div>
+                  <h3 className="text-3xl font-bold text-white tracking-wide">{sec.title}</h3>
+                  <div className="h-1.5 w-16 bg-gradient-to-r from-amber-500 to-amber-700 rounded-full mt-3 opacity-90 shadow-[0_0_10px_rgba(217,119,6,0.5)]"></div>
+                </div>
               </div>
               
-              {sec.content}
+              <div className="prose prose-invert max-w-none text-stone-300 prose-p:leading-relaxed prose-strong:text-white">
+                {sec.content}
+              </div>
 
-              {/* Add Accordion specifically for Accounting Section */}
+              {/* Advanced Grid Layout for Accounting Modules */}
               {sec.id === 'accounting' && (
-                <div className="mt-8 space-y-3">
+                <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-5">
                   {ACCOUNTING_MODULES.map((mod, i) => (
-                    <GuideAccordion key={i} title={mod.title} content={mod.text} isDefaultOpen={i === 0} />
+                    <GuideCard key={i} title={mod.title} content={mod.text} icon={mod.icon} index={i} />
                   ))}
                 </div>
               )}
@@ -160,24 +217,37 @@ export default function AdminGuide() {
   );
 }
 
-// Helper Accordion Component
-function GuideAccordion({ title, content, isDefaultOpen = false }: { title: string; content: string; isDefaultOpen?: boolean }) {
-  const [open, setOpen] = useState(isDefaultOpen);
+// Helper Card Component for Modules
+function GuideCard({ title, content, icon, index }: { title: string; content: string; icon: any; index: number }) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className={`border rounded-xl  overflow-hidden transition-all ${open ? 'border-brand-800 bg-brand-900/10' : 'border-stone-800 bg-stone-900/40 hover:bg-stone-900/80'}`}>
+    <div 
+      className={`border rounded-2xl overflow-hidden transition-all duration-300 ${open ? 'border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-stone-900/80 shadow-[0_4px_30px_rgba(217,119,6,0.05)]' : 'border-stone-800/80 bg-stone-900/30 hover:bg-stone-900/60 hover:border-stone-700'}`}
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
       <button 
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left font-semibold text-white focus:outline-none"
+        className="w-full flex items-center justify-between p-5 text-left focus:outline-none transition-colors group"
       >
-        <span className="text-sm">{title}</span>
-        <ChevronDown size={18} className={`text-stone-500 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div className="px-5 pb-5 text-sm text-stone-400 leading-relaxed">
-          {content}
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-stone-950/80 rounded-xl border border-stone-800/80 shadow-inner group-hover:border-stone-700 transition-colors">
+            {icon}
+          </div>
+          <span className="text-base font-bold text-stone-200 tracking-wide group-hover:text-white transition-colors">{title}</span>
         </div>
-      )}
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${open ? 'bg-amber-500/20 text-amber-500' : 'bg-stone-800/80 text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
+          <ChevronDown size={18} className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      
+      <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <div className="px-6 pb-6 text-[14px] text-stone-400 leading-relaxed border-t border-stone-800/50 mt-2 pt-5">
+            {content}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

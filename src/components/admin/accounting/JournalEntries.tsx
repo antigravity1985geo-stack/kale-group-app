@@ -11,7 +11,7 @@ interface Account { id: string; code: string; name_ka: string; account_type: str
 const STATUS_STYLES: Record<Status, string> = {
   DRAFT: 'bg-amber-900/40 text-amber-300 border-amber-700/50',
   POSTED: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/50',
-  REVERSED: 'bg-stone-700/40 text-stone-400 border-stone-600/50',
+  REVERSED: 'bg-stone-700/40 text-slate-500 border-stone-600/50',
 };
 const STATUS_LABELS: Record<Status, string> = { DRAFT: 'მოლოდინში', POSTED: 'განთავსებული', REVERSED: 'გაუქმებული' };
 
@@ -137,57 +137,57 @@ export default function JournalEntries() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2"><BookOpen size={22} /> სააღრიცხვო ჟურნალი</h2>
-          <p className="text-stone-400 text-sm mt-1">Double-entry bookkeeping — Debit / Credit</p>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BookOpen size={22} /> სააღრიცხვო ჟურნალი</h2>
+          <p className="text-slate-500 text-sm mt-1">Double-entry bookkeeping — Debit / Credit</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-800 rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
           <Plus size={16} /> {showForm ? 'გაკეთება' : 'ახალი ჩანაწ.'}
         </button>
       </div>
 
       {/* New Entry Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-stone-900/90 border border-stone-800 rounded-2xl p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white shadow-sm/90 border border-slate-200 rounded-2xl p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-white font-semibold">📝 ახალი Journal Entry</h3>
-            <button type="button" onClick={() => setShowForm(false)}><X size={18} className="text-stone-500 hover:text-white" /></button>
+            <h3 className="text-slate-800 font-semibold">📝 ახალი Journal Entry</h3>
+            <button type="button" onClick={() => setShowForm(false)}><X size={18} className="text-slate-400 hover:text-slate-800" /></button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div><label className="text-stone-400 text-xs mb-1 block">თარიღი</label>
+            <div><label className="text-slate-500 text-xs mb-1 block">თარიღი</label>
               <input type="date" value={form.entry_date} onChange={e => setForm({ ...form, entry_date: e.target.value })}
-                className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-600" required />
+                className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" required />
             </div>
-            <div><label className="text-stone-400 text-xs mb-1 block">ტიპი</label>
+            <div><label className="text-slate-500 text-xs mb-1 block">ტიპი</label>
               <select value={form.reference_type} onChange={e => setForm({ ...form, reference_type: e.target.value })}
-                className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-600">
+                className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600">
                 {['MANUAL','INVOICE','PURCHASE','PAYMENT','PAYROLL','ADJUSTMENT','DEPRECIATION','OPENING','VAT'].map(t =>
                   <option key={t} value={t}>{t}</option>
                 )}
               </select>
             </div>
-            <div><label className="text-stone-400 text-xs mb-1 block">ფისკ. პერიოდი</label>
+            <div><label className="text-slate-500 text-xs mb-1 block">ფისკ. პერიოდი</label>
               <select value={form.fiscal_period_id} onChange={e => setForm({ ...form, fiscal_period_id: e.target.value })}
-                className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-600" required>
+                className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" required>
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           </div>
-          <div><label className="text-stone-400 text-xs mb-1 block">აღწერა *</label>
+          <div><label className="text-slate-500 text-xs mb-1 block">აღწერა *</label>
             <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-600"
+              className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600"
               placeholder="ჟურნ. ჩანაწ. დასახელება..." required />
           </div>
 
           {/* Journal Lines */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-stone-400 text-xs font-medium uppercase tracking-wider">ხაზები</span>
+              <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">ხაზები</span>
               <button type="button" onClick={() => setLines([...lines, { account_id: '', debit: '', credit: '', currency: 'GEL', description: '' }])}
                 className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1"><Plus size={12} /> ხაზის დამ.</button>
             </div>
             <div className="space-y-2">
               {/* Column headers */}
-              <div className="grid grid-cols-12 gap-2 text-xs text-stone-500 px-1">
+              <div className="grid grid-cols-12 gap-2 text-xs text-slate-400 px-1">
                 <div className="col-span-4">ანგარიში</div>
                 <div className="col-span-2">Debit ₾</div>
                 <div className="col-span-2">Credit ₾</div>
@@ -197,19 +197,19 @@ export default function JournalEntries() {
               {lines.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2">
                   <select value={line.account_id} onChange={e => { const nl = [...lines]; nl[i].account_id = e.target.value; setLines(nl); }}
-                    className="col-span-4 bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-amber-600">
+                    className="col-span-4 bg-stone-800 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-800 text-xs focus:outline-none focus:border-amber-600">
                     <option value="">— ანგარიში —</option>
                     {accounts.map(a => <option key={a.id} value={a.id}>{a.code} — {a.name_ka}</option>)}
                   </select>
                   <input type="number" min="0" step="0.01" placeholder="0.00" value={line.debit}
                     onChange={e => { const nl = [...lines]; nl[i].debit = e.target.value; if (e.target.value) nl[i].credit = ''; setLines(nl); }}
-                    className="col-span-2 bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-emerald-300 text-xs focus:outline-none focus:border-emerald-600" />
+                    className="col-span-2 bg-stone-800 border border-slate-300 rounded-lg px-2 py-1.5 text-emerald-300 text-xs focus:outline-none focus:border-emerald-600" />
                   <input type="number" min="0" step="0.01" placeholder="0.00" value={line.credit}
                     onChange={e => { const nl = [...lines]; nl[i].credit = e.target.value; if (e.target.value) nl[i].debit = ''; setLines(nl); }}
-                    className="col-span-2 bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-red-300 text-xs focus:outline-none focus:border-red-600" />
+                    className="col-span-2 bg-stone-800 border border-slate-300 rounded-lg px-2 py-1.5 text-red-300 text-xs focus:outline-none focus:border-red-600" />
                   <input placeholder="შენიშვნა" value={line.description}
                     onChange={e => { const nl = [...lines]; nl[i].description = e.target.value; setLines(nl); }}
-                    className="col-span-3 bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-amber-600" />
+                    className="col-span-3 bg-stone-800 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-800 text-xs focus:outline-none focus:border-amber-600" />
                   <button type="button" onClick={() => setLines(lines.filter((_, j) => j !== i))} className="col-span-1 flex items-center justify-center text-stone-600 hover:text-red-400">
                     <X size={14} />
                   </button>
@@ -225,8 +225,8 @@ export default function JournalEntries() {
           </div>
 
           <div className="flex gap-3 justify-end">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-stone-400 hover:text-white border border-stone-700 rounded-xl">გაუქმება</button>
-            <button type="submit" disabled={!isBalanced} className="px-5 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-sm rounded-xl font-medium transition-all">შენახვა</button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 border border-slate-300 rounded-xl">გაუქმება</button>
+            <button type="submit" disabled={!isBalanced} className="px-5 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-slate-800 text-sm rounded-xl font-medium transition-all">შენახვა</button>
           </div>
         </form>
       )}
@@ -234,14 +234,14 @@ export default function JournalEntries() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ძება ნომრით ან აღწ..."
-            className="w-full pl-9 pr-4 py-2.5 bg-stone-900 border border-stone-800 rounded-xl text-white text-sm focus:outline-none focus:border-stone-600" />
+            className="w-full pl-9 pr-4 py-2.5 bg-white shadow-sm border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-stone-600" />
         </div>
         <div className="flex gap-2">
           {(['', 'DRAFT', 'POSTED', 'REVERSED'] as const).map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-xl text-xs border transition-all ${statusFilter === s ? 'bg-amber-600 border-amber-500 text-white' : 'border-stone-700 text-stone-400 hover:border-stone-600'}`}>
+              className={`px-3 py-2 rounded-xl text-xs border transition-all ${statusFilter === s ? 'bg-brand-600 border-amber-500 text-slate-800' : 'border-slate-300 text-slate-500 hover:border-stone-600'}`}>
               {s || 'ყველა'}
             </button>
           ))}
@@ -250,24 +250,24 @@ export default function JournalEntries() {
 
       {/* Entries Table */}
       {loading ? (
-        <div className="space-y-2">{Array(5).fill(0).map((_, i) => <div key={i} className="h-14 bg-stone-900 animate-pulse rounded-xl" />)}</div>
+        <div className="space-y-2">{Array(5).fill(0).map((_, i) => <div key={i} className="h-14 bg-white shadow-sm animate-pulse rounded-xl" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-stone-500"><BookOpen size={40} className="mx-auto mb-3 opacity-30" /><p>ჩანაწერები არ მოიძებნა</p></div>
+        <div className="text-center py-16 text-slate-400"><BookOpen size={40} className="mx-auto mb-3 opacity-30" /><p>ჩანაწერები არ მოიძებნა</p></div>
       ) : (
         <div className="space-y-2">
           {filtered.map(entry => (
-            <div key={entry.id} className="bg-stone-900/80 border border-stone-800/50 rounded-xl overflow-hidden">
+            <div key={entry.id} className="bg-white shadow-sm/80 border border-slate-200/50 rounded-xl overflow-hidden">
               <button
                 onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-stone-800/30 transition-colors text-left"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-100/50/30 transition-colors text-left"
               >
                 <div className="flex items-center gap-4">
                   <span className="font-mono text-amber-400 text-sm font-semibold">{entry.entry_number}</span>
-                  <span className="text-white text-sm">{entry.description}</span>
+                  <span className="text-slate-800 text-sm">{entry.description}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_STYLES[entry.status] || STATUS_STYLES.DRAFT}`}>{STATUS_LABELS[entry.status] || entry.status}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-stone-500 text-xs">{entry.entry_date}</span>
+                  <span className="text-slate-400 text-xs">{entry.entry_date}</span>
                   {/* Actions */}
                   {entry.status === 'DRAFT' && (
                     <button onClick={e => { e.stopPropagation(); handleAction(entry.id, 'post'); }}
@@ -279,7 +279,7 @@ export default function JournalEntries() {
                   {entry.status === 'POSTED' && (
                     <button onClick={e => { e.stopPropagation(); handleAction(entry.id, 'reverse'); }}
                       disabled={actionLoading === entry.id + 'reverse'}
-                      className="flex items-center gap-1 px-3 py-1 bg-stone-700/50 hover:bg-stone-600/50 text-stone-300 rounded-lg text-xs border border-stone-600/40">
+                      className="flex items-center gap-1 px-3 py-1 bg-stone-700/50 hover:bg-stone-600/50 text-slate-600 rounded-lg text-xs border border-stone-600/40">
                       <RotateCcw size={12} /> {actionLoading === entry.id + 'reverse' ? '...' : 'Reverse'}
                     </button>
                   )}
@@ -288,9 +288,9 @@ export default function JournalEntries() {
               </button>
 
               {expandedId === entry.id && entry.journal_lines && entry.journal_lines.length > 0 && (
-                <div className="border-t border-stone-800 px-5 py-3">
+                <div className="border-t border-slate-200 px-5 py-3">
                   <table className="w-full text-xs">
-                    <thead><tr className="text-stone-500">
+                    <thead><tr className="text-slate-400">
                       <th className="text-left py-1 w-24">ანგ. კოდი</th>
                       <th className="text-left py-1">სახელი</th>
                       <th className="text-right py-1 text-emerald-400 w-28">Debit ₾</th>
@@ -298,9 +298,9 @@ export default function JournalEntries() {
                     </tr></thead>
                     <tbody>
                       {entry.journal_lines.map((l, i) => (
-                        <tr key={i} className="border-t border-stone-800/50">
+                        <tr key={i} className="border-t border-slate-200/50">
                           <td className="py-1.5 font-mono text-amber-500">{l.accounts?.code}</td>
-                          <td className="py-1.5 text-stone-300">{l.accounts?.name_ka}</td>
+                          <td className="py-1.5 text-slate-600">{l.accounts?.name_ka}</td>
                           <td className="py-1.5 text-right text-emerald-300">{l.debit > 0 ? l.debit.toFixed(2) : ''}</td>
                           <td className="py-1.5 text-right text-red-300">{l.credit > 0 ? l.credit.toFixed(2) : ''}</td>
                         </tr>

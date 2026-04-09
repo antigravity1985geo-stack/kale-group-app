@@ -305,8 +305,29 @@ export default function AdminPanel() {
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     setIsUpdatingStatus(true);
     const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
-    if (error) alert('შეცდომა სტატუსის შეცვლისას: ' + error.message);
-    else await fetchData();
+    if (error) {
+      alert('შეცდომა სტატუსის შეცვლისას: ' + error.message);
+    } else {
+      // When order is delivered, automatically create accounting entry
+      if (newStatus === 'delivered') {
+        try {
+          const { data: rpcResult, error: rpcError } = await supabase.rpc('process_order_sale', {
+            p_order_id: orderId
+          });
+          if (rpcError) {
+            console.error('Accounting entry error:', rpcError);
+            alert('⚠️ შეკვეთა დასრულდა, მაგრამ ბუღალტრული გატარება ვერ მოხერხდა: ' + rpcError.message);
+          } else if (rpcResult && !rpcResult.success) {
+            alert('⚠️ ' + (rpcResult.error || 'ბუღალტრული გატარება ვერ მოხერხდა'));
+          } else if (rpcResult && rpcResult.success) {
+            console.log('✅ Accounting entry created:', rpcResult.entry_number);
+          }
+        } catch (err: any) {
+          console.error('RPC call failed:', err);
+        }
+      }
+      await fetchData();
+    }
     setIsUpdatingStatus(false);
     if (selectedOrder?.id === orderId) {
       setSelectedOrder({ ...selectedOrder, status: newStatus });
@@ -759,7 +780,7 @@ export default function AdminPanel() {
             {activeTab === 'accounting' && canViewAccounting && (
               <div className="space-y-0">
                 {/* ── Accounting Sub-Navigation ── */}
-                <div className="bg-stone-950 rounded-2xl mb-6 p-2 flex flex-wrap gap-1 border border-stone-800">
+                <div className="bg-slate-50 rounded-2xl mb-6 p-2 flex flex-wrap gap-1 border border-slate-200">
                   {([
                     { id: 'acc-dashboard', label: '📊 დეშბორდი' },
                     { id: 'journal',       label: '📒 ჟურნ.' },
@@ -776,21 +797,21 @@ export default function AdminPanel() {
                       onClick={() => setAccSubTab(s.id)}
                       className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border-none outline-none cursor-pointer ${
                         accSubTab === s.id
-                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/40'
-                          : 'text-stone-400 hover:text-white hover:bg-stone-800 bg-transparent'
+                          ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 bg-transparent'
                       }`}
                     >
                       {s.label}
                     </button>
                   ))}
                   {/* RS.ge badge */}
-                  <div className="ml-auto flex items-center px-3 py-1 rounded-xl bg-stone-900 border border-stone-700 text-[10px] text-stone-500 font-bold uppercase tracking-widest">
-                    RS.ge <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400">STUB</span>
+                  <div className="ml-auto flex items-center px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                    RS.ge <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">STUB</span>
                   </div>
                 </div>
 
                 {/* ── Sub-Module Content ── */}
-                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-6 min-h-[500px]">
+                <div className="bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 min-h-[500px]">
                   {accSubTab === 'acc-dashboard' && <AccountingDashboard />}
                   {accSubTab === 'journal'       && <JournalEntries />}
                   {accSubTab === 'invoices'      && <InvoicesList />}

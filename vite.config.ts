@@ -31,9 +31,9 @@ export default defineConfig(({mode}) => {
         }
       })
     ],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
+    // GEMINI_API_KEY is intentionally NOT exposed to the client.
+    // It is only used server-side in /api/ai/* routes.
+    define: {},
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import path from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
@@ -7,6 +8,7 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import "dotenv/config";
+import { autoCreateAndSendEInvoice } from './src/services/rsge/rsge.service.js';
 
 // Optional fallback for Vercel CJS build vs ESM
 let currentFileName = "";
@@ -23,6 +25,8 @@ const app = express();
 
 async function setupApp() {
   const PORT = 3000;
+  console.log(`[Server] Starting in ${process.env.NODE_ENV || 'development'} mode...`);
+  console.log(`[Server] Directory: ${currentDirName}`);
 
   app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
   const allowedOrigins = [
@@ -399,10 +403,68 @@ async function setupApp() {
     }
   });
 
-  // BOG Callback (Webhook)
+  // ══════════════════════════════════════════════
+  // ── Webhook Verification Helpers ──
+  // ══════════════════════════════════════════════
+
+  function getClientIp(req: any): string {
+    return (
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      req.connection?.remoteAddress ||
+      req.ip ||
+      ''
+    );
+  }
+
+  function verifyBogCallback(req: any): boolean {
+    if (!process.env.BOG_CLIENT_SECRET) return true;
+    const signature = req.headers['callback-signature'] || req.headers['x-bog-signature'];
+    if (!signature) {
+      console.warn('[BOG Callback] No signature header — will verify via DB lookup');
+      return true;
+    }
+    try {
+      const payload = JSON.stringify(req.body);
+      const expectedSig = crypto
+        .createHmac('sha256', process.env.BOG_CLIENT_SECRET!)
+        .update(payload)
+        .digest('hex');
+      return crypto.timingSafeEqual(
+        Buffer.from(signature, 'hex'),
+        Buffer.from(expectedSig, 'hex')
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  async function verifyPaymentExists(externalId: string, provider: string): Promise<boolean> {
+    const { data } = await supabaseAdmin
+      .from('payments')
+      .select('id')
+      .eq('external_id', externalId)
+      .eq('provider', provider)
+      .eq('status', 'pending')
+      .single();
+    return !!data;
+  }
+
+  // BOG Callback (Webhook) — with signature + DB verification
   app.post("/api/pay/bog/callback", async (req, res) => {
     try {
+      if (!verifyBogCallback(req)) {
+        console.error('[BOG Callback] Signature verification FAILED from IP:', getClientIp(req));
+        return res.status(403).json({ error: 'Invalid callback signature' });
+      }
+
       const { order_id, status, external_order_id } = req.body;
+
+      const paymentValid = await verifyPaymentExists(order_id, 'bog');
+      if (!paymentValid) {
+        console.error('[BOG Callback] Unknown payment external_id:', order_id);
+        return res.status(404).json({ error: 'Payment not found' });
+      }
+
       const isSuccess = status === 'completed';
 
       await supabaseAdmin
@@ -415,13 +477,7 @@ async function setupApp() {
         .eq('external_id', order_id);
 
       if (isSuccess) {
-        await supabaseAdmin
-          .from('orders')
-          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'bog' })
-          .eq('id', external_order_id);
-
-        // RS.GE ავტომატური ინვოისი (გააქტიურდება credentials-ის შემდეგ)
-        await createRSInvoice(external_order_id);
+        await processSuccessfulOrder(external_order_id, 'bog');
       }
 
       res.status(200).json({ received: true });
@@ -571,10 +627,17 @@ async function setupApp() {
     }
   });
 
-  // TBC Callback
+  // TBC Callback — with DB verification
   app.post("/api/pay/tbc/callback", async (req, res) => {
     try {
       const { PayId, Status, Extra } = req.body;
+
+      const paymentValid = await verifyPaymentExists(PayId, 'tbc');
+      if (!paymentValid) {
+        console.error('[TBC Callback] Unknown payment PayId:', PayId);
+        return res.status(404).json({ error: 'Payment not found' });
+      }
+
       const isSuccess = Status === 'Succeeded';
 
       await supabaseAdmin
@@ -587,12 +650,7 @@ async function setupApp() {
         .eq('external_id', PayId);
 
       if (isSuccess) {
-        await supabaseAdmin
-          .from('orders')
-          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'tbc' })
-          .eq('id', Extra);
-
-        await createRSInvoice(Extra);
+        await processSuccessfulOrder(Extra, 'tbc');
       }
 
       res.status(200).json({ received: true });
@@ -653,10 +711,17 @@ async function setupApp() {
     }
   });
 
-  // Credo Callback
+  // Credo Callback — with DB verification
   app.post("/api/pay/credo/callback", async (req, res) => {
     try {
       const { application_id, status, merchant_order_id } = req.body;
+
+      const paymentValid = await verifyPaymentExists(application_id, 'credo');
+      if (!paymentValid) {
+        console.error('[Credo Callback] Unknown payment application_id:', application_id);
+        return res.status(404).json({ error: 'Payment not found' });
+      }
+
       const isSuccess = status === 'approved' || status === 'completed';
 
       await supabaseAdmin
@@ -669,12 +734,7 @@ async function setupApp() {
         .eq('external_id', application_id);
 
       if (isSuccess) {
-        await supabaseAdmin
-          .from('orders')
-          .update({ status: 'confirmed', payment_status: 'paid', payment_provider: 'credo' })
-          .eq('id', merchant_order_id);
-
-        await createRSInvoice(merchant_order_id);
+        await processSuccessfulOrder(merchant_order_id, 'credo');
       }
 
       res.status(200).json({ received: true });
@@ -685,45 +745,155 @@ async function setupApp() {
   });
 
   // ══════════════════════════════════════════════
-  // ── RS.GE ინვოისის ავტომატური შექმნა ──
+  // ── Auto Accounting & RS.GE Integration ──
   // ══════════════════════════════════════════════
-  async function createRSInvoice(orderId: string): Promise<void> {
-    try {
-      if (!process.env.RS_USERNAME || !process.env.RS_PASSWORD) {
-        console.warn('RS.GE credentials not configured — skipping invoice creation');
-        return;
-      }
 
-      // RS.GE SOAP ინტეგრაცია გააქტიურდება credentials-ის შემდეგ
-      // იხ. kalegroup-fix/kale-group-full-integration-plan.md — ნაწილი 3
+  async function processSuccessfulOrder(orderId: string, provider: string): Promise<void> {
+    try {
+      // 1. Update Order Status
+      await supabaseAdmin
+        .from('orders')
+        .update({ status: 'confirmed', payment_status: 'paid', payment_provider: provider })
+        .eq('id', orderId);
+
+      // 2. Fetch Order Details
       const { data: order } = await supabaseAdmin
         .from('orders')
-        .select(`*, order_items(*, products(*))`)
+        .select(`*, order_items(*, products(category, cost_price))`)
         .eq('id', orderId)
         .single();
 
-      if (!order) {
-        console.warn(`RS.GE: Order not found: ${orderId}`);
-        return;
+      if (!order) return;
+
+      // Ensure we don't double-process the journal
+      const { data: existingJournal } = await supabaseAdmin
+        .from('journal_entries')
+        .select('id')
+        .eq('reference_type', 'SALES_ORDER')
+        .eq('reference_id', orderId)
+        .single();
+        
+      if (existingJournal) return; // Already processed
+
+      // 3. Create System Invoice for the Order
+      const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
+      
+      const { data: invoice } = await supabaseAdmin
+        .from('invoices')
+        .insert({
+          invoice_type: 'SALES',
+          invoice_number: `INV-WEB-${orderId.substring(0,6).toUpperCase()}`,
+          customer_id: null, // Web guest
+          customer_name: `${order.customer_first_name} ${order.customer_last_name}`,
+          invoice_date: new Date().toISOString().split('T')[0],
+          due_date: new Date().toISOString().split('T')[0],
+          total_amount: order.total_price,
+          tax_amount: parseFloat((order.total_price * 0.18).toFixed(2)), // 18% VAT
+          paid_amount: order.total_price,
+          payment_status: 'PAID',
+          fiscal_period_id: currPeriod,
+          notes: `E-commerce order via ${provider}`
+        })
+        .select().single();
+
+      if (invoice) {
+        // Insert Invoice Items
+        const invoiceItems = order.order_items.map((item: any) => ({
+          invoice_id: invoice.id,
+          product_id: item.product_id,
+          description: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.price_at_purchase,
+          total_price: item.price_at_purchase * item.quantity,
+          tax_rate: 18,
+          tax_amount: parseFloat(((item.price_at_purchase * item.quantity) * 0.18).toFixed(2))
+        }));
+        await supabaseAdmin.from('invoice_items').insert(invoiceItems);
       }
 
-      console.log(`RS.GE Invoice creation pending for order: ${orderId} — SOAP integration will be activated with RS.GE credentials`);
-
-      // Placeholder record — will be updated when SOAP is wired
-      await supabaseAdmin.from('rs_invoices').insert({
-        order_id: orderId,
-        status: 'pending',
-        invoice_data: { note: 'Awaiting RS.GE SOAP integration' },
-        created_at: new Date().toISOString(),
+      // 4. Generate Double-Entry Journal Document
+      const totalAmount = order.total_price;
+      const vatAmount = parseFloat((totalAmount * 0.18).toFixed(2));
+      const revenueAmount = parseFloat((totalAmount - vatAmount).toFixed(2));
+      
+      // Calculate COGS (Cost of Goods Sold)
+      let totalCogs = 0;
+      order.order_items.forEach((item: any) => {
+         const cost = item.products?.cost_price || 0;
+         totalCogs += (cost * item.quantity);
       });
 
-    } catch (error) {
-      console.error('RS.GE Invoice Error:', error);
-      await supabaseAdmin.from('rs_invoice_errors').insert({
-        order_id: orderId,
-        error: String(error),
-        created_at: new Date().toISOString(),
-      });
+      // Fetch vital accounts
+      const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', ['1110', '1610', '3330', '6110', '7110']);
+      const accCash = accounts?.find((a: any) => a.code === '1110')?.id; // National Currency in Bank
+      const accInventory = accounts?.find((a: any) => a.code === '1610')?.id; // Inventory
+      const accVat = accounts?.find((a: any) => a.code === '3330')?.id; // VAT Payable
+      const accRev = accounts?.find((a: any) => a.code === '6110')?.id; // Revenue from Sales
+      const accCogs = accounts?.find((a: any) => a.code === '7110')?.id; // Cost of Goods Sold
+
+      if (accCash && accInventory && accVat && accRev && accCogs) {
+        // Create Posted Journal Entry
+        const { data: journal } = await supabaseAdmin
+          .from('journal_entries')
+          .insert({
+            entry_date: new Date().toISOString().split('T')[0],
+            description: `SALE - E-commerce Order #${orderId.substring(0,8)}`,
+            reference_type: 'SALES_ORDER',
+            reference_id: orderId,
+            fiscal_period_id: currPeriod,
+            status: 'POSTED',
+          })
+          .select().single();
+
+        if (journal) {
+          const jLines = [
+            // Cash Asset Increases (Debit)
+            { journal_entry_id: journal.id, account_id: accCash, debit: totalAmount, credit: 0, description: 'Payment Received' },
+            // Revenue Increases (Credit)
+            { journal_entry_id: journal.id, account_id: accRev, debit: 0, credit: revenueAmount, description: 'Sales Revenue' },
+            // VAT Payable Liability Increases (Credit)
+            { journal_entry_id: journal.id, account_id: accVat, debit: 0, credit: vatAmount, description: 'VAT on Sale' },
+          ];
+
+          if (totalCogs > 0) {
+            // COGS Expense Increases (Debit)
+            jLines.push({ journal_entry_id: journal.id, account_id: accCogs, debit: totalCogs, credit: 0, description: 'Cost of Goods Sold' });
+            // Inventory Asset Decreases (Credit)
+            jLines.push({ journal_entry_id: journal.id, account_id: accInventory, debit: 0, credit: totalCogs, description: 'Inventory Out' });
+            
+            // Note: Inventory sync trigger usually handles stock_levels, but since this relies on manual `inventory_transactions`, we must create them!
+            const invTx = order.order_items.map((item: any) => ({
+              product_id: item.product_id,
+              quantity: item.quantity,
+              transaction_type: 'SALE_OUT',
+              unit_cost: item.products?.cost_price || 0,
+              total_cost: (item.products?.cost_price || 0) * item.quantity,
+              reference_type: 'SALES_ORDER',
+              reference_id: orderId,
+              notes: `Order fulfillment via Website`,
+              fiscal_period_id: currPeriod
+            }));
+            await supabaseAdmin.from('inventory_transactions').insert(invTx);
+            
+            // The `sync_stock_levels` trigger on `inventory_transactions` will automatically decrement stock_levels.
+          }
+          
+          await supabaseAdmin.from('journal_lines').insert(jLines);
+        }
+      }
+      // 5. Fire RS.GE Logic (Phase 4 Integration)
+      try {
+        if (invoice) {
+          const rsgeResult = await autoCreateAndSendEInvoice(orderId, invoice.id);
+          console.log('[RS.ge]', rsgeResult.success ? '✅' : '❌', rsgeResult.message);
+        }
+      } catch (rsgeErr) {
+        // RS.ge failure MUST NOT block the order confirmation
+        console.error('[RS.ge] Non-blocking error:', rsgeErr);
+      }
+
+    } catch (err) {
+      console.error("Auto Accounting Error for Order:", orderId, err);
     }
   }
 
@@ -734,8 +904,10 @@ async function setupApp() {
       if (!user || !(await isUserAdmin(user.id))) {
         return res.status(403).json({ error: 'წვდომა აკრძალულია' });
       }
-      await createRSInvoice(req.params.orderId);
-      res.json({ success: true });
+      const invoice = await supabaseAdmin.from('invoices').select('id').eq('order_id', req.params.orderId).single();
+      if (!invoice.data?.id) return res.status(404).json({ error: 'ინვოისი ვერ მოიძებნა' });
+      const result = await autoCreateAndSendEInvoice(req.params.orderId, invoice.data.id);
+      res.json({ success: result.success, message: result.message });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

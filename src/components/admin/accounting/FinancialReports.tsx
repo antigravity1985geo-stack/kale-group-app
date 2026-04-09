@@ -44,15 +44,15 @@ export default function FinancialReports() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2"><BarChart2 size={22} /> ფინანსური ანგარიშგება</h2>
-        <p className="text-stone-400 text-sm mt-1">სტანდ. ფინ. ანგ. · {new Date().getFullYear()}</p>
+        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BarChart2 size={22} /> ფინანსური ანგარიშგება</h2>
+        <p className="text-slate-500 text-sm mt-1">სტანდ. ფინ. ანგ. · {new Date().getFullYear()}</p>
       </div>
 
       {/* Report selector */}
       <div className="grid grid-cols-3 gap-3">
         {REPORTS.map(r => (
           <button key={r.id} onClick={() => setActiveReport(r.id)}
-            className={`p-4 rounded-xl border text-left transition-all ${activeReport === r.id ? 'bg-amber-900/30 border-amber-700/60 text-amber-300' : 'bg-stone-900/60 border-stone-800 text-stone-400 hover:border-stone-700'}`}>
+            className={`p-4 rounded-xl border text-left transition-all ${activeReport === r.id ? 'bg-amber-900/30 border-amber-700/60 text-amber-300' : 'bg-white shadow-sm/60 border-slate-200 text-slate-500 hover:border-slate-300'}`}>
             <r.icon size={20} className="mb-2" />
             <p className="font-semibold text-sm">{r.label}</p>
             <p className="text-xs opacity-70 mt-0.5">{r.desc}</p>
@@ -62,7 +62,7 @@ export default function FinancialReports() {
 
       {/* Loading */}
       {loading && (
-        <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="h-10 bg-stone-900 animate-pulse rounded-xl" />)}</div>
+        <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="h-10 bg-white shadow-sm animate-pulse rounded-xl" />)}</div>
       )}
 
       {/* P&L Report */}
@@ -75,10 +75,10 @@ export default function FinancialReports() {
               { label: 'COGS', value: data.summary?.cogs || 0, color: 'text-orange-300', bg: 'bg-orange-900/20 border-orange-800/40', icon: TrendingDown },
               { label: 'მთლ. მ.', value: data.summary?.grossProfit || 0, color: 'text-blue-300', bg: 'bg-blue-900/20 border-blue-800/40', icon: Minus },
               { label: 'ოპ. ხარ.', value: data.summary?.opex || 0, color: 'text-red-300', bg: 'bg-red-900/20 border-red-800/40', icon: TrendingDown },
-              { label: 'ნეტ. მ.', value: data.summary?.netProfit || 0, color: Number(data.summary?.netProfit) >= 0 ? 'text-emerald-300' : 'text-red-300', bg: 'bg-stone-800 border-stone-700', icon: TrendingUp },
+              { label: 'ნეტ. მ.', value: data.summary?.netProfit || 0, color: Number(data.summary?.netProfit) >= 0 ? 'text-emerald-300' : 'text-red-300', bg: 'bg-stone-800 border-slate-300', icon: TrendingUp },
             ].map((s, i) => (
               <div key={i} className={`rounded-xl p-3 border ${s.bg}`}>
-                <p className="text-stone-500 text-xs mb-1">{s.label}</p>
+                <p className="text-slate-400 text-xs mb-1">{s.label}</p>
                 <p className={`font-bold text-sm ${s.color}`}>{GEL(s.value)}</p>
               </div>
             ))}
@@ -86,10 +86,10 @@ export default function FinancialReports() {
 
           {/* Gross Margin indicator */}
           {data.summary?.revenue > 0 && (
-            <div className="bg-stone-900/60 border border-stone-800 rounded-xl p-4">
+            <div className="bg-white shadow-sm/60 border border-slate-200 rounded-xl p-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-stone-400 text-sm">Gross Margin</span>
-                <span className="text-white font-semibold">{((data.summary.grossProfit / data.summary.revenue) * 100).toFixed(1)}%</span>
+                <span className="text-slate-500 text-sm">Gross Margin</span>
+                <span className="text-slate-800 font-semibold">{((data.summary.grossProfit / data.summary.revenue) * 100).toFixed(1)}%</span>
               </div>
               <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-emerald-600 to-teal-500 rounded-full transition-all"
@@ -105,17 +105,17 @@ export default function FinancialReports() {
             const colors: Record<string, string> = { REVENUE: 'text-emerald-400 border-emerald-700', COGS: 'text-orange-400 border-orange-700', EXPENSE: 'text-red-400 border-red-700' };
             const labels: Record<string, string> = { REVENUE: '📈 შემოსავალი', COGS: '📦 COGS', EXPENSE: '💸 ოპ. ხარჯები' };
             return (
-              <div key={type} className="bg-stone-900/60 border border-stone-800 rounded-xl overflow-hidden">
-                <div className={`px-5 py-3 border-b ${colors[type]?.split(' ')[1] || 'border-stone-700'} bg-stone-800/30`}>
-                  <h4 className={`font-semibold text-sm ${colors[type]?.split(' ')[0] || 'text-white'}`}>{labels[type]}</h4>
+              <div key={type} className="bg-white shadow-sm/60 border border-slate-200 rounded-xl overflow-hidden">
+                <div className={`px-5 py-3 border-b ${colors[type]?.split(' ')[1] || 'border-slate-300'} bg-stone-800/30`}>
+                  <h4 className={`font-semibold text-sm ${colors[type]?.split(' ')[0] || 'text-slate-800'}`}>{labels[type]}</h4>
                 </div>
                 <table className="w-full text-sm">
                   <tbody>
                     {typeLines.map((line: any, i: number) => (
-                      <tr key={i} className="border-b border-stone-800/40 hover:bg-stone-800/20">
-                        <td className="py-2.5 px-5 font-mono text-stone-500 text-xs w-16">{line.code}</td>
-                        <td className="py-2.5 px-3 text-stone-300">{line.name_ka}</td>
-                        <td className="py-2.5 px-5 text-right text-white">{GEL(line.amount || 0)}</td>
+                      <tr key={i} className="border-b border-slate-200/40 hover:bg-slate-100/50/20">
+                        <td className="py-2.5 px-5 font-mono text-slate-400 text-xs w-16">{line.code}</td>
+                        <td className="py-2.5 px-3 text-slate-600">{line.name_ka}</td>
+                        <td className="py-2.5 px-5 text-right text-slate-800">{GEL(line.amount || 0)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -136,7 +136,7 @@ export default function FinancialReports() {
               { label: 'კაპ./ეკ.', value: data.summary?.equity || 0, color: 'text-blue-300', bg: 'bg-blue-900/20 border-blue-800/40' },
             ].map((s, i) => (
               <div key={i} className={`rounded-xl p-4 border ${s.bg}`}>
-                <p className="text-stone-500 text-xs mb-1">{s.label}</p>
+                <p className="text-slate-400 text-xs mb-1">{s.label}</p>
                 <p className={`font-bold text-lg ${s.color}`}>{GEL(s.value)}</p>
               </div>
             ))}
@@ -154,17 +154,17 @@ export default function FinancialReports() {
             const labels: Record<string, string> = { ASSET: '🏛️ აქტივები', LIABILITY: '⚖️ ვალდებულებები', EQUITY: '💼 კაპიტალი' };
             const colors: Record<string, string> = { ASSET: 'text-emerald-400', LIABILITY: 'text-red-400', EQUITY: 'text-blue-400' };
             return (
-              <div key={type} className="bg-stone-900/60 border border-stone-800 rounded-xl overflow-hidden">
-                <div className="px-5 py-3 border-b border-stone-700 bg-stone-800/30">
+              <div key={type} className="bg-white shadow-sm/60 border border-slate-200 rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-300 bg-stone-800/30">
                   <h4 className={`font-semibold text-sm ${colors[type]}`}>{labels[type]}</h4>
                 </div>
                 <table className="w-full text-sm">
                   <tbody>
                     {lines.map((line: any, i: number) => (
-                      <tr key={i} className="border-b border-stone-800/40 hover:bg-stone-800/20">
-                        <td className="py-2.5 px-5 font-mono text-stone-500 text-xs w-16">{line.code}</td>
-                        <td className="py-2.5 px-3 text-stone-300">{line.name_ka}</td>
-                        <td className="py-2.5 px-5 text-right text-white">{GEL(line.balance || 0)}</td>
+                      <tr key={i} className="border-b border-slate-200/40 hover:bg-slate-100/50/20">
+                        <td className="py-2.5 px-5 font-mono text-slate-400 text-xs w-16">{line.code}</td>
+                        <td className="py-2.5 px-3 text-slate-600">{line.name_ka}</td>
+                        <td className="py-2.5 px-5 text-right text-slate-800">{GEL(line.balance || 0)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -185,7 +185,7 @@ export default function FinancialReports() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-stone-500 text-xs border-b border-stone-800 bg-stone-900/60">
+              <thead><tr className="text-slate-400 text-xs border-b border-slate-200 bg-white shadow-sm/60">
                 <th className="text-left py-3 px-4 w-16">კოდი</th>
                 <th className="text-left py-3 px-4">ანგარიში</th>
                 <th className="text-left py-3 px-4 w-20">ტიპი</th>
@@ -195,19 +195,19 @@ export default function FinancialReports() {
               </tr></thead>
               <tbody>
                 {(data.accounts || []).filter((a: any) => Number(a.total_debit) > 0 || Number(a.total_credit) > 0).map((acc: any, i: number) => (
-                  <tr key={i} className="border-b border-stone-800/40 hover:bg-stone-800/20">
+                  <tr key={i} className="border-b border-slate-200/40 hover:bg-slate-100/50/20">
                     <td className="py-2.5 px-4 font-mono text-amber-400 text-xs">{acc.code}</td>
-                    <td className="py-2.5 px-4 text-stone-300">{acc.name_ka}</td>
-                    <td className="py-2.5 px-4 text-stone-500 text-xs">{acc.account_type}</td>
+                    <td className="py-2.5 px-4 text-slate-600">{acc.name_ka}</td>
+                    <td className="py-2.5 px-4 text-slate-400 text-xs">{acc.account_type}</td>
                     <td className="py-2.5 px-4 text-right text-emerald-300">{Number(acc.total_debit) > 0 ? GEL(acc.total_debit) : ''}</td>
                     <td className="py-2.5 px-4 text-right text-red-300">{Number(acc.total_credit) > 0 ? GEL(acc.total_credit) : ''}</td>
-                    <td className={`py-2.5 px-4 text-right font-medium ${Number(acc.balance) >= 0 ? 'text-white' : 'text-red-300'}`}>{GEL(acc.balance || 0)}</td>
+                    <td className={`py-2.5 px-4 text-right font-medium ${Number(acc.balance) >= 0 ? 'text-slate-800' : 'text-red-300'}`}>{GEL(acc.balance || 0)}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t-2 border-stone-700 font-semibold">
+              <tfoot className="border-t-2 border-slate-300 font-semibold">
                 <tr>
-                  <td colSpan={3} className="py-3 px-4 text-stone-400 text-xs uppercase tracking-wider">სულ</td>
+                  <td colSpan={3} className="py-3 px-4 text-slate-500 text-xs uppercase tracking-wider">სულ</td>
                   <td className="py-3 px-4 text-right text-emerald-300">{GEL(data.totalDebit)}</td>
                   <td className="py-3 px-4 text-right text-red-300">{GEL(data.totalCredit)}</td>
                   <td className="py-3 px-4 text-right" />
@@ -219,7 +219,7 @@ export default function FinancialReports() {
       )}
 
       {!loading && !data && (
-        <div className="text-center py-16 text-stone-500">
+        <div className="text-center py-16 text-slate-400">
           <BarChart2 size={40} className="mx-auto mb-3 opacity-30" />
           <p>ანგ. ჩანაწ. ჯ. არ არის. შექმ. Journal Entry-ები.</p>
         </div>

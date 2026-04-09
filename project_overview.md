@@ -1,6 +1,6 @@
-# 🏺 KALE GROUP - Premium Furniture E-commerce Platform
+# 🏺 KALE GROUP - Premium Furniture E-commerce & ERP Platform
 
-**KALE GROUP** არის მაღალი კლასის ონლაინ მაღაზია, რომელიც ორიენტირებულია პრემიუმ ხარისხის ავეჯის გაყიდვასა და ინდივიდუალურ შეკვეთებზე. პლატფორმა აერთიანებს დახვეწილ დიზაინს, თანამედროვე ტექნოლოგიებსა და მომხმარებელზე მორგებულ ფუნქციონალს.
+**KALE GROUP** არის მაღალი კლასის ონლაინ მაღაზია, რომელიც ორიენტირებულია პრემიუმ ხარისხის ავეჯის გაყიდვასა და ინდივიდუალურ შეკვეთებზე. პლატფორმა აერთიანებს დახვეწილ დიზაინს, სრულყოფილ ERP საბუღალტრო სისტემას, თანამედროვე ტექნოლოგიებსა და მომხმარებელზე მორგებულ ფუნქციონალს.
 
 ---
 
@@ -15,43 +15,68 @@
 - **SEO & Head Management:** React Helmet Async (დინამიური მეტა ტეგებისთვის)
 
 ### Backend & API
-- **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (Custom API)
-- **Deployment:** Vercel Serverless Functions (`server.ts` ოპტიმიზებული Vercel-ისთვის)
-- **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (გადატანილია Backend-ზე უსაფრთხოების მიზნით, იცავს API გასაღებს და ამცირებს Rate Limit/429 ერორებს).
+- **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (`server.ts` — Custom Secured API)
+- **Deployment:** Vercel Serverless Functions (ოპტიმიზებული Vercel-ისთვის)
+- **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (Backend-ზე — API Key დაცული, Rate Limiting კონტროლი)
+- **Payment Gateways:** BOG (Bank of Georgia), TBC (tpay), Credo Bank — სრული Webhook ინტეგრაცია
+- **Auto Accounting Engine:** `processSuccessfulOrder()` — ავტომატური გატარება, ინვოისი, COGS, VAT, Stock sync
 
 ### Database, Auth & Storage
-- **BaaS (Backend as a Service):** [Supabase](https://supabase.com/) (ფოსტგრეს ბაზა, რეალურ-დროში სინქრონიზაცია)
-- **Authentication:** Supabase Auth (JWT, Row Level Security გაძლიერებული კონტროლით)
-- **Storage:** Supabase Storage bucket-ები სურათებისა და მედიის ასატვირთად უშუალოდ ადმინ-პანელიდან.
+- **BaaS:** [Supabase](https://supabase.com/) (PostgreSQL v2.0 სქემა, 37 ცხრილი, 9 View, 16 Trigger)
+- **Authentication:** Supabase Auth (JWT + Row Level Security — 22 RLS პოლიტიკა)
+- **Storage:** Supabase Storage bucket-ები სურათებისა და მედიის ასატვირთად
 
 ---
 
 ## ✨ ძირითადი ფუნქციონალი (Core Features)
 
 ### 1. მომხმარებლის ინტერფეისი (Storefront)
-- **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის (Category), მასალისა (Material) და ფერის მიხედვით. დახარისხება ფასის (ზრდადობით/კლებადობით) და პოპულარობის მიხედვით.
-- **ჭკვიანი კალათა (Smart Cart):** Persistent (Local Storage-ზე დაფუძნებული) შესყიდვების კალათა, რომელიც ავტომატურად ითვალისწინებს ავეჯის ფასდაკლებებს (`sale_price`) და გენერირებს ზუსტ ჯამურ ღირებულებას.
-- **რჩეულები (Wishlist):** მომხმარებლებს შეუძლიათ დაამატონ სასურველი ნივთები რეგისტრაციის გარეშე.
-- **მულტილინგვალური სისტემა:** მთლიანი პლატფორმის (Footer, Header, პროდუქტის გვერდი, Checkout, კატალოგი) მყისიერი თარგმნა სამ ენაზე.
-- **Premium UX/UI დეტალები:** "Glassmorphism" დიზაინი, Skeleton Loader-ები (ჩატვირთვის ანიმაციები), "Back to Top" ღილაკი, Inter/Outfit შრიფტების კოლაბორაცია.
-- **AI ჩეთ-ასისტენტი:** პროექტში ჩაშენებულია პერსონალური ინტერიერის დიზაინ-კონსულტანტი (Gemini-ზე დაფუძნებული), სადაც პასუხები გარანტირებულად ემყარება Kale Group-ის ინვენტარს. აპლიკაციის Backend უზრუნველყოფს უსაფრთხო კომუნიკაციას.
-- **Progressive Web App (PWA):** სისტემა მომხმარებელს სთავაზობს აპლიკაციის 홈-ეკრანზე ინსტალაციას (Desktop / Mobile), რაც აჩქარებს მუშაობას და ხდის ხელმისაწვდომს.
+- **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის, მასალისა და ფერის მიხედვით. დახარისხება ფასის (ზრდადობით/კლებადობით) და პოპულარობის მიხედვით.
+- **ჭკვიანი კალათა (Smart Cart):** Persistent (Local Storage) შესყიდვების კალათა — ავტომატური ფასდაკლების კალკულაცია (`sale_price`).
+- **რჩეულები (Wishlist):** სასურველი ნივთების შენახვა რეგისტრაციის გარეშე.
+- **მულტილინგვალური სისტემა:** მთლიანი პლატფორმის მყისიერი თარგმნა 3 ენაზე (ქართული, English, Русский).
+- **Premium UX/UI:** Glassmorphism დიზაინი, Skeleton Loaders, Toast Notifications, Back-to-Top, Inter/Outfit შრიფტები.
+- **AI ჩეთ-ასისტენტი:** Gemini-ზე დაფუძნებული ინტერიერ-დიზაინ კონსულტანტი — Kale Group-ის სინამდვილის ინვენტარზე მირჩეულია.
+- **Progressive Web App (PWA):** Home Screen ინსტალაცია, Offline მხარდაჭერა.
 
-### 2. შეკვეთის გაფორმება & Payments (Checkout System)
-- **Checkout Processing:** დახვეწილი ფორმა მარტივი შეკვეთისთვის. მონაცემების პირდაპირი ინტეგრაცია Supabase-ში.
-- **ფასდაკლებებისა და აქციების მენეჯმენტი:** ავტომატური კალკულაცია, რომელიც უპირატესობას ანიჭებს საპრომოციო ფასებს სტანდარტულთან შედარებით.
-- **PDF ქვითრები:** `jspdf`-ით გენერირებული ბრენდირებული PDF ინვოისი ქართული UTF-8 შრიფტის მხარდაჭერით.
-- **Payment Gateways (მომზადებული ინფრასტრუქტურა):** საფუძველი ჩაყრილია BOG (საქართველოს ბანკი), TBC (tpay), და Credo-ბანკის განვადებებისა და ბარათით გადახდების ინტეგრაციისთვის Webhook Callback-ებზე დაფუძნებით.
+### 2. შეკვეთა & გადახდა (Checkout & Payments)
+- **Checkout:** სრული ფორმა ფიზიკური/იურიდიული პირისთვის, Supabase-ში წერა.
+- **ფასდაკლების ლოგიკა:** ავტომატური `sale_price` VS `price` პრიორიტეტი Backend-ზე (Server-side ვალიდაცია).
+- **PDF ქვითრები:** `jspdf`-ით ბრენდირებული ინვოისი ქართული UTF-8 შრიფტით.
+- **Payment Gateways (Live):**
+  - **BOG (Bank of Georgia):** სრული გადახდა + განვადება (OAuth2)
+  - **TBC (tpay):** ბარათი, QR, Apple Pay, განვადება
+  - **Credo Bank:** Installment
 
-### 3. ადმინ პანელი (Admin Dashboard)
-- **როლებზე დაფუძნებული წვდომა (RBAC):** Supabase RLS-ით მართული 4 როლი:
-  - *Admin:* სრული უფლებები (წაშლა, მოდიფიკაცია, ფინანსები).
-  - *Consultant:* პროდუქტების რედაქტირების და შეკვეთების ნახვის უფლება (წაშლის გარეშე).
-  - *Accountant:* ფინანსების და ბუღალტერიის მოდულზე ორიენტირება.
-  - *Guest:* შესვლის გარეშე/მხოლოდ საჯარო მონაცემები.
-- **პროდუქციის სრული მართვა (CRUD):** Live სურათების ატვირთვა Storage-ში, ახალი პროდუქტის/კატეგორიის წამებში დამატება დინამიური ფორმების მეშვეობით.
-- **შეკვეთების მენეჯმენტი:** მომხმარებლის შეკვეთების აღრიცხვა, სტატუსების მართვა (Pending, Processing, Completed) გამოტანილი კომფორტული ცხრილის სახით.
-- **ბიზნეს ანალიტიკა და ბუღალტერია:** RS.ge და ფინანსური მოდულის მონაცემთა ბազების წინასწარი კონფიგურაცია, მარაგების რეალურ დროში ჩვენება (`in_stock`).
+### 3. ავტომატური საბუღალტრო სისტემა (Auto Accounting Engine)
+
+გადახდის დადასტურებისას (`Webhook Callback`) სისტემა ავტომატურად ასრულებს:
+
+1. **შეკვეთის დადასტურება** → `status: confirmed`, `payment_status: paid`
+2. **გაყიდვების ინვოისის გენერაცია** → `invoices` ცხრილი (18% VAT-ის ჩათვლით)
+3. **COGS კალკულაცია** → `cost_price`-ზე დაყრდნობით
+4. **ორმაგი საბუღალტრო გატარება** → `journal_entries` + `journal_lines`:
+   - 📥 **Debit:** ბანკის ანგარიში (Cash/Bank) + COGS ხარჯი
+   - 📤 **Credit:** გაყიდვების შემოსავალი + დღგ-ს ვალი + ინვენტარი
+5. **საწყობიდან ჩამოწერა** → `inventory_transactions` → `sync_stock_levels` Trigger
+
+### 4. ადმინ პანელი & ERP მოდულები (Admin Dashboard)
+
+**როლებზე დაფუძნებული წვდომა (RBAC):** 4 როლი — Admin, Consultant, Accountant, Guest.
+
+| მოდული | ჩანართი | ფუნქციონალი |
+|--------|---------|------------|
+| 📊 დეშბორდი | `acc-dashboard` | KPI ბარათები, Revenue, Gross Profit, VAT, Inventory Value |
+| 📒 ჟურნალი | `journal` | Double-entry ჩანაწერები — DRAFT/POST/REVERSE |
+| 🧾 ინვოისები | `invoices` | Sales & Purchase ინვოისები |
+| 📦 ინვენტარი | `inventory` | Stock Levels, Transactions, Manual Adjustments |
+| 🛒 შესყიდვები | `purchases` | Suppliers CRUD, Purchase Orders, GRN (3-way match) |
+| 🏛 დღგ | `vat` | VAT Transactions, Summary, Declarations |
+| 👥 HR/ხელფასი | `hr` | Employees, Payroll Runs, Slips |
+| 🏭 წარმოება | `manufacturing` | BOM (Bill of Materials), Production Runs |
+| 🔁 დაბრუნება | `returns` | RMA — Refused/Damaged/Resellable ავტო-გატარებები |
+| 📈 რეპორტები | `reports` | Trial Balance, P&L, Balance Sheet, Cash Flow |
+| 🛡 აუდიტი | `audit` | `audit_log` — ყველა INSERT/UPDATE/DELETE-ის ვინ/როდის/Diffs |
 
 ---
 
@@ -59,61 +84,65 @@
 
 ```bash
 KALE-GROUP--MAIN/
-├── api/             # Vercel Serverless Function entry point-ები 
-├── app/             # (Optional) Next.js/Mobile App components (თუ არსებობს)
-├── public/          # სტატიკური ფაილები, ფონტები, ლოგოები, robots.txt, sitemap.xml
+├── api/             # Vercel Serverless Function entry point-ები
+├── public/          # სტატიკური ფაილები, PWA icons, robots.txt, sitemap.xml
 ├── src/
-│   ├── components/  # მოდულარული React კომპონენტები
-│   │   ├── admin/   # ადმინ პანელის სექციები
-│   │   ├── cart/    # კალათის სექციები & ლოგიკა
-│   │   ├── layout/  # Header, Footer, Hero სექციები
-│   │   ├── modals/  # Popup-ები (Auth, AI Chat)
-│   │   ├── sections/# მთავარი გვერდის ბლოკები
-│   │   ├── ui/      # უნივერსალური კომპონენტები (Buttons, Inputs, Skeletons)
-│   │   └── wishlist/# რჩეულების მოდული
-│   ├── context/     # Global State (Context API Providers)
-│   ├── hooks/       # Custom React Hooks (Supabase Fetching, UI ლოგიკა)
-│   ├── lib/         # Client Configurations (Supabase Client და ა.შ.)
-│   ├── locales/     # i18n JSON ფაილები ტრანსლაციისთვის (en, ka, ru)
-│   ├── pages/       # მთავარი Pages (Admin, Home, Products, Checkout)
-│   ├── types/       # TypeScript Type/Interface დეფინიციები
-│   └── utils/       # Utility ფაილები (Currency formatting, Validation, PDF)
-├── server.ts        # Express Backend & AI Chat API Route-ები
-├── vite.config.ts   # Vite კონფიგურაცია (+ PWA)
-└── tailwind.config  # Tailwind v4 კონფიგურაცია
+│   ├── components/
+│   │   ├── admin/
+│   │   │   └── accounting/   # ბუღალტრული მოდულების კომპონენტები
+│   │   │       ├── AccountingDashboard.tsx
+│   │   │       ├── JournalEntries.tsx
+│   │   │       ├── InvoicesModule.tsx
+│   │   │       ├── InventoryModule.tsx
+│   │   │       ├── PurchasesModule.tsx     ← Suppliers/PO/GRN
+│   │   │       ├── VATModule.tsx
+│   │   │       ├── HRPayrollModule.tsx
+│   │   │       ├── RSGeModule.tsx          ← RS.ge SOAP Integration
+│   │   │       ├── ReturnsModule.tsx       ← RMA/Auto Journal
+│   │   │       ├── FinancialReports.tsx
+│   │   │       └── AuditLogViewer.tsx      ← System Audit Log
+│   │   ├── cart/
+│   │   ├── layout/
+│   │   ├── modals/
+│   │   ├── sections/
+│   │   ├── ui/
+│   │   └── wishlist/
+│   ├── context/     # Global State (Cart, Wishlist, Auth, Language)
+│   ├── hooks/       # Custom React Hooks
+│   ├── lib/         # Supabase Client
+│   ├── locales/     # i18n JSON (en, ka, ru)
+│   ├── pages/       # Routes (Home, Products, Checkout, Admin)
+│   ├── services/
+│   │   └── rsge/    # RS.ge SOAP (mock & live) + Service Logics
+│   ├── types/       # TypeScript Interfaces
+│   └── utils/       # Helpers (Currency, PDF, getEffectivePrice)
+├── server.ts        # Express Backend — AI, Payments, Accounting API, RS.ge Auth
+├── vite.config.ts   # Vite + PWA Config
+└── tailwind.config  # Tailwind v4 Config
 ```
 
 ---
 
-## 🛠️ უახლესი განახლებები / მიღწეული პროგრესი
+## 🛠️ განახლებების ისტორია
 
-1. **მთლიანი Backend მიგრაცია Supabase-ზე:** სრულად იქნა ჩანაცვლებული მოკ-მონაცემები რეალური, დინამიური მონაცემთა ბაზით. ამუშავდა Row Level Security.
-2. **AI ასისტენტის რეფაქტორინგი:** Gemini AI კოდი კლიენტიდან მიგრირდა Node.js სერვერზე `server.ts`-ში, რამაც დაფარა API Keys და მოაგვარა Rate Limiting ერორები. გამართულია Vercel-ზე დეპლოის ფუნქცია.
-3. **მულტილინგვალური მხარდაჭერა (i18next):** პლატფორმა ახლა 3 ენოვანია 100%-ით (ყველა UI კომპონენტითა და Alert შეტყობინებით).
-4. **ფასდაკლების ლოგიკის გამართვა:** კალათასა და დეშბორდში სრულად გასწორდა ფასდაკლებული პროდუქციის კალკულაცია, რომელიც ახლა ზუსტად აღრიცხავს სააქციო პროდუქციას.
-5. **ვიზუალური პრემიუმ-შტრიხები:** წარმატებით ჩაეშვა Premium UI, Smooth Scroll, Toast Notifications, Skeleton Loaders-ები მოლოდინის დროს, რაც აუმჯობესებს User Retention Rate-ს.
-6. **სრული ბუღალტერიის მოდული (v2) & ERP:** დასრულდა გაფართოებული ფინანსური მოდულის `KALE_ACCOUNTING_SCHEMA_v2` სრულყოფილი ინტეგრაცია Admin Panel-ში თავისი API-ებითა და SQL ტრიგერებით. 
-7. **წარმოებისა (Manufacturing) და დაბრუნების (RMA) მოდულები:** დაინერგა წარმოების რეცეპტების შექმნის (BOM) და ავეჯის მიხედვით "Dimension-based" მარაგების ჩამოწერის ლოგიკა `KALE_FURNITURE_MANUFACTURING_PLAN.md`. დაემატა დაბრუნებული საქონლის (Refused/Damaged/Resellable) ორმაგი გატარებით, ავტომატური ბუღალტრული დაბრუნების მექანიზმები.
+| ვერსია | ცვლილება |
+|--------|---------|
+| v1.0 | Supabase მიგრაცია, Auth/RLS, პრემიუმ UI |
+| v1.1 | AI Backend-ზე გადატანა, Gemini Rate Limit მოგვარება |
+| v1.2 | i18n (3-ენა), PWA, ფასდაკლების ლოგიკის გამართვა |
+| v2.0 | Double-Entry Accounting Schema (37 ცხრილი, 9 View, 16 Trigger) |
+| v2.1 | Payment Gateways — BOG, TBC, Credo Webhooks |
+| v2.2 | Manufacturing (BOM) & Returns (RMA) მოდულები |
+| v2.3 | `PurchasesModule` — Suppliers, PO, GRN (3-way matching) |
+| v2.4 | `AuditLogViewer` — სისტემური აუდიტ-ჟურნალი |
+| v2.4 | `processSuccessfulOrder()` — ავტომატური ინვოისი + Double-Entry + COGS + VAT + Stock |
+| **v2.5** | **RS.ge SOAP Integration — ელ-ინვოისებისა და ზედნადებების სრული ავტომატიზაცია (Phase 4)** |
 
 ---
 
-## 🔮 Roadmap (სამომავლო განვითარების გეგმა)
+## 🔮 Roadmap
 
-- [x] **Phase 1: Database, Security & Premium UI (Completed)**
-  - Supabase-ზე სრული მიგრაცია. AI გადატანა Backend-ზე.
-  - როლებზე დაფუძნებული წვდომა და ფასდაკლების სისტემა.
-  - PWA და 3-ენოვანი (i18n) მხარდაჭერა.
-  
-- [ ] **Phase 2: Payment Gateways (In Progress)**
-  - TBC, BOG, და Credo API-საბოლოო ტესტირება და Sandbox-იდან Production-ში გატანა.
-  - Webhook ენდპოინტების დაცვა თაღლითური მოთხოვნებისგან.
-
-- [x] **Phase 3: გაფართოებული ბიზნეს-ანალიტიკა და ბუღალტერია, წარმოება (Completed)**
-  - Double-Entry Bookkeeping SQL არქიტექტურა (v2).
-  - ფინანსური რეპორტების ვიზუალიზაცია (P&L, Balance Sheet, Trial Balance).
-  - მარაგი, დღგ, და ინვოისების მართვის კომპონენტები.
-  - ავეჯის წარმოების მოდული (BOM) და საქონლის დაბრუნების (RMA) ინტეგრაცია ავტომატური ჩამოწერებით.
-
-- [ ] **Phase 4: RS.ge & ფისკალური ინტეგრაცია (Next)**
-  - RS.ge-ს SOAP API-სთან ინტეგრაცია ინვოისების გასაგზავნად.
-  - ზედნადებებისა და ინვოისების ავტომატური გენერაცია ადმინ-პანელიდან ერთი კლიკით.
+- [x] **Phase 1:** Database, Security, Premium UI, PWA, i18n ✅
+- [x] **Phase 2:** Payment Gateways (BOG, TBC, Credo) + Webhooks ✅
+- [x] **Phase 3:** სრული ERP/Accounting Engine, Manufacturing, RMA, Audit, Auto Journal ✅
+- [x] **Phase 4:** RS.ge SOAP Integration — ელ-ინვოისი, ზედნადები, VAT დეკლარაციები (Mock -> Live) ✅

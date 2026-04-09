@@ -110,23 +110,23 @@ export default function ManufacturingModule() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-serif text-white">წარმოება და რეცეპტები</h2>
-        <button onClick={() => setIsAdding(!isAdding)} className="px-4 py-2 bg-amber-600 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2 hover:bg-amber-500 text-white cursor-pointer border-none outline-none">
+        <h2 className="text-2xl font-serif text-slate-800">წარმოება და რეცეპტები</h2>
+        <button onClick={() => setIsAdding(!isAdding)} className="px-4 py-2 bg-brand-600 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2 hover:bg-brand-500 text-slate-800 cursor-pointer border-none outline-none">
           {isAdding ? <List size={16} /> : <Plus size={16} />}
           {isAdding ? 'რეცეპტების სია' : 'ახალი რეცეპტი'}
         </button>
       </div>
 
       {isAdding ? (
-        <div className="bg-stone-900 border border-stone-800 rounded-xl p-6">
+        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-6">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-xs uppercase text-stone-400 mb-2">რეცეპტის სახელი (მაგ: სტანდარტული კარების აწყობა)</label>
-              <input type="text" value={newRecipe.title} onChange={e => setNewRecipe({...newRecipe, title: e.target.value})} className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:border-amber-500 outline-none" />
+              <label className="block text-xs uppercase text-slate-500 mb-2">რეცეპტის სახელი (მაგ: სტანდარტული კარების აწყობა)</label>
+              <input type="text" value={newRecipe.title} onChange={e => setNewRecipe({...newRecipe, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none" />
             </div>
             <div>
-              <label className="block text-xs uppercase text-stone-400 mb-2">რომელი მზა პროდუქტი იქმნება?</label>
-              <select value={newRecipe.finished_good_id} onChange={e => setNewRecipe({...newRecipe, finished_good_id: e.target.value})} className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:border-amber-500 outline-none">
+              <label className="block text-xs uppercase text-slate-500 mb-2">რომელი მზა პროდუქტი იქმნება?</label>
+              <select value={newRecipe.finished_good_id} onChange={e => setNewRecipe({...newRecipe, finished_good_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none">
                 <option value="">-- აირჩიეთ მზა პროდუქტი --</option>
                 {products.map(p => <option key={p.id} value={p.id}>{p.category} - {p.name}</option>)}
               </select>
@@ -135,51 +135,51 @@ export default function ManufacturingModule() {
           
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-2"><TestTube size={16}/> რა მასალები იხარჯება 1 ერთეულზე?</h3>
-            <p className="text-xs text-stone-400 mb-4">დაამატეთ ინგრედიენტები/ნედლეული, რომელიც ესაჭიროება ამ პროდუქტის 1 ცალის დამზადებას.</p>
+            <p className="text-xs text-slate-500 mb-4">დაამატეთ ინგრედიენტები/ნედლეული, რომელიც ესაჭიროება ამ პროდუქტის 1 ცალის დამზადებას.</p>
             {ingredients.map((ing, idx) => (
               <div key={idx} className="flex gap-2 mb-2">
-                <select value={ing.raw_material_id} onChange={e => handleIngredientChange(idx, 'raw_material_id', e.target.value)} className="flex-1 bg-stone-950 border border-stone-800 rounded-xl p-2 text-white outline-none">
+                <select value={ing.raw_material_id} onChange={e => handleIngredientChange(idx, 'raw_material_id', e.target.value)} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-800 outline-none">
                   <option value="">-- აირჩიეთ მისაღები ნედლეული --</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.category} - {p.name}</option>)}
                 </select>
-                <input type="number" step="0.01" value={ing.quantity_required} onChange={e => handleIngredientChange(idx, 'quantity_required', parseFloat(e.target.value))} className="w-32 bg-stone-950 border border-stone-800 rounded-xl p-2 text-white outline-none" placeholder="რაოდენობა" />
+                <input type="number" step="0.01" value={ing.quantity_required} onChange={e => handleIngredientChange(idx, 'quantity_required', parseFloat(e.target.value))} className="w-32 bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-800 outline-none" placeholder="რაოდენობა" />
               </div>
             ))}
             <button onClick={handleAddIngredient} className="text-xs text-amber-500 mt-2 flex items-center hover:text-amber-400 cursor-pointer bg-transparent border-none outline-none">+ მასალის დამატება</button>
           </div>
 
           <div className="mb-6">
-             <label className="block text-xs uppercase text-stone-400 mb-2">ინსტრუქცია</label>
-             <textarea value={newRecipe.instructions} onChange={e => setNewRecipe({...newRecipe, instructions: e.target.value})} className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:border-amber-500 outline-none h-24" />
+             <label className="block text-xs uppercase text-slate-500 mb-2">ინსტრუქცია</label>
+             <textarea value={newRecipe.instructions} onChange={e => setNewRecipe({...newRecipe, instructions: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none h-24" />
           </div>
 
-          <button onClick={handleSaveRecipe} className="px-6 py-3 bg-brand-600 rounded-xl text-white font-bold tracking-widest text-xs uppercase flex items-center gap-2 hover:bg-brand-500 cursor-pointer border-none outline-none">
+          <button onClick={handleSaveRecipe} className="px-6 py-3 bg-brand-600 rounded-xl text-slate-800 font-bold tracking-widest text-xs uppercase flex items-center gap-2 hover:bg-brand-500 cursor-pointer border-none outline-none">
             <Save size={16}/> რეცეპტის შენახვა
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map(r => (
-            <div key={r.id} className="bg-stone-900 border border-stone-800 rounded-xl p-6">
-               <h3 className="text-lg font-bold text-white mb-1">{r.title}</h3>
+            <div key={r.id} className="bg-white shadow-sm border border-slate-200 rounded-xl p-6">
+               <h3 className="text-lg font-bold text-slate-800 mb-1">{r.title}</h3>
                <p className="text-xs text-amber-500 mb-4">მზა პროდუქტი: {r.finished_good?.name}</p>
                
                <div className="space-y-2 mb-6">
-                 <p className="text-[10px] text-stone-400 uppercase tracking-widest">დასახარჯი მასალები (1 ცალზე):</p>
+                 <p className="text-[10px] text-slate-500 uppercase tracking-widest">დასახარჯი მასალები (1 ცალზე):</p>
                  {r.ingredients?.map((i: any) => (
-                   <div key={i.id} className="flex justify-between text-sm text-stone-300 bg-stone-950 p-2 rounded-lg">
+                   <div key={i.id} className="flex justify-between text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
                       <span>{i.material?.name}</span>
-                      <span className="font-mono text-stone-500">x{i.quantity_required}</span>
+                      <span className="font-mono text-slate-400">x{i.quantity_required}</span>
                    </div>
                  ))}
                </div>
 
-               <button onClick={() => handleStartProduction(r)} className="w-full py-3 bg-stone-800 text-stone-300 rounded-lg text-xs uppercase tracking-widest font-bold flex justify-center items-center gap-2 hover:bg-emerald-600 hover:text-white transition cursor-pointer border-none outline-none">
+               <button onClick={() => handleStartProduction(r)} className="w-full py-3 bg-stone-800 text-slate-600 rounded-lg text-xs uppercase tracking-widest font-bold flex justify-center items-center gap-2 hover:bg-emerald-600 hover:text-slate-800 transition cursor-pointer border-none outline-none">
                   <Package size={16} /> წარმოების დაწყება
                </button>
             </div>
           ))}
-          {recipes.length === 0 && <div className="col-span-full py-12 text-center text-stone-500">რეცეპტები არ მოიძებნა. დაამატეთ "ახალი რეცეპტი".</div>}
+          {recipes.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">რეცეპტები არ მოიძებნა. დაამატეთ "ახალი რეცეპტი".</div>}
         </div>
       )}
     </div>
