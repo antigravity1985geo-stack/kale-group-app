@@ -17,11 +17,12 @@ import FinancialReports from './components/admin/accounting/FinancialReports';
 import AdminGuide from './components/admin/AdminGuide';
 import ManufacturingModule from './components/admin/accounting/ManufacturingModule';
 import ReturnsModule from './components/admin/accounting/ReturnsModule';
+import WaybillsModule from './components/admin/accounting/WaybillsModule';
 import POSModule from './components/admin/pos/POSModule';
 import CompanySettings from './components/admin/settings/CompanySettings';
 import type { Product, Category } from './types/product';
 
-type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'reports' | 'manufacturing' | 'returns';
+type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'manufacturing' | 'returns' | 'waybills' | 'reports';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
@@ -806,6 +807,7 @@ export default function AdminPanel() {
                     { id: 'hr',            label: '👥 HR/ხელფ.' },
                     { id: 'manufacturing', label: '🏭 წარმოება' },
                     { id: 'returns',       label: '🔁 დაბრუნ.' },
+                    { id: 'waybills',      label: '🚚 RS.ge' },
                     { id: 'reports',       label: '📈 ანგ.' },
                   ] as { id: AccountingSubTab; label: string }[]).map(s => (
                     <button
@@ -836,6 +838,7 @@ export default function AdminPanel() {
                   { accSubTab === 'hr'            && <HrPayroll /> }
                   { accSubTab === 'manufacturing' && <ManufacturingModule /> }
                   { accSubTab === 'returns'       && <ReturnsModule /> }
+                  { accSubTab === 'waybills'      && <WaybillsModule /> }
                   { accSubTab === 'reports'       && <FinancialReports /> }
                 </div>
               </div>

@@ -1131,5 +1131,97 @@ app.get("/api/accounting/accounts", requireAccountingRead, async (_req: any, res
   }
 });
 
+// ════════════════════════════════════
+// ── RS.ge Integration (Waybills) ──
+// ════════════════════════════════════
+
+app.get("/api/rs-ge/waybills", requireAccountingRead, async (_req: any, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("rs_waybills")
+      .select("*, orders(customer_first_name, customer_last_name, total_price)")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ waybills: data || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/rs-ge/waybill/draft", requireAccountingRead, async (req: any, res) => {
+  try {
+    const { order_id, transport_type, start_address, end_address, driver_name, car_number } = req.body;
+    
+    // Check if waybill already exists
+    const { data: existing } = await supabaseAdmin
+      .from("rs_waybills")
+      .select("id")
+      .eq("order_id", order_id)
+      .single();
+      
+    if (existing) {
+      return res.status(400).json({ error: "ამ შეკვეთაზე ზედნადები უკვე არსებობს" });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("rs_waybills")
+      .insert({
+        order_id,
+        transport_type: transport_type || 1, // 1=საავტომობილო
+        start_address: start_address || 'თბილისი, შოურუმი',
+        end_address: end_address || '',
+        driver_name: driver_name || '',
+        car_number: car_number || '',
+        status: 'DRAFT'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, waybill: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/rs-ge/waybill/send", requireAccountingRead, async (req: any, res) => {
+  try {
+    const { waybill_id } = req.body;
+    
+    const { data: waybill } = await supabaseAdmin
+      .from("rs_waybills")
+      .select("*")
+      .eq("id", waybill_id)
+      .single();
+      
+    if (!waybill) return res.status(404).json({ error: "ზედნადები ვერ მოიძებნა" });
+    if (waybill.status === "SENT") return res.status(400).json({ error: "უკვე გაგზავნილია" });
+
+    // ─────────────────────────────────────────────────────────
+    // RS.ge SOAP API Stub (Placeholder for actual implementation)
+    // ─────────────────────────────────────────────────────────
+    // In production, we would use node-soap or fetch with XML payload to:
+    // https://services.rs.ge/WayBillService/WayBillService.asmx
+    // using process.env.RS_SU and process.env.RS_SP
+    
+    const mockRsWaybillId = `RS-${Math.floor(Math.random() * 10000000)}`;
+    
+    const { data, error } = await supabaseAdmin
+      .from("rs_waybills")
+      .update({
+        status: 'SENT',
+        rs_waybill_id: mockRsWaybillId
+      })
+      .eq("id", waybill_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, message: "ზედნადები წარმატებით გაიგზავნა RS.ge-ზე", waybill: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Export for Vercel ──
 export default app;
