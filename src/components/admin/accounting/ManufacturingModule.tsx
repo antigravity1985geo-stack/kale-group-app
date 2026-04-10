@@ -22,6 +22,10 @@ export default function ManufacturingModule() {
   const [isProducing, setIsProducing] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     if (tab === 'recipes') {
       fetchData();
     }
