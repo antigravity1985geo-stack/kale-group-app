@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
-import { Loader2, Plus, Trash2, Save, Package, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, Package, AlertTriangle, Truck, ShoppingCart } from 'lucide-react';
 
 interface RawMaterial {
   id: string;
@@ -29,7 +29,22 @@ export default function RawMaterialsManager() {
   });
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
 
-  useEffect(() => { fetchMaterials(); }, []);
+  // Purchase registration state
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [purchaseForm, setPurchaseForm] = useState({
+    supplier_id: '', raw_material_id: '', quantity: 0, unit_cost: 0,
+    payment_method: 'bank_transfer' as string, notes: '',
+    use_packages: false, package_count: 0
+  });
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  useEffect(() => { fetchMaterials(); fetchSuppliers(); }, []);
+
+  const fetchSuppliers = async () => {
+    const { data } = await supabase.from('suppliers').select('id, name').eq('is_active', true).order('name');
+    setSuppliers(data || []);
+  };
 
   const fetchMaterials = async () => {
     setIsLoading(true);
@@ -88,6 +103,38 @@ export default function RawMaterialsManager() {
       has_package: !!mat.package_unit
     });
     setIsAdding(true);
+  };
+
+  const handlePurchase = async () => {
+    if (!purchaseForm.supplier_id) return showToast('აირჩიეთ მომწოდებელი', 'err');
+    if (!purchaseForm.raw_material_id) return showToast('აირჩიეთ ნედლეული', 'err');
+    if (purchaseForm.quantity <= 0) return showToast('მიუთითეთ რაოდენობა', 'err');
+    if (purchaseForm.unit_cost <= 0) return showToast('მიუთითეთ ფასი', 'err');
+
+    setPurchaseLoading(true);
+    try {
+      const mat = materials.find(m => m.id === purchaseForm.raw_material_id);
+      const { data, error } = await supabase.rpc('process_goods_receipt', {
+        p_supplier_id: purchaseForm.supplier_id,
+        p_items: [{
+          raw_material_id: purchaseForm.raw_material_id,
+          product_name: mat?.name || '',
+          quantity: purchaseForm.quantity,
+          unit_cost: purchaseForm.unit_cost
+        }],
+        p_payment_method: purchaseForm.payment_method,
+        p_notes: purchaseForm.notes
+      });
+      if (error) throw error;
+      showToast(`შესყიდვა დარეგისტრირდა ✓ (${data.grn_number}) — ბუღალტერიაში გატარდა`, 'ok');
+      setPurchaseForm({ supplier_id: '', raw_material_id: '', quantity: 0, unit_cost: 0, payment_method: 'bank_transfer', notes: '', use_packages: false, package_count: 0 });
+      setShowPurchase(false);
+      fetchMaterials();
+    } catch (err: any) {
+      showToast('შეცდომა: ' + err.message, 'err');
+    } finally {
+      setPurchaseLoading(false);
+    }
   };
 
   const renderFormBlock = () => (
@@ -195,12 +242,100 @@ export default function RawMaterialsManager() {
 
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2"><Package size={20} /> ნედლეულის მარაგი</h2>
-        {!isAdding && (
-          <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-sm font-bold hover:bg-brand-950 transition border-none cursor-pointer">
-            <Plus size={16} /> ნედლეულის დამატება
-          </button>
-        )}
+        <div className="flex gap-2">
+          {!isAdding && !showPurchase && (
+            <>
+              <button onClick={() => setShowPurchase(true)} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition border-none cursor-pointer">
+                <ShoppingCart size={16} /> შესყიდვის რეგისტრაცია
+              </button>
+              <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-sm font-bold hover:bg-brand-950 transition border-none cursor-pointer">
+                <Plus size={16} /> ნედლეულის დამატება
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Purchase Registration Form */}
+      {showPurchase && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-6 shadow-sm">
+          <h3 className="font-semibold text-emerald-800 mb-4 flex items-center gap-2">
+            <Truck size={18} /> შესყიდვის რეგისტრაცია (ბუღალტერიაში გატარებით)
+          </h3>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-xs text-emerald-700 mb-1 block font-semibold">მომწოდებელი *</label>
+              <select value={purchaseForm.supplier_id} onChange={e => setPurchaseForm({...purchaseForm, supplier_id: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none focus:border-emerald-500">
+                <option value="">-- აირჩიეთ მომწოდებელი --</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-emerald-700 mb-1 block font-semibold">ნედლეული *</label>
+              <select value={purchaseForm.raw_material_id} onChange={e => {
+                const mat = materials.find(m => m.id === e.target.value);
+                setPurchaseForm({...purchaseForm, raw_material_id: e.target.value, use_packages: !!(mat?.package_unit)});
+              }} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none focus:border-emerald-500">
+                <option value="">-- აირჩიეთ ნედლეული --</option>
+                {materials.map(m => <option key={m.id} value={m.id}>{m.name} ({m.unit}) — ნაშთი: {m.quantity}</option>)}
+              </select>
+            </div>
+            {(() => {
+              const selectedMat = materials.find(m => m.id === purchaseForm.raw_material_id);
+              const hasPkg = selectedMat?.package_unit && selectedMat?.units_per_package;
+              return (
+                <>
+                  <div>
+                    <label className="text-xs text-emerald-700 mb-1 block font-semibold">
+                      რაოდენობა {hasPkg ? `(${selectedMat!.unit})` : ''} *
+                    </label>
+                    <input type="number" min="0.01" step="0.01" value={purchaseForm.quantity} onChange={e => setPurchaseForm({...purchaseForm, quantity: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+                    {hasPkg && (
+                      <p className="text-[11px] text-emerald-600 mt-1">≈ {(purchaseForm.quantity / selectedMat!.units_per_package!).toFixed(2)} {selectedMat!.package_unit}</p>
+                    )}
+                  </div>
+                  {hasPkg && (
+                    <div>
+                      <label className="text-xs text-amber-600 mb-1 block font-bold">ან შეიყვანეთ {selectedMat!.package_unit}-ებით</label>
+                      <input type="number" min="0" step="1" placeholder={`რამდენი ${selectedMat!.package_unit}?`} onChange={e => {
+                        const pkgs = parseFloat(e.target.value) || 0;
+                        setPurchaseForm({...purchaseForm, quantity: pkgs * selectedMat!.units_per_package!});
+                      }} className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-sm outline-none focus:border-amber-500" />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+            <div>
+              <label className="text-xs text-emerald-700 mb-1 block font-semibold">ერთეულის ფასი (₾) *</label>
+              <input type="number" min="0" step="0.01" value={purchaseForm.unit_cost} onChange={e => setPurchaseForm({...purchaseForm, unit_cost: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+              {purchaseForm.quantity > 0 && purchaseForm.unit_cost > 0 && (
+                <p className="text-[11px] text-emerald-600 mt-1 font-semibold">ჯამი: ₾{(purchaseForm.quantity * purchaseForm.unit_cost).toLocaleString('ka-GE', {minimumFractionDigits: 2})}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-xs text-emerald-700 mb-1 block font-semibold">გადახდის მეთოდი</label>
+              <select value={purchaseForm.payment_method} onChange={e => setPurchaseForm({...purchaseForm, payment_method: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none">
+                <option value="bank_transfer">საბანკო გადარიცხვა</option>
+                <option value="cash">ნაღდი ფული</option>
+                <option value="credit">ნისიაზე (მომწოდებლის ვალი)</option>
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs text-emerald-700 mb-1 block">შენიშვნა</label>
+              <input value={purchaseForm.notes} onChange={e => setPurchaseForm({...purchaseForm, notes: e.target.value})} placeholder="მაგ: ინვოისი #123" className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={handlePurchase} disabled={purchaseLoading} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold transition hover:bg-emerald-700 border-none cursor-pointer disabled:opacity-50">
+              {purchaseLoading ? <Loader2 size={16} className="animate-spin" /> : <Truck size={16} />} რეგისტრაცია და გატარება
+            </button>
+            <button onClick={() => setShowPurchase(false)} className="px-5 py-2.5 border border-emerald-200 text-emerald-700 rounded-xl text-sm hover:bg-emerald-100 transition cursor-pointer bg-transparent">
+              გაუქმება
+            </button>
+          </div>
+        </div>
+      )}
 
       {isAdding && renderFormBlock()}
 
