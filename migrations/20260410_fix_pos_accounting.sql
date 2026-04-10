@@ -29,6 +29,14 @@ ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_invoice_type_check;
 ALTER TABLE invoices ADD CONSTRAINT invoices_invoice_type_check 
   CHECK (invoice_type IN ('B2C', 'B2B', 'REFUND', 'PROFORMA', 'SALES'));
 
+-- 2.5 Fix cost_center CHECK constraint for showroom sales
+ALTER TABLE journal_lines DROP CONSTRAINT IF EXISTS journal_lines_cost_center_check;
+ALTER TABLE journal_lines ADD CONSTRAINT journal_lines_cost_center_check 
+  CHECK (cost_center IN (
+    'ONLINE_SALES', 'COD_SALES', 'ADMIN', 'LOGISTICS', 'MARKETING', 'IT',
+    'SHOWROOM_CASH', 'SHOWROOM_CARD', 'SHOWROOM_BANK', 'SHOWROOM_INSTALLMENT', 'SHOWROOM_OTHER'
+  ));
+
 -- 3. Create helper: record_fifo_sale
 CREATE OR REPLACE FUNCTION record_fifo_sale(p_order_id UUID, p_je_id UUID)
 RETURNS VOID AS $$
