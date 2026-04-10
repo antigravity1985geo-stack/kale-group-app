@@ -857,11 +857,7 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {activeTab === 'manufacturing' && canViewAccounting && (
-              <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 min-h-[500px]">
-                <ManufacturingModule />
-              </div>
-            )}
+
 
             {activeTab === 'guide' && (
               <AdminGuide />
