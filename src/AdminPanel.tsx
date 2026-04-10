@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings, Factory } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -24,11 +24,11 @@ import FixedAssetsModule from './components/admin/accounting/FixedAssetsModule';
 import TaxesModule from './components/admin/accounting/TaxesModule';
 import type { Product, Category } from './types/product';
 
-type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'manufacturing' | 'returns' | 'waybills' | 'fixed-assets' | 'taxes' | 'reports';
+type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' | 'vat' | 'hr' | 'returns' | 'waybills' | 'fixed-assets' | 'taxes' | 'reports';
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'settings' | 'guide'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'manufacturing' | 'settings' | 'guide'>('dashboard');
   const [accSubTab, setAccSubTab] = useState<AccountingSubTab>('acc-dashboard');
 
   // Permission helpers
@@ -424,8 +424,8 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      <aside className="w-64 bg-brand-900 text-white flex flex-col shadow-2xl z-10 relative">
+    <div className="min-h-screen bg-[#f8f9fa] flex font-sans selection:bg-gold-400/30">
+      <aside className="w-64 bg-gradient-to-b from-brand-950 to-brand-900 border-r border-white/5 text-white flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.1)] z-10 relative">
         <div className="p-6 border-b border-white/10">
           <h2 className="text-2xl font-serif font-bold tracking-tight text-white mb-1 glow-gold cursor-pointer" onClick={() => window.location.href='/'}>
             KALE<span className="text-gold-400 font-light">ADMIN</span>
@@ -446,6 +446,7 @@ export default function AdminPanel() {
             { id: 'orders', icon: <ShoppingCart size={18}/>, label: 'შეკვეთები' },
             ...(!isAccountant ? [{ id: 'pos', icon: <Store size={18}/>, label: 'შოურუმი (POS)' }] : []),
             ...(canViewAccounting ? [{ id: 'accounting', icon: <Calculator size={18}/>, label: 'ბუღალტერია' }] : []),
+            ...(canViewAccounting ? [{ id: 'manufacturing', icon: <Factory size={18}/>, label: 'წარმოება და საწყობი' }] : []),
             ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : []),
             ...(isAdmin ? [{ id: 'settings', icon: <Settings size={18}/>, label: 'პარამეტრები' }] : [])
           ].map(tab => (
@@ -490,6 +491,7 @@ export default function AdminPanel() {
               {activeTab === 'orders' && 'შეკვეთების ისტორია'}
               {activeTab === 'pos' && 'შოურუმი — პირდაპირი გაყიდვა'}
               {activeTab === 'accounting' && 'ბუღალტერია'}
+              {activeTab === 'manufacturing' && 'წარმოება და ნედლეული'}
               {activeTab === 'team' && 'თანამშრომლების მართვა'}
               {activeTab === 'settings' && 'კომპანიის პარამეტრები'}
             </h1>
@@ -501,6 +503,7 @@ export default function AdminPanel() {
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
               {activeTab === 'pos' && 'კონსულტანტის პირდაპირი გაყიდვა — ქეში, ბარათი, განვადება'}
               {activeTab === 'accounting' && 'ფინანსური ანალიტიკა და ბუღალტრული ჩანაწერები'}
+              {activeTab === 'manufacturing' && 'საწარმოო რეცეპტები, BOM დოკუმენტები და ნედლეულის აღრიცხვა'}
               {activeTab === 'team' && 'ადმინისტრატორები, კონსულტანტები და ბუღალტრები'}
               {activeTab === 'settings' && 'დღგ, განვადება და სხვა გლობალური პარამეტრები'}
             </p>
@@ -807,7 +810,6 @@ export default function AdminPanel() {
                     { id: 'inventory',     label: '📦 მარაგი' },
                     { id: 'vat',           label: '🏛 დღგ' },
                     { id: 'hr',            label: '👥 HR/ხელფ.' },
-                    { id: 'manufacturing', label: '🏭 წარმოება' },
                     { id: 'returns',       label: '🔁 დაბრუნ.' },
                     { id: 'waybills',      label: '🚚 RS.ge' },
                     { id: 'fixed-assets',  label: '🏢 ძირ. აქტ.' },
@@ -840,13 +842,24 @@ export default function AdminPanel() {
                   {accSubTab === 'inventory'     && <InventoryModule />}
                   {accSubTab === 'vat'           && <VatModule />}
                   { accSubTab === 'hr'            && <HrPayroll /> }
-                  { accSubTab === 'manufacturing' && <ManufacturingModule /> }
                   { accSubTab === 'returns'       && <ReturnsModule /> }
                   { accSubTab === 'waybills'      && <WaybillsModule /> }
                   { accSubTab === 'fixed-assets'  && <FixedAssetsModule /> }
                   { accSubTab === 'taxes'         && <TaxesModule /> }
                   { accSubTab === 'reports'       && <FinancialReports /> }
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'manufacturing' && canViewAccounting && (
+              <div className="bg-white/90 backdrop-blur-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 min-h-[500px]">
+                <ManufacturingModule />
+              </div>
+            )}
+
+            {activeTab === 'manufacturing' && canViewAccounting && (
+              <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 min-h-[500px]">
+                <ManufacturingModule />
               </div>
             )}
 
