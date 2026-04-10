@@ -22,8 +22,10 @@ export default function ManufacturingModule() {
   const [isProducing, setIsProducing] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (tab === 'recipes') {
+      fetchData();
+    }
+  }, [tab]);
 
   const fetchData = async () => {
     setIsLoading(true);
