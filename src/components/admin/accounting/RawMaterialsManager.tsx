@@ -126,7 +126,7 @@ export default function RawMaterialsManager() {
           </label>
           
           {form.has_package && (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="text-xs text-slate-500 mb-1 block">შეფუთვის დასახელება</label>
                 <input value={form.package_unit} onChange={e => setForm({...form, package_unit: e.target.value})} placeholder="მაგ: ფილა, რულონი..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm focus:border-amber-500 outline-none" />
@@ -147,6 +147,21 @@ export default function RawMaterialsManager() {
                   className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-amber-500" 
                 />
                 <p className="text-[10px] text-amber-600 mt-1 leading-tight">ავტომატურად გადათვლის<br/>"საწყის რაოდენობას"</p>
+              </div>
+              <div>
+                <label className="text-xs text-amber-600 mb-1 block font-bold">1 {form.package_unit || 'შეკვრის'} ფასი (₾)</label>
+                <input 
+                  type="number" 
+                  placeholder="მაგ: 220 ₾"
+                  onChange={e => {
+                    const packPrice = parseFloat(e.target.value) || 0;
+                    if (form.units_per_package > 0) {
+                      setForm(prev => ({ ...prev, unit_cost: Number((packPrice / prev.units_per_package).toFixed(3)) }));
+                    }
+                  }} 
+                  className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-amber-500" 
+                />
+                <p className="text-[10px] text-amber-600 mt-1 leading-tight">ავტომატურად გადათვლის<br/>"ერთ. ღირ (₾)"</p>
               </div>
             </div>
           )}
