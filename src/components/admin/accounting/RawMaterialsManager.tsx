@@ -73,7 +73,7 @@ export default function RawMaterialsManager() {
     setIsAdding(true);
   };
 
-  const FormBlock = () => (
+  const renderFormBlock = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
       <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
         <Package size={18} /> {editingId ? 'ნედლეულის რედაქტირება' : 'ახალი ნედლეული'}
@@ -136,7 +136,7 @@ export default function RawMaterialsManager() {
         )}
       </div>
 
-      {isAdding && <FormBlock />}
+      {isAdding && renderFormBlock()}
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
