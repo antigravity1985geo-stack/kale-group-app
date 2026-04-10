@@ -425,8 +425,15 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex font-sans selection:bg-gold-400/30">
-      <aside className="w-64 bg-gradient-to-b from-brand-950 to-brand-900 border-r border-white/5 text-white flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.1)] z-10 relative">
+    <div className="min-h-screen bg-slate-50 flex font-sans selection:bg-gold-400/30 overflow-hidden">
+      {/* Decorative ambient background */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-amber-200/20 blur-[100px] rounded-full mix-blend-multiply" />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-blue-200/20 blur-[100px] rounded-full mix-blend-multiply" />
+        <div className="absolute -bottom-40 right-1/4 w-96 h-96 bg-violet-200/20 blur-[120px] rounded-full mix-blend-multiply" />
+      </div>
+
+      <aside className="w-64 bg-gradient-to-b from-brand-950 to-brand-900 border-r border-white/5 text-white flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.1)] z-20 relative">
         <div className="p-6 border-b border-white/10">
           <h2 className="text-2xl font-serif font-bold tracking-tight text-white mb-1 glow-gold cursor-pointer" onClick={() => window.location.href='/'}>
             KALE<span className="text-gold-400 font-light">ADMIN</span>
@@ -482,10 +489,10 @@ export default function AdminPanel() {
         </div>
       </aside>
 
-      <main className="flex-1 p-8 h-screen overflow-y-auto bg-gray-50/50 relative">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 bg-white p-6 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100">
+      <main className="flex-1 p-8 h-screen overflow-y-auto relative z-10 scroll-smooth">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 bg-white/70 backdrop-blur-2xl p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative z-20">
           <div>
-            <h1 className="text-3xl font-serif text-brand-900 mb-1">
+            <h1 className="text-3xl font-serif text-brand-900 mb-1 drop-shadow-sm">
               {activeTab === 'dashboard' && 'ჯამური სტატისტიკა'}
               {activeTab === 'products' && 'პროდუქციის მართვა'}
               {activeTab === 'promotions' && 'აქციების მართვა'}

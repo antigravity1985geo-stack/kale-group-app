@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
-import { Loader2, Plus, Trash2, Save, Package, AlertTriangle, Truck, ShoppingCart } from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, Package, AlertTriangle, Truck, ShoppingCart, Download, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface RawMaterial {
   id: string;
@@ -19,6 +20,7 @@ const UNITS = ['ცალი', 'მ²', 'კგ', 'მ', 'ლ', 'შ.', 'ტ.'];
 
 export default function RawMaterialsManager() {
   const { user } = useAuth();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [materials, setMaterials] = useState<RawMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -137,6 +139,57 @@ export default function RawMaterialsManager() {
     }
   };
 
+  const downloadTemplate = () => {
+    const wsData = [
+      { დასახელება: 'MDF 16მმ თეთრი', ერთეული: 'მ²', რაოდენობა: 0, მინ_ზღვარი: 5, ერთ_ფასი: 25.5, მეტრიკა_შეფუთვაში: 'ფილა', შეფუთვაში: 5.79, შენიშვნა: '' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ნედლეული");
+    XLSX.writeFile(wb, "nedleuli_shabloni.xlsx");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        if (data.length === 0) return showToast('ფაილი ცარიელია', 'err');
+        
+        const materialsToInsert = data.map((row: any) => ({
+          name: row['დასახელება'],
+          unit: row['ერთეული'] || 'ცალი',
+          quantity: Number(row['რაოდენობა'] || 0),
+          reorder_point: Number(row['მინ_ზღვარი'] || 5),
+          unit_cost: Number(row['ერთ_ფასი'] || 0),
+          package_unit: row['მეტრიკა_შეფუთვაში'] || null,
+          units_per_package: Number(row['შეფუთვაში'] || 0),
+          notes: row['შენიშვნა'] || ''
+        })).filter(m => m.name);
+
+        if (materialsToInsert.length === 0) return showToast('ვერ მოიძებნა ვალიდური მონაცემები', 'err');
+
+        const { error } = await supabase.from('raw_materials').insert(materialsToInsert);
+        if (error) throw error;
+        
+        showToast(`აიტვირთა ${materialsToInsert.length} ნედლეული ✓`, 'ok');
+        fetchMaterials();
+      } catch (err: any) {
+        showToast('შეცდომა ატვირთვისას: ' + err.message, 'err');
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const renderFormBlock = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
       <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -245,6 +298,13 @@ export default function RawMaterialsManager() {
         <div className="flex gap-2">
           {!isAdding && !showPurchase && (
             <>
+              <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition border-none cursor-pointer">
+                <Download size={16} /> შაბლონი
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition border-none cursor-pointer">
+                <Upload size={16} /> ექსელით ატვირთვა
+              </button>
+              <input type="file" ref={fileInputRef} accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
               <button onClick={() => setShowPurchase(true)} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition border-none cursor-pointer">
                 <ShoppingCart size={16} /> შესყიდვის რეგისტრაცია
               </button>

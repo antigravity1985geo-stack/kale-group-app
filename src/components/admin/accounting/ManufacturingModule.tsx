@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Loader2, Plus, TestTube, Save, List, Package, Factory, AlertTriangle, Copy, Truck, X, Edit3, Trash2, Building2, Phone, Mail, Globe, User } from 'lucide-react';
+import { Loader2, Plus, TestTube, Save, List, Package, Factory, AlertTriangle, Copy, Truck, X, Edit3, Trash2, Building2, Phone, Mail, Globe, User, Download, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '../../../context/AuthContext';
 import RawMaterialsManager from './RawMaterialsManager';
 
@@ -34,6 +35,7 @@ export default function ManufacturingModule() {
   const [products, setProducts] = useState<any[]>([]);
   const [rawMaterials, setRawMaterials] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const recipeFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [isAdding, setIsAdding] = useState(false);
   const [newRecipe, setNewRecipe] = useState({ title: '', finished_good_id: '', instructions: '' });
@@ -252,6 +254,98 @@ export default function ManufacturingModule() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const downloadRecipeTemplate = () => {
+    const wsData = [
+      { მზა_პროდუქტის_სახელი: 'მაგიდა Lusso 200სმ', რეცეპტის_სახელი: 'მაგიდა Lusso სტანდარტული', ნედლეულის_სახელი: 'MDF 16მმ', რაოდენობა: 2.5, ინსტრუქცია: 'ააწყვეთ' },
+      { მზა_პროდუქტის_სახელი: 'მაგიდა Lusso 200სმ', რეცეპტის_სახელი: 'მაგიდა Lusso სტანდარტული', ნედლეულის_სახელი: 'შურუპი 30მმ', რაოდენობა: 100, ინსტრუქცია: '' },
+    ];
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "რეცეპტები");
+    XLSX.writeFile(wb, "receptebis_shabloni.xlsx");
+  };
+
+  const handleRecipeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        if (data.length === 0) return alert('ფაილი ცარიელია');
+
+        // Group by recipe name
+        const grouped: Record<string, any> = {};
+        data.forEach((row: any) => {
+          const recName = row['რეცეპტის_სახელი'];
+          const prodName = row['მზა_პროდუქტის_სახელი'];
+          const rawName = row['ნედლეულის_სახელი'];
+          const qty = Number(row['რაოდენობა'] || 0);
+          const inst = row['ინსტრუქცია'] || '';
+
+          if (!recName) return;
+          
+          if (!grouped[recName]) {
+            grouped[recName] = { 
+              product_name: prodName, 
+              instructions: inst, 
+              ingredients: [] 
+            };
+          }
+          if (rawName && qty > 0) {
+            grouped[recName].ingredients.push({ name: rawName, qty });
+          }
+        });
+
+        // Resolve IDs and Insert
+        for (const [recName, recData] of Object.entries(grouped)) {
+          const matchedProd = products.find(p => p.name.trim().toLowerCase() === String(recData.product_name || '').trim().toLowerCase());
+          if (!matchedProd) {
+            console.warn(`პროდუქტი ვერ მოიძებნა: ${recData.product_name}`);
+            continue;
+          }
+
+          // Insert Recipe
+          const { data: recInserted, error: recErr } = await supabase.from('production_recipes').insert({
+            finished_good_id: matchedProd.id,
+            title: recName,
+            instructions: recData.instructions,
+            created_by: user?.id
+          }).select().single();
+
+          if (recErr || !recInserted) continue;
+
+          // Insert Ingredients
+          const ingsToInsert = recData.ingredients.map((ing: any) => {
+            const matchedRaw = rawMaterials.find(r => r.name.trim().toLowerCase() === String(ing.name).trim().toLowerCase());
+             if(!matchedRaw) return null;
+             return {
+               recipe_id: recInserted.id,
+               raw_material_ref_id: matchedRaw.id,
+               raw_material_id: matchedRaw.id,
+               quantity_required: ing.qty
+             };
+          }).filter(Boolean);
+
+          if (ingsToInsert.length > 0) {
+            await supabase.from('recipe_ingredients').insert(ingsToInsert);
+          }
+        }
+        
+        alert('რეცეპტები წარმატებით აიტვირთა!');
+        fetchData();
+      } catch (err: any) {
+        alert('შეცდომა ატვირთვისას: ' + err.message);
+      }
+      if (recipeFileInputRef.current) recipeFileInputRef.current.value = '';
+    };
+    reader.readAsBinaryString(file);
+  };
+
+
   if (isLoading && tab !== 'suppliers') return (
     <div className="flex justify-center p-12">
       <Loader2 className="animate-spin text-brand-400" />
@@ -272,7 +366,7 @@ export default function ManufacturingModule() {
         <h2 className="text-2xl font-serif text-slate-800 flex items-center gap-2">
           <Factory size={24} /> წარმოება
         </h2>
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+        <div className="flex gap-2 p-1.5 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-fit relative z-10">
           {([
             ['recipes', '📋 რეცეპტები'],
             ['raw-materials', '🧱 ნედლეული'],
@@ -281,7 +375,7 @@ export default function ManufacturingModule() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer ${tab === t ? 'bg-white text-brand-900 shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-800'}`}
+              className={`px-5 py-2.5 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-400 border-none cursor-pointer outline-none relative overflow-hidden ${tab === t ? 'bg-white text-brand-900 shadow-[0_4px_20px_rgb(0,0,0,0.08)] scale-100' : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'}`}
             >
               {l}
             </button>
@@ -299,7 +393,7 @@ export default function ManufacturingModule() {
             <p className="text-sm text-slate-500">{suppliers.length} მომწოდებელი სისტემაში</p>
             <button
               onClick={openAddSupplier}
-              className="px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer"
+              className="px-6 py-3 bg-brand-900 text-gold-400 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-brand-950 transition-all shadow-lg shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-0.5"
             >
               <Plus size={16} /> ახალი მომწოდებელი
             </button>
@@ -307,17 +401,17 @@ export default function ManufacturingModule() {
 
           {/* Supplier Form Modal */}
           {showSuppForm && (
-            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                  <h3 className="text-lg font-bold text-slate-800">
+            <div className="fixed inset-0 z-50 bg-brand-950/40 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2rem] shadow-[0_20px_60px_rgb(0,0,0,0.1)] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-8 border-b border-slate-200/50">
+                  <h3 className="text-xl font-bold text-brand-900 font-serif">
                     {editingSupplier ? '✏️ მომწოდებლის რედაქტირება' : '➕ ახალი მომწოდებელი'}
                   </h3>
-                  <button onClick={() => setShowSuppForm(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 border-none cursor-pointer bg-transparent">
+                  <button onClick={() => setShowSuppForm(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 border-none cursor-pointer bg-transparent transition-colors">
                     <X size={20} />
                   </button>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-8 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">სახელი / კომპანია *</label>
@@ -325,14 +419,14 @@ export default function ManufacturingModule() {
                         <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" value={suppForm.name} onChange={e => setSuppForm({ ...suppForm, name: e.target.value })}
                           placeholder="შპს მომწოდებელი / ფიზ. პირი"
-                          className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">საიდ. კოდი (TIN)</label>
                       <input type="text" value={suppForm.tin} onChange={e => setSuppForm({ ...suppForm, tin: e.target.value })}
                         placeholder="12345678"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">საკონტაქტო პირი</label>
@@ -340,7 +434,7 @@ export default function ManufacturingModule() {
                         <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" value={suppForm.contact_person} onChange={e => setSuppForm({ ...suppForm, contact_person: e.target.value })}
                           placeholder="გიორგი ბერიძე"
-                          className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
@@ -349,7 +443,7 @@ export default function ManufacturingModule() {
                         <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="tel" value={suppForm.phone} onChange={e => setSuppForm({ ...suppForm, phone: e.target.value })}
                           placeholder="+995 5XX XXX XXX"
-                          className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
@@ -358,21 +452,21 @@ export default function ManufacturingModule() {
                         <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="email" value={suppForm.email} onChange={e => setSuppForm({ ...suppForm, email: e.target.value })}
                           placeholder="info@supplier.ge"
-                          className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div className="col-span-2">
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">მისამართი</label>
                       <input type="text" value={suppForm.address} onChange={e => setSuppForm({ ...suppForm, address: e.target.value })}
                         placeholder="ქ. თბილისი, ..."
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ქვეყანა</label>
                       <div className="relative">
                         <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <select value={suppForm.country} onChange={e => setSuppForm({ ...suppForm, country: e.target.value })}
-                          className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm appearance-none">
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm appearance-none">
                           <option value="GE">🇬🇪 საქართველო</option>
                           <option value="TR">🇹🇷 თურქეთი</option>
                           <option value="CN">🇨🇳 ჩინეთი</option>
@@ -388,7 +482,7 @@ export default function ManufacturingModule() {
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">გადახდის ვადა (დღე)</label>
                       <input type="number" min={0} value={suppForm.payment_terms} onChange={e => setSuppForm({ ...suppForm, payment_terms: parseInt(e.target.value) })}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ვალუტა</label>
@@ -415,14 +509,14 @@ export default function ManufacturingModule() {
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm resize-none" />
                     </div>
                   </div>
-                  <div className="flex gap-3 pt-2">
+                  <div className="flex gap-4 pt-4 border-t border-slate-100">
                     <button onClick={handleSaveSupplier} disabled={suppSaving}
-                      className="flex items-center gap-2 px-6 py-3 bg-brand-900 text-gold-400 rounded-xl font-bold text-sm hover:bg-brand-950 transition border-none cursor-pointer disabled:opacity-60">
+                      className="flex items-center justify-center gap-2 flex-1 py-3.5 bg-brand-900 text-gold-400 rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-brand-950 transition-all shadow-lg hover:shadow-xl border-none cursor-pointer disabled:opacity-60">
                       {suppSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                       {editingSupplier ? 'განახლება' : 'შენახვა'}
                     </button>
                     <button onClick={() => setShowSuppForm(false)}
-                      className="px-5 py-3 border border-slate-200 text-slate-500 rounded-xl text-sm hover:bg-slate-100 transition cursor-pointer bg-transparent">
+                      className="px-8 py-3.5 border border-slate-200/60 bg-white text-slate-500 rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-slate-50 transition cursor-pointer">
                       გაუქმება
                     </button>
                   </div>
@@ -431,24 +525,26 @@ export default function ManufacturingModule() {
             </div>
           )}
 
-          {/* Suppliers List */}
           {suppLoading ? (
             <div className="flex justify-center py-16"><Loader2 className="animate-spin text-brand-400" /></div>
           ) : suppliers.length === 0 ? (
-            <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <Truck size={48} className="mx-auto mb-4 text-slate-300" />
-              <p className="text-slate-500 font-semibold mb-1">მომწოდებლები არ არის დამატებული</p>
-              <p className="text-slate-400 text-sm mb-4">დაამატეთ პირველი მომწოდებელი, რათა შესყიდვის ფორმა ამუშავდეს</p>
+            <div className="text-center py-20 bg-white/50 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem]">
+              <div className="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-white/50">
+                <Truck size={32} className="text-slate-400" />
+              </div>
+              <p className="text-slate-700 font-bold mb-2 font-serif text-xl">მომწოდებლები არ არის დამატებული</p>
+              <p className="text-slate-400 text-sm mb-8">დაამატეთ პირველი მომწოდებელი, რათა შესყიდვის ფორმა ამუშავდეს</p>
               <button onClick={openAddSupplier}
-                className="px-5 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-sm font-bold hover:bg-brand-950 transition border-none cursor-pointer">
+                className="px-8 py-3.5 bg-brand-900 text-gold-400 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-950 transition-all shadow-xl shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-1">
                 + დამატება
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {suppliers.map(s => (
-                <div key={s.id} className={`bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow ${s.is_active === false ? 'opacity-60' : ''}`}>
-                  <div className="flex justify-between items-start mb-3">
+                <div key={s.id} className={`bg-white/60 backdrop-blur-xl border border-white/80 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300 group hover:-translate-y-1 relative overflow-hidden ${s.is_active === false ? 'opacity-60 grayscale' : ''}`}>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+                  <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-bold text-slate-800 text-base">{s.name}</h3>
                       {s.tin && <p className="text-xs text-slate-400 mt-0.5">სას. კოდი: {s.tin}</p>}
@@ -465,12 +561,12 @@ export default function ManufacturingModule() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => openEditSupplier(s)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-100 transition border-none cursor-pointer">
-                      <Edit3 size={13} /> რედაქტ.
+                      className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-white/80 border border-slate-100/50 text-brand-600 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-brand-900 hover:shadow-md transition-all cursor-pointer outline-none">
+                      <Edit3 size={14} /> რედაქტ.
                     </button>
                     <button onClick={() => handleDeleteSupplier(s.id)}
-                      className="px-3 py-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition border-none cursor-pointer">
-                      <Trash2 size={14} />
+                      className="px-4 py-3 bg-white/80 border border-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm hover:shadow-md cursor-pointer outline-none flex items-center justify-center">
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -483,7 +579,18 @@ export default function ManufacturingModule() {
       {/* ── Recipes Tab ── */}
       {tab === 'recipes' && (
         <div>
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
+            {!isAdding && (
+              <>
+                <button onClick={downloadRecipeTemplate} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-200 transition border-none cursor-pointer">
+                  <Download size={16} /> შაბლონი
+                </button>
+                <button onClick={() => recipeFileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-100 transition border-none cursor-pointer">
+                  <Upload size={16} /> ექსელით ატვირთვა
+                </button>
+                <input type="file" ref={recipeFileInputRef} accept=".xlsx, .xls" onChange={handleRecipeFileUpload} className="hidden" />
+              </>
+            )}
             <button
               onClick={() => setIsAdding(!isAdding)}
               className="px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer"

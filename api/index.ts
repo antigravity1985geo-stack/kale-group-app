@@ -328,6 +328,12 @@ async function processSuccessfulOrder(orderId: string, provider: string): Promis
 
     if (existingJournal) return; // Already processed
 
+    // Fetch VAT Settings
+    const { data: vatSetting } = await supabaseAdmin.from('company_settings').select('value').eq('key', 'vat_registered').single();
+    const isVatRegistered = vatSetting?.value === true || vatSetting?.value === 'true';
+    const VAT_RATE = isVatRegistered ? 0.18 : 0;
+    const TAX_R = isVatRegistered ? 18 : 0;
+
     // 3. Create System Invoice for the Order
     const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
 
@@ -341,7 +347,7 @@ async function processSuccessfulOrder(orderId: string, provider: string): Promis
         invoice_date: new Date().toISOString().split('T')[0],
         due_date: new Date().toISOString().split('T')[0],
         total_amount: order.total_price,
-        tax_amount: parseFloat((order.total_price * 0.18).toFixed(2)),
+        tax_amount: parseFloat((order.total_price * VAT_RATE).toFixed(2)),
         paid_amount: order.total_price,
         payment_status: 'PAID',
         fiscal_period_id: currPeriod,
@@ -358,15 +364,15 @@ async function processSuccessfulOrder(orderId: string, provider: string): Promis
         quantity: item.quantity,
         unit_price: item.price_at_purchase,
         total_price: item.price_at_purchase * item.quantity,
-        tax_rate: 18,
-        tax_amount: parseFloat(((item.price_at_purchase * item.quantity) * 0.18).toFixed(2)),
+        tax_rate: TAX_R,
+        tax_amount: parseFloat(((item.price_at_purchase * item.quantity) * VAT_RATE).toFixed(2)),
       }));
       await supabaseAdmin.from('invoice_items').insert(invoiceItems);
     }
 
     // 4. Generate Double-Entry Journal Document
     const totalAmount = order.total_price;
-    const vatAmount = parseFloat((totalAmount * 0.18).toFixed(2));
+    const vatAmount = parseFloat((totalAmount * VAT_RATE).toFixed(2));
     const revenueAmount = parseFloat((totalAmount - vatAmount).toFixed(2));
 
     let totalCogs = 0;

@@ -30,6 +30,7 @@ export default function POSModule() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerIdNumber, setCustomerIdNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState<any>(null);
@@ -118,6 +119,7 @@ export default function POSModule() {
           customer_last_name: lastName,
           customer_phone: customerPhone || '+995000000000',
           customer_email: 'showroom@kalegroup.ge',
+          personal_id: customerIdNumber || null,
           total_price: total,
           status: 'delivered', // showroom sales are immediate
           payment_method: paymentMethod,
@@ -166,6 +168,7 @@ export default function POSModule() {
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
+      setCustomerIdNumber('');
       setNotes('');
       setPaymentMethod('cash');
     } catch (err: any) {
@@ -308,6 +311,13 @@ export default function POSModule() {
             placeholder="მომხმარებლის სახელი *"
             value={customerName}
             onChange={e => setCustomerName(e.target.value)}
+            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
+          />
+          <input
+            type="text"
+            placeholder="პირადი ნომერი (სურვ.)"
+            value={customerIdNumber}
+            onChange={e => setCustomerIdNumber(e.target.value)}
             className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
           />
           <input
