@@ -378,14 +378,14 @@ async function processSuccessfulOrder(orderId: string, provider: string): Promis
     const { data: accounts } = await supabaseAdmin
       .from('accounts')
       .select('id, code')
-      .in('code', ['1110', '1610', '3330', '6110', '7110']);
+      .in('code', ['1110', '1310', '3200', '6100', '7100']);
     const accCash = accounts?.find((a: any) => a.code === '1110')?.id;
-    const accInventory = accounts?.find((a: any) => a.code === '1610')?.id;
-    const accVat = accounts?.find((a: any) => a.code === '3330')?.id;
-    const accRev = accounts?.find((a: any) => a.code === '6110')?.id;
-    const accCogs = accounts?.find((a: any) => a.code === '7110')?.id;
+    const accInventory = accounts?.find((a: any) => a.code === '1310')?.id;
+    const accVat = accounts?.find((a: any) => a.code === '3200')?.id;
+    const accRev = accounts?.find((a: any) => a.code === '6100')?.id;
+    const accCogs = accounts?.find((a: any) => a.code === '7100')?.id;
 
-    if (accCash && accInventory && accVat && accRev && accCogs) {
+    if (accCash && accRev) {
       const { data: journal } = await supabaseAdmin
         .from('journal_entries')
         .insert({
@@ -971,12 +971,17 @@ app.post("/api/ai/chat", aiLimiter, async (req, res) => {
 
 app.get("/api/accounting/dashboard", requireAccountingRead, async (req: any, res) => {
   try {
-    const [revenueRes, cogsRes, invoicesRes, stockRes, vatRes] = await Promise.all([
+    const [revenueRes, cogsRes, invoicesRes, stockRes, vatRes, paymentBreakdownRes] = await Promise.all([
       supabaseAdmin.from("v_profit_loss").select("account_type,amount").eq("account_type", "REVENUE"),
       supabaseAdmin.from("v_profit_loss").select("account_type,amount").eq("account_type", "COGS"),
       supabaseAdmin.from("invoices").select("total_amount, paid_amount, payment_status").eq("payment_status", "PAID"),
       supabaseAdmin.from("stock_levels").select("total_cost_value"),
       supabaseAdmin.from("v_vat_summary").select("net_vat_payable").order("period_year", { ascending: false }).order("period_month", { ascending: false }).limit(1),
+      // Payment method breakdown from orders
+      supabaseAdmin
+        .from("orders")
+        .select("payment_method, total_price, status")
+        .in("status", ["delivered", "confirmed", "completed"]),
     ]);
     const revenue = (revenueRes.data || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
     const cogs = (cogsRes.data || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
@@ -984,6 +989,23 @@ app.get("/api/accounting/dashboard", requireAccountingRead, async (req: any, res
     const totalPaidRevenue = (invoicesRes.data || []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0);
     const inventoryValue = (stockRes.data || []).reduce((s: number, r: any) => s + Number(r.total_cost_value || 0), 0);
     const latestVatPayable = vatRes.data?.[0]?.net_vat_payable || 0;
+
+    // Compute payment method breakdown
+    const orders = paymentBreakdownRes.data || [];
+    const paymentBreakdown = {
+      cash: { count: 0, total: 0 },
+      card: { count: 0, total: 0 },
+      bank_transfer: { count: 0, total: 0 },
+      installment: { count: 0, total: 0 },
+      other: { count: 0, total: 0 },
+    };
+    for (const o of orders) {
+      const method = o.payment_method || 'other';
+      const key = method in paymentBreakdown ? method : 'other';
+      (paymentBreakdown as any)[key].count += 1;
+      (paymentBreakdown as any)[key].total += Number(o.total_price || 0);
+    }
+
     const { data: monthlySummary } = await supabaseAdmin.from("v_monthly_summary").select("*").order("year").order("month");
     res.json({
       kpis: {
@@ -996,6 +1018,7 @@ app.get("/api/accounting/dashboard", requireAccountingRead, async (req: any, res
         inventoryValue: inventoryValue.toFixed(2),
         vatPayable: Number(latestVatPayable).toFixed(2),
       },
+      paymentBreakdown,
       monthlySummary: monthlySummary || [],
     });
   } catch (err: any) {

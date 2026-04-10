@@ -149,10 +149,18 @@ export default function POSModule() {
       if (itemErr) throw itemErr;
 
       // Trigger accounting entry
-      const { error: rpcErr } = await supabase.rpc('process_order_sale', {
+      const { data: rpcResult, error: rpcErr } = await supabase.rpc('process_order_sale', {
         p_order_id: order.id,
       });
-      if (rpcErr) console.warn('Accounting entry warning:', rpcErr.message);
+      if (rpcErr) {
+        console.error('❌ Accounting RPC error:', rpcErr.message);
+        alert('⚠️ გაყიდვა შესრულდა, მაგრამ ბუღალტრული გატარება ვერ მოხერხდა: ' + rpcErr.message);
+      } else if (rpcResult && !rpcResult.success) {
+        console.warn('⚠️ Accounting entry warning:', rpcResult.error);
+        alert('⚠️ გაყიდვა შესრულდა, მაგრამ: ' + (rpcResult.error || 'ბუღალტრული გატარების პრობლემა'));
+      } else if (rpcResult?.success) {
+        console.log('✅ Accounting entry created:', rpcResult.entry_number, '| Payment:', rpcResult.payment_label);
+      }
 
       setSuccessOrder({ ...order, items });
       setCart([]);

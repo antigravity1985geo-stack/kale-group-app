@@ -1066,14 +1066,18 @@ async function setupApp() {
   app.get('/api/accounting/dashboard', requireAccountingRead, async (req: any, res) => {
     try {
       const [
-        revenueRes, cogsRes, invoicesRes, stockRes, vatRes, cashRes
+        revenueRes, cogsRes, invoicesRes, stockRes, vatRes, paymentBreakdownRes
       ] = await Promise.all([
         supabaseAdmin.from('v_profit_loss').select('account_type,amount').eq('account_type', 'REVENUE'),
         supabaseAdmin.from('v_profit_loss').select('account_type,amount').eq('account_type', 'COGS'),
         supabaseAdmin.from('invoices').select('total_amount, paid_amount, payment_status').eq('payment_status', 'PAID'),
         supabaseAdmin.from('stock_levels').select('total_cost_value'),
         supabaseAdmin.from('v_vat_summary').select('net_vat_payable').order('period_year', { ascending: false }).order('period_month', { ascending: false }).limit(1),
-        supabaseAdmin.from('accounts').select('code').in('code', ['1100','1110','1140','1150']),
+        // Payment method breakdown from orders
+        supabaseAdmin
+          .from('orders')
+          .select('payment_method, total_price, status')
+          .in('status', ['delivered', 'confirmed', 'completed']),
       ]);
 
       const revenue = (revenueRes.data || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
@@ -1083,6 +1087,22 @@ async function setupApp() {
       const totalPaidRevenue = (invoicesRes.data || []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0);
       const inventoryValue = (stockRes.data || []).reduce((s: number, r: any) => s + Number(r.total_cost_value || 0), 0);
       const latestVatPayable = vatRes.data?.[0]?.net_vat_payable || 0;
+
+      // Compute payment method breakdown
+      const orders = paymentBreakdownRes.data || [];
+      const paymentBreakdown: Record<string, { count: number; total: number }> = {
+        cash: { count: 0, total: 0 },
+        card: { count: 0, total: 0 },
+        bank_transfer: { count: 0, total: 0 },
+        installment: { count: 0, total: 0 },
+        other: { count: 0, total: 0 },
+      };
+      for (const o of orders) {
+        const method = o.payment_method || 'other';
+        const key = method in paymentBreakdown ? method : 'other';
+        paymentBreakdown[key].count += 1;
+        paymentBreakdown[key].total += Number(o.total_price || 0);
+      }
 
       // Monthly summary for chart
       const { data: monthlySummary } = await supabaseAdmin.from('v_monthly_summary').select('*').order('year').order('month');
@@ -1098,6 +1118,7 @@ async function setupApp() {
           inventoryValue: inventoryValue.toFixed(2),
           vatPayable: Number(latestVatPayable).toFixed(2),
         },
+        paymentBreakdown,
         monthlySummary: monthlySummary || [],
       });
     } catch (err: any) {
