@@ -265,7 +265,9 @@ export default function ManufacturingModule() {
                     >
                       <option value="">-- ნედლეული --</option>
                       {rawMaterials.map(m => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.unit}) — ნაშთი: {m.quantity}</option>
+                        <option key={m.id} value={m.id}>
+                          {m.name} {m.package_unit ? `[ძირითადი ტიპი: ${m.unit}]` : `(${m.unit})`} — ნაშთი: {m.quantity} {m.unit} {m.package_unit && m.units_per_package ? `(≈ ${(m.quantity / m.units_per_package).toFixed(1)} ${m.package_unit})` : ''}
+                        </option>
                       ))}
                     </select>
                     <input
@@ -275,8 +277,11 @@ export default function ManufacturingModule() {
                       value={ing.quantity_required}
                       onChange={e => handleIngredientChange(idx, 'quantity_required', parseFloat(e.target.value))}
                       className="w-28 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 outline-none text-sm"
-                      placeholder="ოდ."
+                      placeholder="რაოდ."
                     />
+                    <div className="w-8 text-xs text-slate-500 flex items-center">
+                      {rawMaterials.find(rm => rm.id === ing.raw_material_ref_id)?.unit || ''}
+                    </div>
                     <button
                       onClick={() => handleRemoveIngredient(idx)}
                       className="w-9 h-9 flex items-center justify-center bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition border-none cursor-pointer"
