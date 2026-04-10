@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Loader2, Plus, TestTube, Save, List, Package, Factory, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, TestTube, Save, List, Package, Factory, AlertTriangle, Copy } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import RawMaterialsManager from './RawMaterialsManager';
 
@@ -69,6 +69,11 @@ export default function ManufacturingModule() {
   const handleSaveRecipe = async () => {
     if (!newRecipe.title.trim() || !newRecipe.finished_good_id) {
       return alert('გთხოვთ შეავსოთ სარეცეპტო სახელი და მზა პროდუქტი.');
+    }
+
+    const selectedMatIds = ingredients.map(i => i.raw_material_ref_id).filter(id => id);
+    if (new Set(selectedMatIds).size !== selectedMatIds.length) {
+      return alert('შეცდომა: ერთი და იგივე ნედლეული რამდენჯერმე გაქვთ არჩეული. გთხოვთ გააერთიანოთ რაოდენობები.');
     }
     try {
       const { data: recData, error: recErr } = await supabase
@@ -145,6 +150,26 @@ export default function ManufacturingModule() {
     await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
     await supabase.from('production_recipes').delete().eq('id', id);
     fetchData();
+  };
+
+  const handleDuplicateRecipe = (recipe: any) => {
+    setNewRecipe({
+      title: recipe.title + ' (ასლი)',
+      finished_good_id: recipe.finished_good_id || '',
+      instructions: recipe.instructions || ''
+    });
+    
+    if (recipe.ingredients && recipe.ingredients.length > 0) {
+      setIngredients(recipe.ingredients.map((i: any) => ({
+        raw_material_ref_id: i.raw_material_ref_id || i.raw_material_id || '',
+        quantity_required: i.quantity_required || 1
+      })));
+    } else {
+      setIngredients([]);
+    }
+    
+    setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) return (
@@ -342,8 +367,16 @@ export default function ManufacturingModule() {
                       წარმოება
                     </button>
                     <button
+                      onClick={() => handleDuplicateRecipe(r)}
+                      title="დუბლირება"
+                      className="px-3 py-2.5 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition border-none cursor-pointer flex items-center justify-center"
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button
                       onClick={() => handleDeleteRecipe(r.id)}
-                      className="px-3 py-2.5 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition border-none cursor-pointer text-xs"
+                      className="px-3 py-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition border-none cursor-pointer text-xs flex items-center justify-center"
+                      title="წაშლა"
                     >
                       ✕
                     </button>
