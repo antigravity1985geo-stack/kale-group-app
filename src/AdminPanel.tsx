@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings, Factory } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings, Factory, MessageSquare } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -15,6 +15,7 @@ import VatModule from './components/admin/accounting/VatModule';
 import HrPayroll from './components/admin/accounting/HrPayroll';
 import FinancialReports from './components/admin/accounting/FinancialReports';
 import AdminGuide from './components/admin/AdminGuide';
+import ContactMessages from './components/admin/ContactMessages';
 import ManufacturingModule from './components/admin/accounting/ManufacturingModule';
 import ReturnsModule from './components/admin/accounting/ReturnsModule';
 import WaybillsModule from './components/admin/accounting/WaybillsModule';
@@ -28,7 +29,7 @@ type AccountingSubTab = 'acc-dashboard' | 'journal' | 'invoices' | 'inventory' |
 
 export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'manufacturing' | 'settings' | 'guide'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'manufacturing' | 'settings' | 'guide' | 'messages'>('dashboard');
   const [accSubTab, setAccSubTab] = useState<AccountingSubTab>('acc-dashboard');
 
   // Permission helpers
@@ -448,6 +449,7 @@ export default function AdminPanel() {
             ...(canViewAccounting ? [{ id: 'accounting', icon: <Calculator size={18}/>, label: 'ბუღალტერია' }] : []),
             ...(canViewAccounting ? [{ id: 'manufacturing', icon: <Factory size={18}/>, label: 'წარმოება და საწყობი' }] : []),
             ...(canManageTeam ? [{ id: 'team', icon: <Users size={18}/>, label: 'თანამშრომლები' }] : []),
+            ...(isAdmin ? [{ id: 'messages', icon: <MessageSquare size={18}/>, label: 'შეტყობინებები' }] : []),
             ...(isAdmin ? [{ id: 'settings', icon: <Settings size={18}/>, label: 'პარამეტრები' }] : [])
           ].map(tab => (
             <button 
@@ -861,6 +863,12 @@ export default function AdminPanel() {
 
             {activeTab === 'guide' && (
               <AdminGuide />
+            )}
+
+            {activeTab === 'messages' && isAdmin && (
+              <div className="bg-white/90 backdrop-blur-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 min-h-[400px]">
+                <ContactMessages />
+              </div>
             )}
 
             {activeTab === 'team' && canManageTeam && (
