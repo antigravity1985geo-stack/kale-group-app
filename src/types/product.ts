@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   description?: string;
   material?: string;
+  dimensions?: string;
   warranty?: string;
   delivery?: string;
   manufacturing?: string;

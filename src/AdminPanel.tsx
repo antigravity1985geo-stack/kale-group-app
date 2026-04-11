@@ -1028,10 +1028,14 @@ export default function AdminPanel() {
                       <h4 className="font-bold text-sm tracking-widest uppercase">დეტალები & მახასიათებლები</h4>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
                         <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">მასალა</label>
                         <input value={newProduct.material || ''} onChange={e => setNewProduct({...newProduct, material: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 focus:bg-white focus:border-gold-400 transition-all outline-none" placeholder="მაგ: MDF / მუხა" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">ზომები</label>
+                        <input value={newProduct.dimensions || ''} onChange={e => setNewProduct({...newProduct, dimensions: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 focus:bg-white focus:border-gold-400 transition-all outline-none" placeholder="მაგ: 120 x 60 სმ" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">გარანტია</label>
