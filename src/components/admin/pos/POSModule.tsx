@@ -88,8 +88,12 @@ export default function POSModule() {
     setCart(prev => prev.filter(i => i.product.id !== productId));
   };
 
+  const isProductOnSale = (product: any) => {
+    return product.is_on_sale && (!product.sale_end_date || new Date(product.sale_end_date).getTime() > new Date().getTime());
+  };
+
   const getProductPrice = (product: any) => {
-    return product.is_on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price);
+    return isProductOnSale(product) && product.sale_price ? Number(product.sale_price) : Number(product.price);
   };
 
   const subtotal = cart.reduce((s, i) => s + getProductPrice(i.product) * i.quantity, 0);
@@ -223,28 +227,47 @@ export default function POSModule() {
           <div className="flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-3 gap-3 pr-2">
             {filteredProducts.map(p => {
               const price = getProductPrice(p);
+              const isOnSale = isProductOnSale(p);
               const inCart = cart.find(i => i.product.id === p.id);
               return (
                 <button
                   key={p.id}
                   onClick={() => addToCart(p)}
-                  className={`relative text-left bg-white border rounded-2xl p-4 transition-all cursor-pointer hover:shadow-md hover:border-gold-400 group ${inCart ? 'border-gold-400 bg-amber-50/50' : 'border-gray-100'}`}
+                  className={`relative text-left bg-white border rounded-2xl p-4 transition-all cursor-pointer hover:shadow-md hover:border-gold-400 group flex flex-col justify-between ${inCart ? 'border-gold-400 bg-amber-50/50' : 'border-gray-100'}`}
                 >
-                  {inCart && (
-                    <span className="absolute top-2 right-2 w-6 h-6 bg-gold-400 text-brand-900 rounded-full text-xs font-bold flex items-center justify-center">
-                      {inCart.quantity}
-                    </span>
-                  )}
-                  <div className="w-full aspect-square rounded-xl overflow-hidden mb-3 bg-gray-50">
-                    <img
-                      src={p.images?.[0] || ''}
-                      alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                  <div className="w-full relative">
+                    {inCart && (
+                      <span className="absolute -top-2 -right-2 w-6 h-6 bg-gold-400 text-brand-900 rounded-full text-xs font-bold flex items-center justify-center z-20">
+                        {inCart.quantity}
+                      </span>
+                    )}
+                    {isOnSale && (
+                      <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white rounded-md text-[10px] font-black tracking-widest z-10 shadow-sm border border-red-600">
+                        -{p.discount_percentage}%
+                      </span>
+                    )}
+                    <div className="w-full aspect-square rounded-xl overflow-hidden mb-3 bg-gray-50 relative z-0">
+                      <img
+                        src={p.images?.[0] || ''}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
                   </div>
-                  <p className="text-xs font-semibold text-brand-900 leading-tight mb-1 line-clamp-2">{p.name}</p>
-                  <p className="text-[10px] text-brand-400 uppercase tracking-wider">{p.category}</p>
-                  <p className="text-sm font-bold text-brand-900 mt-1">₾{price.toLocaleString()}</p>
+                  <div className="flex flex-col flex-1 pb-1">
+                    <p className="text-xs font-semibold text-brand-900 leading-tight mb-1 line-clamp-2">{p.name}</p>
+                    <p className="text-[10px] text-brand-400 uppercase tracking-wider">{p.category}</p>
+                  </div>
+                  <div className="flex items-end mt-1 w-full gap-2">
+                    {isOnSale ? (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-brand-400 line-through leading-none">₾{Number(p.price).toLocaleString()}</span>
+                        <span className="text-sm font-bold text-red-600 leading-tight">₾{price.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-bold text-brand-900">₾{price.toLocaleString()}</span>
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -284,7 +307,12 @@ export default function POSModule() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-brand-900 truncate">{item.product.name}</p>
-                  <p className="text-xs text-brand-400">₾{getProductPrice(item.product).toLocaleString()} / ც.</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className={`text-xs font-bold ${isProductOnSale(item.product) ? 'text-red-600' : 'text-brand-400'}`}>₾{getProductPrice(item.product).toLocaleString()} / ც.</p>
+                    {isProductOnSale(item.product) && (
+                      <p className="text-[10px] text-brand-300 line-through">₾{Number(item.product.price).toLocaleString()}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button onClick={() => updateQty(item.product.id, -1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-red-50 hover:border-red-200 text-gray-600 hover:text-red-500 transition-all cursor-pointer">
