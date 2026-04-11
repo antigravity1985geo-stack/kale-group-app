@@ -244,7 +244,7 @@ async function setupApp() {
         // Find product strictly from supabase — including sale fields to correctly apply discounts
         const { data: product } = await supabase
           .from("products")
-          .select("id, name, price, is_on_sale, sale_price")
+          .select("id, name, price, is_on_sale, sale_price, sale_end_date")
           .eq("id", item.product.id)
           .single();
 
@@ -252,11 +252,13 @@ async function setupApp() {
           return res.status(404).json({ error: `პროდუქტი ვერ მოიძებნა ბაზაში (ID: ${item.product.id})` });
         }
 
-        // Use sale_price if product is on sale and has a valid sale_price (mirrors frontend getEffectivePrice logic)
-        const effectivePrice =
-          product.is_on_sale && product.sale_price != null && product.sale_price > 0
-            ? product.sale_price
-            : product.price;
+        // Mirror frontend isProductOnActiveSale logic — check sale_end_date too
+        const isOnActiveSale = product.is_on_sale 
+          && product.sale_price != null 
+          && product.sale_price > 0
+          && (!product.sale_end_date || new Date(product.sale_end_date).getTime() > Date.now());
+
+        const effectivePrice = isOnActiveSale ? product.sale_price : product.price;
 
         // Add to total cost using effective (discounted) price
         calculatedTotal += effectivePrice * item.quantity;
@@ -266,7 +268,7 @@ async function setupApp() {
           product_name: product.name,
           quantity: item.quantity,
           price_at_purchase: effectivePrice,  // records the actual price paid (sale or regular)
-          is_promotional_sale: product.is_on_sale && product.sale_price != null && product.sale_price > 0
+          is_promotional_sale: isOnActiveSale
         });
       }
 
@@ -824,12 +826,18 @@ async function setupApp() {
          totalCogs += (cost * item.quantity);
       });
 
-      // 4. Create System Invoice for the Order (BUG-2 fix)
+      // 4. Create System Invoice for the Order
       const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
+
+      if (!currPeriod) {
+        console.error(`[processSuccessfulOrder] No fiscal period for current month. Order ${orderId} accounting skipped. Run seed_fiscal_year().`);
+        return;
+      }
       
       const { data: invoice } = await supabaseAdmin
         .from('invoices')
         .insert({
+          order_id: orderId,
           invoice_type: 'B2C',
           invoice_number: `INV-WEB-${orderId.substring(0,6).toUpperCase()}`,
           customer_name: `${order.customer_first_name} ${order.customer_last_name}`,
@@ -1504,8 +1512,8 @@ async function setupApp() {
         .from('accounts').select('id, code')
         .in('code', [SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE]);
 
-      const accSalaryExpense = payrollAccounts?.find(a => a.code === SALARY_EXPENSE_CODE)?.id;
-      const accSalariesPayable = payrollAccounts?.find(a => a.code === SALARIES_PAYABLE_CODE)?.id;
+      const accSalaryExpense = payrollAccounts?.find((a: { code: string; id: string }) => a.code === SALARY_EXPENSE_CODE)?.id;
+      const accSalariesPayable = payrollAccounts?.find((a: { code: string; id: string }) => a.code === SALARIES_PAYABLE_CODE)?.id;
 
       if (!accSalaryExpense || !accSalariesPayable) {
         console.error('[Payroll] Accounts not found', { SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE });

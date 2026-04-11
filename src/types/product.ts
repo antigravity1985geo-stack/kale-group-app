@@ -12,7 +12,7 @@ export interface Product {
   delivery?: string;
   manufacturing?: string;
   in_stock?: boolean;
-  is_on_sale?: boolean;
+  is_on_sale: boolean;
   discount_percentage?: number;
   sale_price?: number;
   sale_start_date?: string;

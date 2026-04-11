@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Package, ShoppingCart, Calculator, Book, Receipt, Warehouse, Percent, Users, BarChart2, ShieldAlert, ChevronDown, ChevronRight, Workflow, RefreshCcw, Factory, FileSignature } from 'lucide-react';
+import { BookOpen, Package, ShoppingCart, Calculator, Book, Receipt, Warehouse, Percent, Users, BarChart2, ShieldAlert, ChevronDown, ChevronRight, Workflow, RefreshCcw, Factory, FileSignature, Tag } from 'lucide-react';
 
 interface GuideSection {
   id: string;

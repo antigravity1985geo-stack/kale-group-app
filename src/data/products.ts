@@ -19,6 +19,7 @@ export const defaultProducts: Product[] = [
     delivery: '7-14 დღე',
     manufacturing: 'ინდივიდუალური',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1556910103-1c02745a872f?q=80&w=2070&auto=format&fit=crop',
@@ -36,6 +37,7 @@ export const defaultProducts: Product[] = [
     delivery: '10-14 დღე',
     manufacturing: 'ინდივიდუალური',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1540518614846-7eded433c457?q=80&w=2057&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1505693314120-0d443867891c?q=80&w=2022&auto=format&fit=crop',
@@ -53,6 +55,7 @@ export const defaultProducts: Product[] = [
     delivery: '7-10 დღე',
     manufacturing: 'ინდივიდუალური',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1974&auto=format&fit=crop',
@@ -70,6 +73,7 @@ export const defaultProducts: Product[] = [
     delivery: '5-7 დღე',
     manufacturing: 'სტანდარტული',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=2069&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=2070&auto=format&fit=crop',
@@ -87,6 +91,7 @@ export const defaultProducts: Product[] = [
     delivery: '10-14 დღე',
     manufacturing: 'ინდივიდუალური',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=2070&auto=format&fit=crop',
@@ -104,6 +109,7 @@ export const defaultProducts: Product[] = [
     delivery: '7-10 დღე',
     manufacturing: 'ინდივიდუალური',
     in_stock: true,
+    is_on_sale: false,
     images: [
       'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=2070&auto=format&fit=crop',
