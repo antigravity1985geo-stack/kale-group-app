@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import { useTranslation } from 'react-i18next';
 import ProtectedImage from '../ui/ProtectedImage';
+import { isProductOnActiveSale } from '../../utils/promotions';
 
 export const Countdown = ({ endDate }: { endDate: string }) => {
   const [timeLeft, setTimeLeft] = React.useState('');
@@ -83,7 +84,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
     }
     // Filter by sale status
     if (onlyOnSale) {
-      result = result.filter(p => p.is_on_sale);
+      result = result.filter(p => isProductOnActiveSale(p));
     }
     // Filter by stock status
     if (onlyInStock) {
@@ -91,21 +92,21 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
     }
     // Filter by price range
     result = result.filter(p => {
-      const cost = p.is_on_sale && p.sale_price ? p.sale_price : p.price;
+      const cost = isProductOnActiveSale(p) && p.sale_price ? p.sale_price : p.price;
       return cost >= priceRange[0] && cost <= priceRange[1];
     });
 
     // Sort
     if (sortBy === 'price-asc') {
       result.sort((a, b) => {
-        const p1 = a.is_on_sale && a.sale_price ? a.sale_price : a.price;
-        const p2 = b.is_on_sale && b.sale_price ? b.sale_price : b.price;
+        const p1 = isProductOnActiveSale(a) && a.sale_price ? a.sale_price : a.price;
+        const p2 = isProductOnActiveSale(b) && b.sale_price ? b.sale_price : b.price;
         return p1 - p2;
       });
     } else if (sortBy === 'price-desc') {
       result.sort((a, b) => {
-        const p1 = a.is_on_sale && a.sale_price ? a.sale_price : a.price;
-        const p2 = b.is_on_sale && b.sale_price ? b.sale_price : b.price;
+        const p1 = isProductOnActiveSale(a) && a.sale_price ? a.sale_price : a.price;
+        const p2 = isProductOnActiveSale(b) && b.sale_price ? b.sale_price : b.price;
         return p2 - p1;
       });
     }
@@ -322,7 +323,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                           </div>
 
                           {/* Sale Badge */}
-                          {product.is_on_sale && product.discount_percentage ? (
+                          {isProductOnActiveSale(product) && product.discount_percentage ? (
                             <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10">
                               <span className="bg-red-500 text-white text-[8px] md:text-[11px] font-bold px-2 py-1 md:px-3 md:py-1.5 rounded md:rounded-lg uppercase tracking-widest shadow-lg">
                                 -{product.discount_percentage}%
@@ -331,7 +332,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                           ) : null}
 
                           {/* Countdown */}
-                          {product.is_on_sale && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
+                          {isProductOnActiveSale(product) && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
                             <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 z-10">
                               <Countdown endDate={product.sale_end_date} />
                             </div>
@@ -357,7 +358,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            {product.is_on_sale && product.sale_price ? (
+                            {isProductOnActiveSale(product) && product.sale_price ? (
                               <div className="flex flex-col">
                                 <span className="text-[10px] md:text-sm font-bold text-gray-400 line-through">₾{product.price.toLocaleString()}</span>
                                 <span className="text-sm md:text-lg font-bold text-red-600">₾{product.sale_price.toLocaleString()}</span>

@@ -4,6 +4,7 @@ import { X, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { getEffectivePrice } from '../../utils/price';
+import { isProductOnActiveSale } from '../../utils/promotions';
 
 export default function CartDrawer() {
   const { items, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
@@ -110,7 +111,7 @@ export default function CartDrawer() {
                             </button>
                           </div>
                           <div className="text-right">
-                            {item.product.is_on_sale && item.product.sale_price && (
+                            {isProductOnActiveSale(item.product) && item.product.sale_price && (
                               <p className="text-xs text-brand-300 line-through">
                                 ₾{(item.product.price * item.quantity).toLocaleString()}
                               </p>

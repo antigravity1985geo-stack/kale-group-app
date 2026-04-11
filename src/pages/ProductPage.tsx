@@ -9,6 +9,8 @@ import { useWishlist } from '../context/WishlistContext';
 import { useTranslation } from 'react-i18next';
 import { Countdown } from '../components/sections/ProductsSection';
 import ProtectedImage from '../components/ui/ProtectedImage';
+import { isProductOnActiveSale } from '../utils/promotions';
+
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -89,7 +91,7 @@ export default function ProductPage() {
                 </motion.div>
               </AnimatePresence>
               
-              {product.is_on_sale && product.discount_percentage ? (
+              {isProductOnActiveSale(product) && product.discount_percentage ? (
                 <div className="absolute top-6 left-6 z-10">
                   <span className="bg-red-500 text-white text-[13px] font-bold px-4 py-2 rounded-xl uppercase tracking-widest shadow-xl">
                     -{product.discount_percentage}%
@@ -97,7 +99,7 @@ export default function ProductPage() {
                 </div>
               ) : null}
 
-              {product.is_on_sale && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
+              {isProductOnActiveSale(product) && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
                  <div className="absolute bottom-6 left-6 z-10">
                     <Countdown endDate={product.sale_end_date} />
                  </div>
@@ -140,7 +142,7 @@ export default function ProductPage() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-900 mb-6 leading-tight">{product.name}</h1>
             
             <div className="mb-8">
-              {product.is_on_sale && product.sale_price ? (
+              {isProductOnActiveSale(product) && product.sale_price ? (
                 <div className="flex flex-col gap-1">
                   <p className="text-xl font-bold text-gray-400 line-through">₾{product.price.toLocaleString()}</p>
                   <p className="text-4xl lg:text-5xl font-bold text-red-600">₾{product.sale_price.toLocaleString()}</p>
@@ -247,7 +249,7 @@ export default function ProductPage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       watermarkText=""
                     />
-                    {relProduct.is_on_sale && relProduct.discount_percentage ? (
+                    {isProductOnActiveSale(relProduct) && relProduct.discount_percentage ? (
                       <div className="absolute top-4 left-4 z-10">
                         <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-widest shadow-lg">
                           -{relProduct.discount_percentage}%
@@ -259,7 +261,7 @@ export default function ProductPage() {
                     <h3 className="text-lg font-serif text-brand-900 group-hover:text-gold-500 transition-colors truncate">{relProduct.name}</h3>
                     <p className="text-[10px] font-bold tracking-widest text-brand-400 uppercase mt-1 mb-2 truncate">{relProduct.category}</p>
                     <div className="flex items-center justify-between">
-                      {relProduct.is_on_sale && relProduct.sale_price ? (
+                      {isProductOnActiveSale(relProduct) && relProduct.sale_price ? (
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-red-600">₾{relProduct.sale_price.toLocaleString()}</span>
                           <span className="text-[10px] font-bold text-gray-400 line-through">₾{relProduct.price.toLocaleString()}</span>

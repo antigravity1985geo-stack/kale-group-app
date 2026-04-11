@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, ShoppingCart, Package, DollarSign, Clock, CheckCircle2, AlertCircle, BarChart3 } from 'lucide-react';
+import { isProductOnActiveSale } from '../../utils/promotions';
 
 interface DashboardMetricsProps {
   orders: any[];
@@ -77,7 +78,7 @@ export default function DashboardMetrics({ orders, products }: DashboardMetricsP
     {
       title: 'პროდუქცია ბაზაში',
       value: metrics.totalProducts,
-      sub: `${products.filter(p => p.is_on_sale).length} აქციაზე`,
+      sub: `${products.filter(p => isProductOnActiveSale(p)).length} აქციაზე`,
       icon: <Package size={22} className="text-amber-600" />,
       iconBg: 'bg-amber-100',
       accent: 'border-l-amber-400',

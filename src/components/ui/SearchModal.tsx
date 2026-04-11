@@ -5,6 +5,7 @@ import { useProducts } from '../../hooks/useSupabaseData';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../utils/price';
+import { isProductOnActiveSale } from '../../utils/promotions';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -113,7 +114,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </div>
                       <div className="text-right flex flex-col items-end gap-1">
                         <span className="text-brand-900 font-bold whitespace-nowrap">
-                          {formatPrice(product.is_on_sale ? product.sale_price! : product.price)}
+                          {formatPrice(isProductOnActiveSale(product) ? product.sale_price! : product.price)}
                         </span>
                         <ArrowRight size={16} className="text-brand-200 group-hover:text-brand-900 group-hover:translate-x-1 transition-all" />
                       </div>

@@ -22,6 +22,8 @@ try {
 }
 
 const app = express();
+// Trust first proxy to fix express-rate-limit ERR_ERL_KEY_GEN_IPV6
+app.set('trust proxy', 1);
 
 async function setupApp() {
   const PORT = 3000;

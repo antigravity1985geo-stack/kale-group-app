@@ -90,7 +90,7 @@ export default function POSModule() {
   };
 
   const isProductOnSale = (product: any) => {
-    return product.is_on_sale && (!product.sale_end_date || new Date(product.sale_end_date).getTime() > new Date().getTime());
+    return isProductOnActiveSale(product);
   };
 
   const getProductPrice = (product: any) => {

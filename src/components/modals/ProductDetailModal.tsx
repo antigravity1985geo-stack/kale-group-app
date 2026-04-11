@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { Countdown } from '../sections/ProductsSection';
 import type { Product } from '../../types/product';
 import ProtectedImage from '../ui/ProtectedImage';
+import { isProductOnActiveSale } from '../../utils/promotions';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -78,7 +79,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </motion.div>
               </AnimatePresence>
               
-              {product.is_on_sale && product.discount_percentage ? (
+              {isProductOnActiveSale(product) && product.discount_percentage ? (
                 <div className="absolute top-6 left-6 z-10">
                   <span className="bg-red-500 text-white text-[13px] font-bold px-4 py-2 rounded-xl uppercase tracking-widest shadow-xl">
                     -{product.discount_percentage}%
@@ -86,7 +87,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </div>
               ) : null}
 
-              {product.is_on_sale && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
+              {isProductOnActiveSale(product) && product.sale_end_date && new Date(product.sale_end_date).getTime() > new Date().getTime() && (
                  <div className="absolute top-6 right-6 z-10">
                     <Countdown endDate={product.sale_end_date} />
                  </div>
@@ -119,7 +120,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             </div>
 
             <div className="space-y-8 mb-16">
-              {product.is_on_sale && product.sale_price ? (
+              {isProductOnActiveSale(product) && product.sale_price ? (
                 <div>
                   <p className="text-xl font-bold text-gray-400 line-through mb-1">₾{product.price.toLocaleString()}</p>
                   <p className="text-4xl font-bold text-red-600">₾{product.sale_price.toLocaleString()}</p>
