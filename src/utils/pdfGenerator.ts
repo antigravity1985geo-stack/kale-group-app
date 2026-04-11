@@ -3,7 +3,7 @@
  * Handles order receipts and invoices with Georgian font support
  */
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Helper function to convert ArrayBuffer to Base64
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
@@ -32,8 +32,8 @@ export const generateOrderReceipt = async (order: any, items: any[]) => {
     doc.setFont('NotoSansGeorgian');
 
     // 🎨 Branding (Gold/Dark Slate)
-    const goldColor = [184, 134, 11]; // Dark Goldenrod
-    const brand900 = [24, 24, 27]; // Brand 900
+    const goldColor: [number, number, number] = [184, 134, 11];
+    const brand900: [number, number, number] = [24, 24, 27];
     
     // Header
     doc.setFontSize(26);
@@ -83,7 +83,7 @@ export const generateOrderReceipt = async (order: any, items: any[]) => {
       `${(item.quantity * item.price_at_purchase).toLocaleString()} ₾`
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 95,
       head: [['პროდუქტი', 'რაოდენობა', 'ფასი', 'ჯამი']],
       body: tableData,
