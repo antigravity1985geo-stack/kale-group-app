@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings, Factory, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, X, Package, LogOut, RefreshCw, ShoppingCart, Loader2, Edit3, Image as ImageIcon, Search, Eye, Download, TrendingUp, Users, UserPlus, Calculator, Tag, Percent, LayoutGrid, Book, Store, Settings, Factory, MessageSquare, User, Mail, MapPin, ShoppingBag } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './context/AuthContext';
 import { generateOrderReceipt } from './utils/pdfGenerator';
@@ -1239,125 +1239,163 @@ export default function AdminPanel() {
               </div>
 
               <div className="p-8 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Customer Info */}
-                  <div className="space-y-6">
-                    <section>
-                      <h4 className="text-xs font-bold tracking-widest text-brand-400 uppercase mb-4">კლიენტის მონაცემები</h4>
-                      <div className="bg-gray-50 p-5 rounded-2xl space-y-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 bg-brand-100 text-brand-800 text-[10px] font-bold uppercase rounded-md tracking-wider">
-                            {selectedOrder.customer_type === 'legal' ? 'იურიდიული პირი' : 'ფიზიკური პირი'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold text-brand-900">{selectedOrder.customer_first_name} {selectedOrder.customer_last_name}</p>
-                        <p className="text-sm text-brand-600">{selectedOrder.customer_phone}</p>
-                        {selectedOrder.customer_email && <p className="text-sm text-brand-600">{selectedOrder.customer_email}</p>}
-                        
-                        {(selectedOrder.personal_id || selectedOrder.company_id) && (
-                          <div className="pt-2">
-                             <p className="text-[10px] text-brand-400 uppercase font-bold mb-0.5">
-                               {selectedOrder.customer_type === 'legal' ? 'საიდ. კოდი:' : 'პირადი ნომერი:'}
-                             </p>
-                             <p className="text-sm font-medium text-brand-900">
-                               {selectedOrder.customer_type === 'legal' ? selectedOrder.company_id : selectedOrder.personal_id}
-                             </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    {/* Customer Info */}
+                    <div className="space-y-8">
+                      <section>
+                        <h4 className="text-[10px] font-black tracking-[0.3em] text-brand-300 uppercase mb-5 flex items-center gap-2">
+                          <User size={12} className="text-gold-500" />
+                          კლიენტის მონაცემები
+                        </h4>
+                        <div className="bg-white border border-gray-100 p-6 rounded-[2rem] shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-500">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-gold-400/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-700" />
+                          <div className="relative z-10 space-y-4">
+                            <div className="inline-flex px-3 py-1 bg-brand-900/5 text-brand-900 text-[10px] font-bold uppercase rounded-full tracking-widest border border-brand-900/10">
+                              {selectedOrder.customer_type === 'legal' ? 'იურიდიული პირი' : 'ფიზიკური პირი'}
+                            </div>
+                            <div>
+                                <p className="text-lg font-serif text-brand-900 leading-tight">{selectedOrder.customer_first_name} {selectedOrder.customer_last_name}</p>
+                                <p className="text-sm text-brand-500 font-medium mt-1">{selectedOrder.customer_phone}</p>
+                            </div>
+                            {selectedOrder.customer_email && (
+                                <div className="flex items-center gap-2 text-brand-400 group/item">
+                                    <Mail size={14} className="group-hover/item:text-gold-500 transition-colors" />
+                                    <p className="text-sm truncate">{selectedOrder.customer_email}</p>
+                                </div>
+                            )}
+                            
+                            {(selectedOrder.personal_id || selectedOrder.company_id) && (
+                              <div className="pt-4 border-t border-gray-50">
+                                 <p className="text-[9px] text-brand-300 uppercase font-black tracking-widest mb-1">
+                                   {selectedOrder.customer_type === 'legal' ? 'საიდენტიფიკაციო კოდი' : 'პირადი ნომერი'}
+                                 </p>
+                                 <p className="text-sm font-mono font-bold text-brand-900 tracking-wider">
+                                   {selectedOrder.customer_type === 'legal' ? selectedOrder.company_id : selectedOrder.personal_id}
+                                 </p>
+                              </div>
+                            )}
+
+                            <div className="pt-4 border-t border-gray-50 flex gap-3">
+                                <MapPin size={16} className="text-gold-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-[9px] text-brand-300 uppercase font-black tracking-widest mb-1">მიწოდების მისამართი</p>
+                                    <p className="text-sm text-brand-800 leading-snug">{selectedOrder.customer_city}, {selectedOrder.customer_address}</p>
+                                </div>
+                            </div>
                           </div>
-                        )}
-
-                        <div className="pt-3 border-t border-gray-200">
-                          <p className="text-[10px] text-brand-400 uppercase font-bold mb-1">მისამართი</p>
-                          <p className="text-sm text-brand-800">{selectedOrder.customer_city}, {selectedOrder.customer_address}</p>
                         </div>
-                      </div>
-                    </section>
+                      </section>
 
-                    <section>
-                      <h4 className="text-xs font-bold tracking-widest text-brand-400 uppercase mb-4">დამატებითი კომენტარი</h4>
-                      <div className="bg-brand-50 p-5 rounded-2xl">
-                        <p className="text-sm text-brand-800 italic">
-                          {selectedOrder.customer_note || "კომენტარი არ არის"}
-                        </p>
-                      </div>
-                    </section>
-                  </div>
+                      <section>
+                        <h4 className="text-[10px] font-black tracking-[0.3em] text-brand-300 uppercase mb-5 flex items-center gap-2">
+                          <MessageSquare size={12} className="text-gold-500" />
+                          კომენტარი
+                        </h4>
+                        <div className="bg-brand-50/50 border border-brand-100/50 p-6 rounded-[2rem] relative">
+                          <p className="text-sm text-brand-800 italic leading-relaxed">
+                            {selectedOrder.customer_note || "დამატებითი კომენტარი არ არის მითითებული"}
+                          </p>
+                        </div>
+                      </section>
+                    </div>
 
                   {/* Order Items */}
-                  <div className="lg:col-span-2 space-y-6">
-                    <section>
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-xs font-bold tracking-widest text-brand-400 uppercase">პროდუქტები ({orderItems.length})</h4>
-                        <button 
-                          onClick={async () => await generateOrderReceipt(selectedOrder, orderItems)}
-                          className="flex items-center gap-2 text-xs font-bold text-brand-900 border-b border-brand-900 pb-0.5 hover:text-gold-600 hover:border-gold-600 transition-colors bg-transparent border-none outline-none cursor-pointer"
-                        >
-                          <Download size={14} /> PDF ქვითარი
-                        </button>
-                      </div>
-                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                        <table className="w-full text-left text-sm">
-                          <thead className="bg-gray-50 text-brand-400 uppercase text-[10px] tracking-wider">
-                            <tr>
-                              <th className="px-4 py-3 w-16 text-center">ფოტო</th>
-                              <th className="px-4 py-3">დასახელება</th>
-                              <th className="px-4 py-3 text-center">რაოდ.</th>
-                              <th className="px-4 py-3 text-right">ფასი</th>
-                              <th className="px-4 py-3 text-right">ჯამი</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
+                    <div className="lg:col-span-2 space-y-10">
+                      <section>
+                        <div className="flex justify-between items-end mb-6">
+                            <div>
+                                <h4 className="text-[10px] font-black tracking-[0.3em] text-brand-300 uppercase mb-1 flex items-center gap-2">
+                                    <ShoppingBag size={12} className="text-gold-500" />
+                                    პროდუქტები
+                                </h4>
+                                <p className="text-xl font-serif text-brand-900">შეკვეთის შემადგენლობა ({orderItems.length})</p>
+                            </div>
+                            <button 
+                                onClick={async () => await generateOrderReceipt(selectedOrder, orderItems)}
+                                className="group flex items-center gap-3 px-6 py-3 bg-brand-900 text-white rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase hover:bg-brand-950 transition-all shadow-lg hover:shadow-brand-900/20 active:scale-95 border-none outline-none cursor-pointer"
+                            >
+                                <Download size={14} className="group-hover:translate-y-0.5 transition-transform" /> 
+                                PDF ქვითარი
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
                             {orderItems.map((item, idx) => (
-                              <tr key={idx} className="hover:bg-brand-50/50 transition-colors">
-                                <td className="px-4 py-3 flex items-center justify-center">
-                                  {item.products?.images?.[0] ? (
-                                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm flex-shrink-0">
-                                      <img src={item.products.images[0]} alt={item.product_name} className="w-full h-full object-cover" />
+                                <div key={idx} className="bg-white border border-gray-100 p-5 rounded-[2.5rem] flex items-center gap-6 group hover:border-gold-400/30 hover:shadow-xl transition-all duration-500">
+                                    <div className="w-24 h-24 rounded-[1.5rem] overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-50 shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                        {item.products?.images?.[0] ? (
+                                            <img src={item.products.images[0]} alt={item.product_name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-gray-300 tracking-widest uppercase">No Photo</div>
+                                        )}
                                     </div>
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                                      <span className="text-[8px] font-bold text-gray-400 uppercase">NO IMG</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h5 className="text-lg font-serif text-brand-900 mb-1 leading-tight group-hover:text-gold-600 transition-colors">{item.product_name}</h5>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-[10px] font-black text-brand-300 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-full">ID: {item.product_id.slice(0, 8)}</span>
+                                                    <span className="text-[10px] font-black text-gold-600 uppercase tracking-widest">რაოდენობა: {item.quantity}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] text-brand-300 uppercase font-black tracking-widest mb-1">ერთ. ფასი</p>
+                                                <p className="text-base font-bold text-brand-900">₾{item.price_at_purchase.toLocaleString()}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 font-medium text-brand-900">{item.product_name}</td>
-                                <td className="px-4 py-3 text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-right text-brand-600 font-medium">₾{item.price_at_purchase.toLocaleString()}</td>
-                                <td className="px-4 py-3 text-right font-bold text-brand-900">₾{(item.quantity * item.price_at_purchase).toLocaleString()}</td>
-                              </tr>
+                                    <div className="px-8 border-l border-gray-50 text-right">
+                                        <p className="text-[9px] text-brand-300 uppercase font-black tracking-widest mb-1">ჯამური ფასი</p>
+                                        <p className="text-xl font-black text-brand-900">₾{(item.quantity * item.price_at_purchase).toLocaleString()}</p>
+                                    </div>
+                                </div>
                             ))}
-                          </tbody>
-                          <tfoot className="bg-brand-50/50 border-t-2 border-brand-100">
-                            <tr>
-                              <td colSpan={4} className="px-4 py-4 text-right font-bold text-brand-900 uppercase tracking-widest text-xs">სულ გადასახდელი:</td>
-                              <td className="px-4 py-4 text-right font-bold text-xl text-brand-900">₾{selectedOrder.total_price.toLocaleString()}</td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    </section>
-                    
-                    <section className="bg-white p-6 rounded-2xl border-2 border-brand-100">
-                      <h4 className="text-xs font-bold tracking-widest text-brand-400 uppercase mb-4">შეკვეთის სტატუსი</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { id: 'pending', label: 'ახალი' },
-                          { id: 'processing', label: 'მუშავდება' },
-                          { id: 'shipped', label: 'გაგზავნილია' },
-                          { id: 'delivered', label: 'დასრულებული' },
-                          { id: 'cancelled', label: 'გაუქმებული' }
-                        ].map(s => (
-                          <button 
-                            key={s.id}
-                            onClick={() => handleStatusUpdate(selectedOrder.id, s.id)}
-                            disabled={isUpdatingStatus}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-none outline-none cursor-pointer ${selectedOrder.status === s.id ? 'bg-gold-400 text-brand-950 scale-105 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  </div>
+                        </div>
+
+                        <div className="mt-8 bg-brand-900 text-gold-400 p-8 rounded-[3rem] flex justify-between items-center shadow-2xl shadow-brand-900/20">
+                            <div>
+                                <p className="text-[10px] font-black tracking-[0.4em] uppercase opacity-60 mb-1">სულ გადასახდელი</p>
+                                <h3 className="text-3xl font-serif">ჯამური ღირებულება</h3>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-4xl font-black tracking-tighter">₾{selectedOrder.total_price.toLocaleString()}</span>
+                            </div>
+                        </div>
+                      </section>
+                      
+                      <section className="bg-gray-50 p-8 rounded-[3rem] border border-gray-100">
+                        <h4 className="text-[10px] font-black tracking-[0.3em] text-brand-300 uppercase mb-6 flex items-center gap-2">
+                            <RefreshCw size={12} className="text-gold-500" />
+                            შეკვეთის სტატუსის მართვა
+                        </h4>
+                        <div className="flex flex-wrap gap-3">
+                          {[
+                            { id: 'pending', label: 'ახალი შეკვეთა', color: 'bg-blue-500' },
+                            { id: 'processing', label: 'მუშავდება', color: 'bg-amber-500' },
+                            { id: 'shipped', label: 'გაგზავნილია', color: 'bg-purple-500' },
+                            { id: 'delivered', label: 'დასრულებული', color: 'bg-emerald-500' },
+                            { id: 'cancelled', label: 'გაუქმებული', color: 'bg-rose-500' }
+                          ].map(s => (
+                            <button 
+                              key={s.id}
+                              onClick={() => handleStatusUpdate(selectedOrder.id, s.id)}
+                              disabled={isUpdatingStatus}
+                              className={`
+                                flex-1 min-w-[140px] px-6 py-4 rounded-2xl text-[10px] font-black tracking-[0.1em] uppercase transition-all duration-300 border-none outline-none cursor-pointer
+                                ${selectedOrder.status === s.id 
+                                  ? 'bg-brand-900 text-gold-400 shadow-xl scale-105 ring-2 ring-gold-400/20' 
+                                  : 'bg-white text-brand-400 hover:text-brand-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-100'}
+                              `}
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${selectedOrder.status === s.id ? 'bg-gold-400 animate-pulse' : 'bg-gray-200'}`} />
+                                {s.label}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    </div>
                 </div>
               </div>
             </motion.div>
