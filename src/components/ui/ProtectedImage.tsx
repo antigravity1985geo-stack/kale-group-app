@@ -14,7 +14,7 @@ const ProtectedImage: React.FC<ProtectedImageProps> = ({
   ...props 
 }) => {
   return (
-    <div className={`relative group select-none ${containerClassName}`} style={{ WebkitUserSelect: 'none' }}>
+    <div className={`relative group select-none w-full h-full ${containerClassName}`} style={{ WebkitUserSelect: 'none' }}>
       {/* Base Image */}
       <img 
         src={src} 
