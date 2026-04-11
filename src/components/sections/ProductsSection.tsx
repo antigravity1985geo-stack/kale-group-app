@@ -260,7 +260,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 lg:gap-10">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
                 {[...Array(itemsPerPage)].map((_, i) => <ProductSkeleton key={i} />)}
               </div>
             ) : totalItems === 0 ? (
@@ -276,7 +276,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
               </div>
             ) : (
               <>
-                <motion.div layout className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 lg:gap-10">
+                <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
                   <AnimatePresence mode="popLayout">
                     {currentProducts.map((product, i) => (
                       <motion.div 

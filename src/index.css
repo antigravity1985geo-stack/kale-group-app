@@ -97,6 +97,11 @@ body {
   50%       { transform: translateY(6px); opacity: 0.5; }
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* ==========================================
    UTILITY CLASSES
    ========================================== */
@@ -160,6 +165,15 @@ body {
 /* Pulse gold */
 .animate-pulse-gold {
   animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* Infinite Marquee */
+.animate-marquee-slow {
+  animation: marquee 60s linear infinite;
+}
+
+.pause-on-hover:hover {
+  animation-play-state: paused !important;
 }
 
 /* Premium card hover */
