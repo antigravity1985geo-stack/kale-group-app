@@ -16,8 +16,9 @@ export const generateOrderReceipt = async (order: any, items: any[]) => {
   const doc = new jsPDF();
   
   try {
-    // 1. Load Georgian Font
-    const response = await fetch('/fonts/NotoSansGeorgian.ttf');
+    // 1. Load Georgian Font from CDN (Fontsource / jsDelivr)
+    const response = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-georgian@latest/georgian-400-normal.ttf');
+    if (!response.ok) throw new Error('Font download failed');
     const fontBuffer = await response.arrayBuffer();
     const fontBase64 = arrayBufferToBase64(fontBuffer);
     
