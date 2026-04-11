@@ -344,7 +344,7 @@ export default function AdminPanel() {
   const openOrderDetails = async (order: any) => {
     setSelectedOrder(order);
     setIsOrderModalOpen(true);
-    const { data, error } = await supabase.from('order_items').select('*').eq('order_id', order.id);
+    const { data, error } = await supabase.from('order_items').select('*, products(images)').eq('order_id', order.id);
     if (error) console.error('Error fetching order items:', error);
     else setOrderItems(data || []);
   };
@@ -1298,6 +1298,7 @@ export default function AdminPanel() {
                         <table className="w-full text-left text-sm">
                           <thead className="bg-gray-50 text-brand-400 uppercase text-[10px] tracking-wider">
                             <tr>
+                              <th className="px-4 py-3 w-16 text-center">ფოტო</th>
                               <th className="px-4 py-3">დასახელება</th>
                               <th className="px-4 py-3 text-center">რაოდ.</th>
                               <th className="px-4 py-3 text-right">ფასი</th>
@@ -1306,17 +1307,28 @@ export default function AdminPanel() {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                             {orderItems.map((item, idx) => (
-                              <tr key={idx}>
+                              <tr key={idx} className="hover:bg-brand-50/50 transition-colors">
+                                <td className="px-4 py-3 flex items-center justify-center">
+                                  {item.products?.images?.[0] ? (
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm flex-shrink-0">
+                                      <img src={item.products.images[0]} alt={item.product_name} className="w-full h-full object-cover" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                      <span className="text-[8px] font-bold text-gray-400 uppercase">NO IMG</span>
+                                    </div>
+                                  )}
+                                </td>
                                 <td className="px-4 py-3 font-medium text-brand-900">{item.product_name}</td>
                                 <td className="px-4 py-3 text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-right">₾{item.price_at_purchase.toLocaleString()}</td>
-                                <td className="px-4 py-3 text-right font-bold">₾{(item.quantity * item.price_at_purchase).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right text-brand-600 font-medium">₾{item.price_at_purchase.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right font-bold text-brand-900">₾{(item.quantity * item.price_at_purchase).toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
-                          <tfoot className="bg-brand-50/50">
+                          <tfoot className="bg-brand-50/50 border-t-2 border-brand-100">
                             <tr>
-                              <td colSpan={3} className="px-4 py-4 text-right font-bold text-brand-900">სულ გადასახდელი:</td>
+                              <td colSpan={4} className="px-4 py-4 text-right font-bold text-brand-900 uppercase tracking-widest text-xs">სულ გადასახდელი:</td>
                               <td className="px-4 py-4 text-right font-bold text-xl text-brand-900">₾{selectedOrder.total_price.toLocaleString()}</td>
                             </tr>
                           </tfoot>
