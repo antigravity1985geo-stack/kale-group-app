@@ -507,7 +507,7 @@ export default function AdminPanel() {
             <p className="text-sm text-brand-400">
               {activeTab === 'dashboard' && 'გაყიდვების დიაგრამები და შეკვეთების მეტრიკა'}
               {activeTab === 'products' && `${products.length} აქტიური პროდუქტი სისტემაში`}
-              {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale).length} აქტიური აქცია`}
+              {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).length} აქტიური აქცია`}
               {activeTab === 'categories' && `${categories.length} ძირითადი კატეგორია`}
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
               {activeTab === 'pos' && 'კონსულტანტის პირდაპირი გაყიდვა — ქეში, ბარათი, განვადება'}
@@ -647,7 +647,7 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {products.filter(p => p.is_on_sale).map((p) => (
+                      {products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).map((p) => (
                         <tr key={p.id} className="hover:bg-brand-50/30 transition-colors group">
                           <td className="px-6 py-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
@@ -692,7 +692,7 @@ export default function AdminPanel() {
                     </tbody>
                   </table>
                 </div>
-                {products.filter(p => p.is_on_sale).length === 0 && (
+                {products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).length === 0 && (
                   <div className="flex flex-col items-center justify-center py-24 text-gray-400">
                     <p className="text-xl font-serif text-brand-800 uppercase tracking-widest">აქტიური აქციები არ არის</p>
                     <p className="text-sm mt-2 text-brand-400">გადადით "პროდუქციაში" აქციის დასამატებლად</p>
