@@ -31,6 +31,7 @@ export default function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promotions' | 'categories' | 'orders' | 'pos' | 'team' | 'accounting' | 'manufacturing' | 'settings' | 'guide' | 'messages'>('dashboard');
   const [accSubTab, setAccSubTab] = useState<AccountingSubTab>('acc-dashboard');
+  const [promotionTab, setPromotionTab] = useState<'active' | 'history'>('active');
 
   // Permission helpers
   const canAddProducts = isAdmin || isConsultant;
@@ -389,6 +390,10 @@ export default function AdminPanel() {
     o.id.toLowerCase().includes(orderSearchQuery.toLowerCase())
   );
 
+  const activePromotions = products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime()));
+  const historyPromotions = products.filter(p => p.is_on_sale && p.sale_end_date && new Date(p.sale_end_date).getTime() <= new Date().getTime());
+  const displayedPromotions = promotionTab === 'active' ? activePromotions : historyPromotions;
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-brand-950 flex flex-col items-center justify-center p-4">
@@ -507,7 +512,7 @@ export default function AdminPanel() {
             <p className="text-sm text-brand-400">
               {activeTab === 'dashboard' && 'გაყიდვების დიაგრამები და შეკვეთების მეტრიკა'}
               {activeTab === 'products' && `${products.length} აქტიური პროდუქტი სისტემაში`}
-              {activeTab === 'promotions' && `${products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).length} აქტიური აქცია`}
+              {activeTab === 'promotions' && `${activePromotions.length} აქტიური აქცია`}
               {activeTab === 'categories' && `${categories.length} ძირითადი კატეგორია`}
               {activeTab === 'orders' && 'მომხმარებელთა შეკვეთები და სტატუსები'}
               {activeTab === 'pos' && 'კონსულტანტის პირდაპირი გაყიდვა — ქეში, ბარათი, განვადება'}
@@ -634,6 +639,20 @@ export default function AdminPanel() {
 
             {activeTab === 'promotions' && (
               <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div className="flex border-b border-gray-100 bg-gray-50/50">
+                  <button 
+                    onClick={() => setPromotionTab('active')}
+                    className={`px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all outline-none border-none cursor-pointer ${promotionTab === 'active' ? 'text-brand-900 border-b-[3px] border-gold-400 bg-white' : 'text-gray-400 hover:text-brand-600 bg-transparent'}`}
+                  >
+                    აქტიური კამპანიები ({activePromotions.length})
+                  </button>
+                  <button 
+                    onClick={() => setPromotionTab('history')}
+                    className={`px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all outline-none border-none cursor-pointer ${promotionTab === 'history' ? 'text-brand-900 border-b-[3px] border-gold-400 bg-white' : 'text-gray-400 hover:text-brand-600 bg-transparent'}`}
+                  >
+                    დასრულებული (ისტორია) ({historyPromotions.length})
+                  </button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -647,7 +666,7 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).map((p) => (
+                      {displayedPromotions.map((p) => (
                         <tr key={p.id} className="hover:bg-brand-50/30 transition-colors group">
                           <td className="px-6 py-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
@@ -683,7 +702,7 @@ export default function AdminPanel() {
                              <button onClick={() => openEditModal(p)} className="inline-flex p-2 text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-none outline-none border-none cursor-pointer" title="რედაქტირება">
                               <Edit3 size={16} />
                             </button>
-                            <button onClick={() => handleStopSale(p.id)} className="inline-flex p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-none outline-none border-none cursor-pointer" title="აქციის შეწყვეტა">
+                            <button onClick={() => handleStopSale(p.id)} className="inline-flex p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-none outline-none border-none cursor-pointer" title={promotionTab === 'active' ? "აქციის შეწყვეტა" : "ისტორიიდან წაშლა (გასუფთავება)"}>
                               <X size={16} />
                             </button>
                           </td>
@@ -692,10 +711,10 @@ export default function AdminPanel() {
                     </tbody>
                   </table>
                 </div>
-                {products.filter(p => p.is_on_sale && (!p.sale_end_date || new Date(p.sale_end_date).getTime() > new Date().getTime())).length === 0 && (
+                {displayedPromotions.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                    <p className="text-xl font-serif text-brand-800 uppercase tracking-widest">აქტიური აქციები არ არის</p>
-                    <p className="text-sm mt-2 text-brand-400">გადადით "პროდუქციაში" აქციის დასამატებლად</p>
+                    <p className="text-xl font-serif text-brand-800 uppercase tracking-widest">{promotionTab === 'active' ? 'აქტიური აქციები არ არის' : 'ისტორია ცარიელია'}</p>
+                    {promotionTab === 'active' && <p className="text-sm mt-2 text-brand-400">გადადით "პროდუქციაში" აქციის დასამატებლად</p>}
                   </div>
                 )}
               </div>

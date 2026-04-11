@@ -138,13 +138,13 @@ export default function POSModule() {
 
       if (orderErr) throw orderErr;
 
-      // Insert order items
       const items = cart.map(i => ({
         order_id: order.id,
         product_id: i.product.id,
         product_name: i.product.name,
         quantity: i.quantity,
         price_at_purchase: getProductPrice(i.product),
+        is_promotional_sale: i.product.is_on_sale && i.product.sale_price != null && i.product.sale_price > 0,
       }));
 
       const { error: itemErr } = await supabase.from('order_items').insert(items);

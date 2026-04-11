@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KALE GROUP | Architectural Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@300;400;700&amp;family=Manrope:wght@300;400;600&amp;family=Inter:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#c8c6c5",
+                        "secondary": "#e9c349",
+                        "surface": "#131313",
+                        "on-surface": "#e5e2e1",
+                        "on-secondary": "#3c2f00",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-variant": "#353534"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Manrope', sans-serif;
+            overflow-x: hidden;
+            border-radius: 0px !important;
+        }
+        * { border-radius: 0px !important; }
+        .hero-split-glass {
+            backdrop-filter: blur(40px);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .text-huge {
+            font-size: clamp(4rem, 15vw, 12rem);
+            line-height: 0.8;
+        }
+        .radial-line {
+            height: 1px;
+            background: linear-gradient(90deg, #e9c349 0%, transparent 100%);
+            transform-origin: left center;
+        }
+        .carousel-container {
+            perspective: 2000px;
+        }
+        .carousel-card {
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .carousel-card:hover {
+            transform: rotateY(-15deg) translateZ(50px);
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .drawer {
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .drawer-hidden {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body class="bg-surface selection:bg-secondary selection:text-on-secondary">
+<!-- TopAppBar Component -->
+<header class="fixed top-0 w-full flex justify-between items-center px-8 py-6 z-50 bg-[#131313]/40 backdrop-blur-xl border-b border-[#1c1b1b]">
+<div class="flex items-center space-x-12">
+<div class="text-2xl font-bold text-[#e9c349] tracking-tighter font-headline">KALE GROUP</div>
+<nav class="hidden lg:flex items-center space-x-8 font-headline uppercase tracking-[0.1em] text-sm">
+<a class="text-[#e9c349] border-b border-[#e9c349] pb-1" href="#">Collections</a>
+<a class="text-[#d3c5ad] hover:text-[#e9c349] transition-colors duration-500" href="#">Atelier</a>
+<a class="text-[#d3c5ad] hover:text-[#e9c349] transition-colors duration-500" href="#">Heritage</a>
+</nav>
+</div>
+<div class="flex items-center space-x-6">
+<div class="hidden md:flex items-center bg-[#1c1b1b] px-4 py-2 border border-white/10">
+<span class="material-symbols-outlined text-[#d3c5ad] text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-[10px] tracking-widest text-[#d3c5ad] w-32 placeholder:text-[#474746]" placeholder="SEARCH PIECES" type="text"/>
+</div>
+<button class="material-symbols-outlined text-[#d3c5ad] hover:text-[#e9c349] transition-all">person</button>
+<div class="flex items-center space-x-1 cursor-pointer group">
+<span class="material-symbols-outlined text-[#d3c5ad] group-hover:text-[#e9c349]">language</span>
+<span class="font-label text-[10px] tracking-widest text-[#d3c5ad] group-hover:text-[#e9c349]">EN/GE</span>
+</div>
+<button class="material-symbols-outlined text-[#d3c5ad] hover:text-[#e9c349] transition-all" onclick="toggleDrawer('wishlist')">favorite</button>
+<button class="material-symbols-outlined text-[#d3c5ad] hover:text-[#e9c349] transition-all relative" onclick="toggleDrawer('cart')">
+            shopping_cart
+            <span class="absolute -top-1 -right-1 bg-[#e9c349] text-[#131313] text-[8px] font-bold w-3 h-3 flex items-center justify-center rounded-none">2</span>
+</button>
+<button class="material-symbols-outlined text-[#d3c5ad] hover:text-[#e9c349] transition-all">contrast</button>
+</div>
+</header>
+<!-- SideNavBar Component -->
+<aside class="fixed left-0 top-0 h-full flex flex-col items-center py-10 z-40 w-20 border-r border-[#1c1b1b] bg-[#131313]">
+<div class="mb-12 flex flex-col items-center">
+<span class="text-xl font-black text-[#e9c349] font-headline">KALE</span>
+<span class="font-inter uppercase tracking-[0.2em] text-[6px] text-[#d3c5ad] mt-1">Monolith</span>
+</div>
+<div class="flex-1 flex flex-col space-y-10 justify-center">
+<div class="group relative flex items-center justify-center w-12 h-12 bg-[#e9c349] text-[#131313] cursor-pointer">
+<span class="material-symbols-outlined">architecture</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-[#1c1b1b] text-[#e9c349] text-[8px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">HOME</span>
+</div>
+<div class="group relative flex items-center justify-center w-12 h-12 text-[#d3c5ad] opacity-60 hover:opacity-100 hover:bg-[#1c1b1b] cursor-pointer transition-all">
+<span class="material-symbols-outlined">diamond</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-[#1c1b1b] text-[#e9c349] text-[8px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">VAULT</span>
+</div>
+<div class="group relative flex items-center justify-center w-12 h-12 text-[#d3c5ad] opacity-60 hover:opacity-100 hover:bg-[#1c1b1b] cursor-pointer transition-all">
+<span class="material-symbols-outlined">gallery_thumbnail</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-[#1c1b1b] text-[#e9c349] text-[8px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">EXHIBITION</span>
+</div>
+<div class="group relative flex items-center justify-center w-12 h-12 text-[#d3c5ad] opacity-60 hover:opacity-100 hover:bg-[#1c1b1b] cursor-pointer transition-all">
+<span class="material-symbols-outlined">auto_fix</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-[#1c1b1b] text-[#e9c349] text-[8px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">PROCESS</span>
+</div>
+<div class="group relative flex items-center justify-center w-12 h-12 text-[#d3c5ad] opacity-60 hover:opacity-100 hover:bg-[#1c1b1b] cursor-pointer transition-all">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-[#1c1b1b] text-[#e9c349] text-[8px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">CONCIERGE</span>
+</div>
+</div>
+</aside>
+<!-- Shopping Cart Drawer -->
+<div class="fixed inset-y-0 right-0 w-full md:w-[400px] bg-surface-container-low z-[100] border-l border-white/5 drawer drawer-hidden flex flex-col shadow-2xl" id="cart-drawer">
+<div class="p-8 border-b border-white/10 flex justify-between items-center">
+<h2 class="font-headline text-2xl tracking-widest">YOUR COLLECTION</h2>
+<button class="material-symbols-outlined hover:text-secondary" onclick="toggleDrawer('cart')">close</button>
+</div>
+<div class="flex-1 p-8 overflow-y-auto space-y-8">
+<!-- Placeholder Cart Items -->
+<div class="flex space-x-4">
+<div class="w-24 h-24 bg-surface-variant flex-shrink-0">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAloGx52PdNeclp8bhma3BZO8U6e6Ok5WlFHqcwBmbXRvyeKtsy8yB4qww7lJvrllDDyfZH4T0LWQNm5A6h_Kos0MJsWSRD8CmWeKHa6_UYNAECZVqc2RvF9lx8MOyZIOV2W2aIYNxVVoHqVSn1hOsSEqGfu73PkL4teIc6Cp-uSUApsTdoY16YKJyKnSBumIfKKdpaxMWSxCyINrMaO4aUiim6TYiSUmm92GQuTh50MeNDNqvlD7Waabx5s_Z4D5wqGau4zq77LM87"/>
+</div>
+<div class="flex-1">
+<h4 class="font-headline text-sm">LUNE LOUNGE CHAIR</h4>
+<p class="text-[10px] text-white/40 tracking-widest">ALUMINUM / SUEDE</p>
+<div class="mt-4 flex justify-between items-center">
+<span class="text-secondary text-xs">$3,250.00</span>
+<button class="text-[10px] underline underline-offset-4 text-white/40">REMOVE</button>
+</div>
+</div>
+</div>
+</div>
+<div class="p-8 border-t border-white/10 bg-surface">
+<div class="flex justify-between items-center mb-6">
+<span class="font-label text-xs tracking-widest text-white/60">SUBTOTAL</span>
+<span class="font-headline text-xl text-secondary">$3,250.00</span>
+</div>
+<button class="w-full py-4 bg-[#e9c349] text-[#131313] font-bold tracking-[0.2em] text-[10px] hover:bg-white transition-colors">PROCEED TO ACQUISITION</button>
+</div>
+</div>
+<!-- Wishlist Drawer (Shared style) -->
+<div class="fixed inset-y-0 right-0 w-full md:w-[400px] bg-surface-container-low z-[100] border-l border-white/5 drawer drawer-hidden flex flex-col shadow-2xl" id="wishlist-drawer">
+<div class="p-8 border-b border-white/10 flex justify-between items-center">
+<h2 class="font-headline text-2xl tracking-widest">CURATED LIST</h2>
+<button class="material-symbols-outlined hover:text-secondary" onclick="toggleDrawer('wishlist')">close</button>
+</div>
+<div class="flex-1 p-8 flex flex-col items-center justify-center text-center opacity-40">
+<span class="material-symbols-outlined text-6xl mb-4">favorite</span>
+<p class="font-label text-[10px] tracking-[0.2em]">YOUR WISHLIST IS VACANT</p>
+</div>
+</div>
+<main>
+<!-- Hero Section -->
+<section class="relative h-screen w-full overflow-hidden flex">
+<div class="absolute inset-0 z-0">
+<img alt="Luxury interior" class="w-full h-full object-cover grayscale-[0.2] contrast-[1.1]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFVAUtmhBB6_Qp1ixg_6W2vZFfHLJ0jPIp4Z4_Zu9Oiog5DF9lrKesphKzs2bsP0lN8LkDjURONg9LTM9nA9EiHwmvYnjdKm7MA4io4iJFxZyv0lTlw70pUbCpe7ZLe9wlSPuTk5vQxyejvixWT353-djmCdZI87WZBJts4YJczXpg9huvd9gDcHPo7P8GVDjhIq0uW3KsZovALeKAbg-_H1lQTm1yfrnAlfg_StksyaOrnECGbp1ZrGIB50iXpGLH19wCxpGfMTvx"/>
+<div class="absolute inset-0 bg-gradient-to-b from-surface/20 via-transparent to-surface"></div>
+</div>
+<div class="relative z-10 w-1/2 h-full hero-split-glass flex items-center justify-end pr-8 md:pr-0">
+<h1 class="text-huge font-headline font-bold text-white tracking-tighter opacity-90 select-none">KALE</h1>
+<div class="absolute bottom-20 left-12 reveal">
+<p class="font-label text-[10px] tracking-[0.4em] text-secondary mb-4">ARCHITECTURAL MASTERY</p>
+<button class="group flex items-center space-x-4">
+<span class="font-headline text-3xl italic font-light hover:text-secondary transition-colors">DISCOVER COLLECTIONS</span>
+<div class="h-[1px] w-12 bg-white group-hover:w-24 transition-all duration-700"></div>
+</button>
+</div>
+</div>
+<div class="relative z-10 w-1/2 h-full flex items-center justify-start pl-8 md:pl-0">
+<h1 class="text-huge font-headline font-bold text-secondary tracking-tighter select-none">GROUP</h1>
+</div>
+</section>
+<!-- 3D Category Carousel Section -->
+<section class="py-32 pl-20 bg-surface reveal overflow-hidden">
+<div class="mb-20 px-12 max-w-4xl">
+<span class="font-label text-[10px] tracking-[0.3em] text-secondary">CURATED SPACES</span>
+<h2 class="font-headline text-6xl mt-4 leading-tight">Sculptural Form <br/>&amp; Functional Silence</h2>
+</div>
+<div class="carousel-container flex space-x-12 overflow-x-auto pb-12 px-12 no-scrollbar">
+<!-- Carousel Item 1: Kitchen -->
+<div class="flex-none w-[450px] aspect-[4/5] relative group cursor-pointer carousel-card">
+<img alt="Kitchen" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYRGiD4XGYDbrfrMo2u28rIU6rBdQhDjUiHlXn28c3DDdS1DnXVstjZlwSmLGs1djJwN7j0-dJfRa2R-y4WRXAVCsuLotD4RTz9ToXSK8jFL7ejEvQ9Olbsy4YUz-t70icS0PpdFnydmlDXvudakXvBeC5TCOM0xPIANaR2JbBE4CtuOps3YzSOZE1QZrMn8x2WjttFLxV-VhsLmeImso61XA-yl1njWljKj6Ip8x1htbo4expn89BJdy2V8XcZugVmRo1PdLmDvZX"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 w-full p-8 border-t border-white/5 bg-surface/20 backdrop-blur-md flex justify-between items-end">
+<div>
+<h3 class="font-headline text-3xl mb-1">Kitchen</h3>
+<p class="font-label text-[10px] tracking-widest text-white/60 uppercase">The Culinary Atelier</p>
+</div>
+<span class="material-symbols-outlined text-secondary">arrow_outward</span>
+</div>
+</div>
+<!-- Carousel Item 2: Bedroom -->
+<div class="flex-none w-[450px] aspect-[4/5] relative group cursor-pointer carousel-card">
+<img alt="Bedroom" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRE2Etw5zXDJwMjykT6fqbCnieCrIcEoubV4ujPqiLq8V3wQ5EgPdRjuH1YhkKgy8Hx9XUw_V8m3X5MqW_WC983EnKOT33FNU7jDdRNwxzbMGejDwSwgh655swjQ1vtoyd5Miz0wr_b8EICx3w6Rz4q0ZyaqOmA9UnS4jxA2US_87yMQPW8iNU-Q6OyDzwCPbRG32YVvcBl_kYv0NM-2GzLWLU_fr7_PjjGE5pA4QnvGgNhJV3B3OUZtFXaHI03nDlLwlAElUTMVj8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 w-full p-8 border-t border-white/5 bg-surface/20 backdrop-blur-md flex justify-between items-end">
+<div>
+<h3 class="font-headline text-3xl mb-1">Bedroom</h3>
+<p class="font-label text-[10px] tracking-widest text-white/60 uppercase">Sanctuary of Rest</p>
+</div>
+<span class="material-symbols-outlined text-secondary">arrow_outward</span>
+</div>
+</div>
+<!-- Carousel Item 3: Living Room -->
+<div class="flex-none w-[450px] aspect-[4/5] relative group cursor-pointer carousel-card">
+<img alt="Living Room" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJLTZumgQJwJYJCAcAzHkFgJJg2s3sU3JmJItP1XTJIL0Dr-VHCAoqx00CMohuFkKX6M6pNbmkn1twN3yrSr_OrNpF2G585Phy64dRr7lyGuxKOosL4AZnzk-wcnOyiay1mxxbj7M_gYRe8meL2EyBgJAKMRLBc3v5SNOtjptYQVV_DhVvOW10L3GxesKPhm2jfju38wjlwqcZiuZ8XXaTKmPXO4ufDwVLhhrU745iTphwq_X70rsIouvtmkjGeiVUbMmijTGN_diq"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 w-full p-8 border-t border-white/5 bg-surface/20 backdrop-blur-md flex justify-between items-end">
+<div>
+<h3 class="font-headline text-3xl mb-1">Living Room</h3>
+<p class="font-label text-[10px] tracking-widest text-white/60 uppercase">The Formal Gallery</p>
+</div>
+<span class="material-symbols-outlined text-secondary">arrow_outward</span>
+</div>
+</div>
+<!-- Carousel Item 4: Office -->
+<div class="flex-none w-[450px] aspect-[4/5] relative group cursor-pointer carousel-card">
+<img alt="Office" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAloGx52PdNeclp8bhma3BZO8U6e6Ok5WlFHqcwBmbXRvyeKtsy8yB4qww7lJvrllDDyfZH4T0LWQNm5A6h_Kos0MJsWSRD8CmWeKHa6_UYNAECZVqc2RvF9lx8MOyZIOV2W2aIYNxVVoHqVSn1hOsSEqGfu73PkL4teIc6Cp-uSUApsTdoY16YKJyKnSBumIfKKdpaxMWSxCyINrMaO4aUiim6TYiSUmm92GQuTh50MeNDNqvlD7Waabx5s_Z4D5wqGau4zq77LM87"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 w-full p-8 border-t border-white/5 bg-surface/20 backdrop-blur-md flex justify-between items-end">
+<div>
+<h3 class="font-headline text-3xl mb-1">Office</h3>
+<p class="font-label text-[10px] tracking-widest text-white/60 uppercase">Commanding Focus</p>
+</div>
+<span class="material-symbols-outlined text-secondary">arrow_outward</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Products Section -->
+<section class="py-32 pl-20 pr-12 bg-surface-container-low reveal">
+<div class="flex justify-between items-end mb-24">
+<div>
+<span class="font-label text-[10px] tracking-[0.3em] text-secondary">NEW ACQUISITIONS</span>
+<h2 class="font-headline text-5xl mt-4">The Obsidian Series</h2>
+</div>
+<div class="flex space-x-4">
+<button class="w-12 h-12 flex items-center justify-center border border-white/10 hover:border-secondary transition-colors">
+<span class="material-symbols-outlined">west</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center border border-white/10 hover:border-secondary transition-colors">
+<span class="material-symbols-outlined">east</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Product 1 -->
+<div class="space-y-6 group">
+<div class="aspect-square relative overflow-hidden bg-surface">
+<img alt="Chair" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAloGx52PdNeclp8bhma3BZO8U6e6Ok5WlFHqcwBmbXRvyeKtsy8yB4qww7lJvrllDDyfZH4T0LWQNm5A6h_Kos0MJsWSRD8CmWeKHa6_UYNAECZVqc2RvF9lx8MOyZIOV2W2aIYNxVVoHqVSn1hOsSEqGfu73PkL4teIc6Cp-uSUApsTdoY16YKJyKnSBumIfKKdpaxMWSxCyINrMaO4aUiim6TYiSUmm92GQuTh50MeNDNqvlD7Waabx5s_Z4D5wqGau4zq77LM87"/>
+<div class="absolute top-6 left-6 bg-secondary text-on-secondary px-3 py-1 font-label text-[10px] tracking-widest">LIMITED</div>
+<div class="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<button class="w-full bg-white text-surface py-4 font-label text-xs tracking-widest hover:bg-secondary hover:text-on-secondary transition-colors uppercase">Add to Collection</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline text-xl">Lune Lounge Chair</h4>
+<p class="font-label text-[10px] tracking-widest text-white/40 mt-1 uppercase">Brushed Aluminum &amp; Suede</p>
+</div>
+<span class="font-label text-sm text-secondary">$3,250.00</span>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="space-y-6 group">
+<div class="aspect-square relative overflow-hidden bg-surface">
+<img alt="Table" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEBLvb-TCM-LedgXEKQoRZC76bn2Q63RCwaWdrAdufybQ5xB3P0xRL7mpOzlpb4JK_grBsv0FXfHiXmpD6JP3YPP2uxz-gaYIqA8lFqp-DS4t49l9_Za31VTA7_wulwXrQAfMwJoLxqyxnbfwiUbsSCRP5_U22jtfsSinYRWwTofS9DZ0xyPUpMgS8DZD4PT62mk3qY5T3X8yaYN_DJdER_nvv6DtyJIA7f4TWU7tQ-aaVP1Gaa4m2l4ck_EDx86NXPpynOx8ToD11"/>
+<div class="absolute top-6 left-6 bg-white/10 backdrop-blur-md text-white px-3 py-1 font-label text-[10px] tracking-widest">BESPOKE</div>
+<div class="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<button class="w-full bg-white text-surface py-4 font-label text-xs tracking-widest hover:bg-secondary hover:text-on-secondary transition-colors uppercase">Add to Collection</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline text-xl">Marquina Monolith</h4>
+<p class="font-label text-[10px] tracking-widest text-white/40 mt-1 uppercase">Nero Marquina Marble</p>
+</div>
+<span class="font-label text-sm text-secondary">$7,800.00</span>
+</div>
+</div>
+<!-- Product 3 -->
+<div class="space-y-6 group">
+<div class="aspect-square relative overflow-hidden bg-surface">
+<img alt="Sofa" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAG0NXMqfq4F2xdT-cQJemCVK7ezhjEsov-_3dRRB1GwE11MNpSi6O67zSqdnCIQls8kgaO--km9nopIZKi0VhYKUeiAMKZYDnPnCWQEGCVoyz5ZXYXfzWLv1eo0BzmlHzjUoq_sQ0mre-trQMGHYBqI2AFNOxag8mjY4HM7Wdnlk3OzFRZ2jhfhO3Q0T3kVFSNw1hjacPAEKx2NzdLgDTuHUDdYBx8egj90nq_mE6eoihhGcIJCkaEIPdOQLXQBLCpxrWeFKP78nD6"/>
+<div class="absolute top-6 left-6 bg-secondary text-on-secondary px-3 py-1 font-label text-[10px] tracking-widest">NEW ARRIVAL</div>
+<div class="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<button class="w-full bg-white text-surface py-4 font-label text-xs tracking-widest hover:bg-secondary hover:text-on-secondary transition-colors uppercase">Add to Collection</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline text-xl">Vitra Modular Sofa</h4>
+<p class="font-label text-[10px] tracking-widest text-white/40 mt-1 uppercase">Kvadrat Textile &amp; Oak</p>
+</div>
+<span class="font-label text-sm text-secondary">$12,400.00</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- AI ChatBot Widget -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-secondary text-on-secondary flex items-center justify-center z-50 group hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="absolute right-full mr-4 px-3 py-2 bg-surface-container-low border border-white/10 text-white text-[10px] tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">CONSULT ARCHITECT AI</span>
+</button>
+<!-- Footer Component -->
+<footer class="w-full px-12 py-8 flex flex-col md:flex-row justify-between items-center border-t border-[#1c1b1b] bg-[#131313] ml-20">
+<div class="font-inter text-[10px] tracking-widest uppercase text-[#d3c5ad]">
+        © 2024 KALE GROUP. ALL RIGHTS RESERVED.
+    </div>
+<div class="flex space-x-8 mt-4 md:mt-0">
+<a class="font-inter text-[10px] tracking-widest uppercase text-[#d3c5ad] hover:text-white transition-colors" href="#">Privacy</a>
+<a class="font-inter text-[10px] tracking-widest uppercase text-[#d3c5ad] hover:text-white transition-colors" href="#">Terms</a>
+<a class="font-inter text-[10px] tracking-widest uppercase text-[#d3c5ad] hover:text-white transition-colors" href="#">Bespoke Services</a>
+<a class="font-inter text-[10px] tracking-widest uppercase text-[#d3c5ad] hover:text-white transition-colors" href="#">Global Press</a>
+</div>
+</footer>
+<script>
+    function toggleDrawer(type) {
+        const cart = document.getElementById('cart-drawer');
+        const wishlist = document.getElementById('wishlist-drawer');
+        
+        if (type === 'cart') {
+            cart.classList.toggle('drawer-hidden');
+            wishlist.classList.add('drawer-hidden');
+        } else if (type === 'wishlist') {
+            wishlist.classList.toggle('drawer-hidden');
+            cart.classList.add('drawer-hidden');
+        }
+    }
+
+    // Scroll Reveal Logic
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body></html>

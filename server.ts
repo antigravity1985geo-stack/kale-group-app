@@ -244,7 +244,8 @@ async function setupApp() {
           product_id: product.id,
           product_name: product.name,
           quantity: item.quantity,
-          price_at_purchase: effectivePrice  // records the actual price paid (sale or regular)
+          price_at_purchase: effectivePrice,  // records the actual price paid (sale or regular)
+          is_promotional_sale: product.is_on_sale && product.sale_price != null && product.sale_price > 0
         });
       }
 
@@ -1066,7 +1067,7 @@ async function setupApp() {
   app.get('/api/accounting/dashboard', requireAccountingRead, async (req: any, res) => {
     try {
       const [
-        revenueRes, cogsRes, invoicesRes, stockRes, vatRes, paymentBreakdownRes
+        revenueRes, cogsRes, invoicesRes, stockRes, vatRes, paymentBreakdownRes, promoSalesRes
       ] = await Promise.all([
         supabaseAdmin.from('v_profit_loss').select('account_type,amount').eq('account_type', 'REVENUE'),
         supabaseAdmin.from('v_profit_loss').select('account_type,amount').eq('account_type', 'COGS'),
@@ -1078,6 +1079,7 @@ async function setupApp() {
           .from('orders')
           .select('payment_method, total_price, status')
           .in('status', ['delivered', 'confirmed', 'completed']),
+        supabaseAdmin.from('order_items').select('price_at_purchase, quantity').eq('is_promotional_sale', true)
       ]);
 
       const revenue = (revenueRes.data || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
@@ -1087,6 +1089,7 @@ async function setupApp() {
       const totalPaidRevenue = (invoicesRes.data || []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0);
       const inventoryValue = (stockRes.data || []).reduce((s: number, r: any) => s + Number(r.total_cost_value || 0), 0);
       const latestVatPayable = vatRes.data?.[0]?.net_vat_payable || 0;
+      const promotionalSales = (promoSalesRes?.data || []).reduce((sum: number, item: any) => sum + ((Number(item.price_at_purchase) || 0) * (Number(item.quantity) || 1)), 0);
 
       // Compute payment method breakdown
       const orders = paymentBreakdownRes.data || [];
@@ -1117,6 +1120,7 @@ async function setupApp() {
           totalPaidRevenue: totalPaidRevenue.toFixed(2),
           inventoryValue: inventoryValue.toFixed(2),
           vatPayable: Number(latestVatPayable).toFixed(2),
+          promotionalSales: promotionalSales.toFixed(2),
         },
         paymentBreakdown,
         monthlySummary: monthlySummary || [],

@@ -15,6 +15,7 @@ interface KPIs {
   totalPaidRevenue: string;
   inventoryValue: string;
   vatPayable: string;
+  promotionalSales: string;
 }
 
 interface PaymentMethodData {
@@ -119,6 +120,7 @@ export default function AccountingDashboard() {
     { label: 'გადახ. ინვოის.', value: GEL(kpis.totalPaidRevenue), color: 'from-cyan-500 to-sky-600', icon: FileText, trend: '+' },
     { label: 'მარაგის ღირ.', value: GEL(kpis.inventoryValue), color: 'from-teal-500 to-green-600', icon: Warehouse, trend: '' },
     { label: 'ნეტო მოგება', value: GEL(kpis.netProfit), color: 'from-green-500 to-emerald-700', icon: Wallet, trend: '+' },
+    { label: 'აქციით გაყიდვ.', value: GEL(kpis.promotionalSales), color: 'from-fuchsia-500 to-pink-600', icon: Percent, trend: '+' },
   ] : [];
 
   const paymentMethods = paymentBreakdown ? [

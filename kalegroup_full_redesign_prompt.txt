@@ -1,0 +1,393 @@
+===================================================================
+  KALE GROUP — FULL UI REDESIGN PROMPT (Landing Page + Admin Panel)
+  Technology: React 18, Tailwind CSS, Framer Motion, Lucide React Icons
+  Backend: Supabase (PostgreSQL + Auth + Storage)
+  i18n: react-i18next (Georgian/English/Russian)
+===================================================================
+
+You are a Senior UI/UX Designer and Senior Frontend Architect.
+Your task is to completely redesign the ENTIRE visual layer (UI) of the Kale Group eCommerce platform.
+You MUST keep every single button, function, route, and feature exactly as described below.
+Only the VISUAL DESIGN changes — the structure and logic stays identical.
+
+The design direction is: ULTRA-PREMIUM, LUXURY, GLASSMORPHISM, ARCHITECTURAL.
+Color Palette: YOU MUST INVENT AND APPLY A BRAND NEW, STUNNING COLOR PALETTE. DO NOT use the existing colors (brand-50, brand-100, etc. which are beige/brown). Please select a high-end, modern color scheme (e.g. sleek dark mode, deep rich tones, or minimalist pure aesthetics) that fits a premium furniture brand. Be creative and wow the user.
+Typography: Select modern, premium fonts (e.g., Noto Serif, Inter, Manrope, or similar google fonts).
+Border Radius: 0px everywhere (sharp, architectural edges) or whatever fits your luxury design.
+Animations: Framer Motion with smooth cubic-bezier easing.
+
+===================================================================
+PART 1: LANDING PAGE (Public-Facing Website)
+===================================================================
+
+FILE: src/pages/HomePage.tsx
+ROUTE: / (root)
+
+This is the main public page. It renders these sections IN ORDER:
+1. HeroSection
+2. CategoriesSection
+3. AboutSection
+4. ProductsSection
+5. AIGeneratorSection
+6. ContactSection
+7. BackToTop (floating button)
+
+STATE: HomePage manages `activeCategory` (string) state.
+- CategoriesSection receives `onCategorySelected` callback.
+- ProductsSection receives `activeCategory` and `setActiveCategory`.
+
+-------------------------------------------------------------------
+SECTION 1: HEADER (src/components/layout/Header.tsx)
+-------------------------------------------------------------------
+- Sticky navigation bar. Transparent when at top, solid on scroll.
+- HIDES on /admin route (returns null).
+
+DESKTOP ELEMENTS (left to right):
+  - Logo: "KALE" + "GROUP" (brand-colored span). Links to "/".
+  - Nav Links (4 items):
+    * Home → "/"
+    * Products → "/#products"
+    * AI Design → "/#ai-generator"
+    * Contact → "/#contact"
+  - Language Switcher: 3 buttons (Georgian 🇬🇪, English 🇺🇸, Russian 🇷🇺).
+    Uses i18n.changeLanguage(). Saves to localStorage('kalegroup-lang').
+  - Social Icons: Facebook, Instagram, TikTok (custom SVG).
+  - Search Button: Opens SearchModal (Ctrl+K shortcut).
+  - Wishlist Heart: Shows badge count. Opens WishlistDrawer via onOpenWishlist().
+  - Cart Bag: Shows badge count. Opens CartDrawer via setIsCartOpen(true).
+
+MOBILE ELEMENTS:
+  - Search, Wishlist, Cart (compact icons).
+  - Hamburger Menu → full-screen overlay with nav links + language switcher + social icons.
+
+NEW DESIGN REQUIREMENT:
+  - Add a Dark/Light Mode toggle icon to the header.
+  - Make the mobile menu use glassmorphism (backdrop-blur, semi-transparent).
+
+-------------------------------------------------------------------
+SECTION 2: HERO SECTION (src/components/sections/HeroSection.tsx)
+-------------------------------------------------------------------
+CURRENT: Full-screen background image with centered text.
+
+NEW DESIGN (from reference images):
+  - Split the screen 50/50 vertically.
+  - LEFT HALF: Heavy frosted glass overlay (backdrop-blur-2xl). Display "KALE" in massive bold serif.
+  - RIGHT HALF: Clear background image of luxury furniture. Display "GROUP" in massive bold serif.
+  - The two words must align in the center, creating a dramatic split effect.
+  - Below the title: A badge "PREMIUM FURNITURE" and two CTA buttons:
+    * "Shop Collection" → scrolls to #products
+    * "Get Consultation" → scrolls to #contact
+  - Stats row: "10+ Years", "500+ Projects", "100% Quality"
+  - Scroll indicator at bottom.
+
+TRANSLATIONS USED: hero.badge, hero.title, hero.titleSpan, hero.subtitle, hero.btnProducts, hero.btnConsult, hero.stats.experience, hero.stats.projects, hero.stats.quality
+
+-------------------------------------------------------------------
+SECTION 3: CATEGORIES (src/components/sections/CategoriesSection.tsx)
+-------------------------------------------------------------------
+PROPS: onCategorySelected: (category: string) => void
+DATA SOURCE: useCategories() hook → fetches from Supabase 'categories' table.
+
+CURRENT: 4-column grid of category cards with images.
+
+NEW DESIGN:
+  - Horizontal scrolling carousel with 3D perspective effect.
+  - Cards slide from RIGHT to LEFT.
+  - Each card: Full image background, category name overlaid, "View" link.
+  - On click: calls onCategorySelected(cat.name) and scrolls to #products.
+
+TRANSLATIONS: categories.badge, categories.title, categories.loading, categories.view
+
+-------------------------------------------------------------------
+SECTION 4: ABOUT (src/components/sections/AboutSection.tsx)
+-------------------------------------------------------------------
+LAYOUT: Split — image left, text right.
+- Left: Large image with floating "10+" experience counter.
+- Right: Badge, Title, description, 4 feature icons (Shield/Award/Truck/Sparkles), and mission quote.
+- Uses IntersectionObserver for counter animation.
+
+TRANSLATIONS: about.badge, about.title, about.titleHighlight, about.description, about.experienceLabel, about.featureWarranty, about.featureQuality, about.featureDelivery, about.featureDesign, about.mission
+
+-------------------------------------------------------------------
+SECTION 5: PRODUCTS (src/components/sections/ProductsSection.tsx)
+-------------------------------------------------------------------
+PROPS: activeCategory: string, setActiveCategory: (category: string) => void
+DATA: useProducts(activeCategory), useCategories()
+CONTEXT: useCart() for addToCart(), useWishlist() for toggleWishlist()/isInWishlist()
+
+FEATURES:
+  - Category filter buttons (tabs) at top.
+  - Sidebar with filters:
+    * Price range slider (0-10000 GEL).
+    * Checkboxes: "On Sale Only", "In Stock Only".
+  - Toolbar: Items per page (9/12/18/24), Sort (default/price-asc/price-desc), Grid view toggle.
+  - Product cards: Image, name, category tag, material tag, price. Hover shows Wishlist heart + Add to Cart bag.
+  - Sale badge with -XX% discount.
+  - Countdown timer for time-limited sales.
+  - Pagination controls.
+  - Clicking a product navigates to /product/{id}.
+
+TRANSLATIONS: products.badge, products.title, products.titleHighlight, products.all, products.filterLabel, products.priceFilter, products.statusFilter, products.onSale, products.inStock, products.show, products.sortDefault, products.sortPriceLow, products.sortPriceHigh, product.notFound
+
+-------------------------------------------------------------------
+SECTION 6: AI GENERATOR (src/components/sections/AIGeneratorSection.tsx)
+-------------------------------------------------------------------
+FUNCTION: Calls /api/ai/generate-image endpoint with prompt + optional room image.
+
+LAYOUT: Split — form left, preview right.
+- Step 1: Upload room photo (file input).
+- Step 2: Text prompt textarea.
+- Generate button (gold, with Sparkles icon).
+- Right side: Generated image preview with Download and Regenerate buttons.
+
+TRANSLATIONS: ai.badge, ai.title, ai.titleHighlight, ai.description, ai.step1, ai.step2, ai.upload, ai.promptPlaceholder, ai.btnGenerate, ai.btnCreate, ai.resultPlaceholder, ai.errorGen, ai.errorGeneral
+
+-------------------------------------------------------------------
+SECTION 7: CONTACT (src/components/sections/ContactSection.tsx)
+-------------------------------------------------------------------
+BACKEND: Submits to Supabase 'contact_messages' table.
+LAYOUT: Info left, form right.
+- Left: Phone, Email, Address + Showroom map preview.
+- Right: Glassmorphic form with Name, Phone, Message fields + Submit button.
+- Success state: Checkmark animation.
+
+TRANSLATIONS: contact.badge, contact.title, contact.phoneLabel, contact.emailLabel, contact.addressLabel, contact.addressValue, contact.visitShowroom, contact.showroomDesc, contact.viewOnMap, contact.writeUs, contact.nameLabel, contact.namePlaceholder, contact.phonePlaceholder, contact.ideaLabel, contact.messagePlaceholder, contact.btnSend, contact.successMsgTitle, contact.successMsgBody, contact.newForm
+
+-------------------------------------------------------------------
+SECTION 8: FOOTER (src/components/layout/Footer.tsx)
+-------------------------------------------------------------------
+- 4 columns: Logo/description/social, Navigation links, Contact info, Newsletter form.
+- Newsletter submits to Supabase 'newsletter_subscribers' table.
+- Bottom: Copyright + Privacy/Terms links.
+- HIDES on /admin route.
+
+-------------------------------------------------------------------
+GLOBAL UI COMPONENTS
+-------------------------------------------------------------------
+- CartDrawer: Slide-out panel from right. Shows cart items with quantity controls.
+- WishlistDrawer: Slide-out panel. Shows wishlist items.
+- AIChatBot: Floating button bottom-right, expands to chat window.
+- SearchModal: Full-screen modal with product search. Opens via Ctrl+K.
+- BackToTop: Floating scroll-to-top button.
+
+===================================================================
+PART 2: ADMIN PANEL (src/AdminPanel.tsx)
+===================================================================
+
+ROUTE: /admin
+AUTH: Supabase Auth. Roles: admin, consultant, accountant.
+PERMISSIONS:
+  - Admin: Full access to everything.
+  - Consultant: Products, Categories, Orders, POS. No accounting.
+  - Accountant: Orders, Accounting, Manufacturing. No product management.
+
+-------------------------------------------------------------------
+LOGIN SCREEN
+-------------------------------------------------------------------
+- Shows when user is not authorized.
+- Email + Password form.
+- Error message if user lacks role permissions.
+
+-------------------------------------------------------------------
+MAIN LAYOUT (after login)
+-------------------------------------------------------------------
+LEFT SIDEBAR:
+  - Logo: "KALE" + "ADMIN". Clicking logo goes to "/".
+  - User info: full_name or email. Role badge (Admin/Consultant/Accountant).
+  - Navigation buttons (role-based visibility):
+    * Dashboard (სტატისტიკა) — icon: TrendingUp
+    * Products (პროდუქცია) — icon: Package [hidden for accountant]
+    * Promotions (აქციები) — icon: Tag [hidden for accountant]
+    * Categories (კატეგორიები) — icon: LayoutGrid [hidden for accountant]
+    * Orders (შეკვეთები) — icon: ShoppingCart
+    * POS / Showroom (შოურუმი) — icon: Store [hidden for accountant]
+    * Accounting (ბუღალტერია) — icon: Calculator [admin + accountant only]
+    * Manufacturing (წარმოება) — icon: Factory [admin + accountant only]
+    * Team (თანამშრომლები) — icon: Users [admin only]
+    * Messages (შეტყობინებები) — icon: MessageSquare [admin only]
+    * Settings (პარამეტრები) — icon: Settings [admin only]
+  - Guide button (სახელმძღვანელო) — icon: Book
+  - Logout button at bottom.
+
+TOP HEADER BAR:
+  - Dynamic title based on active tab.
+  - Dynamic subtitle/description.
+  - Search input (searches products or orders depending on active tab).
+  - Refresh button (calls fetchData()).
+  - "+ Add" button (visible on Products and Categories tabs).
+
+-------------------------------------------------------------------
+TAB: Dashboard
+-------------------------------------------------------------------
+COMPONENT: DashboardMetrics
+PROPS: orders[], products[]
+CONTENT: Sales charts, order metrics, revenue statistics.
+
+-------------------------------------------------------------------
+TAB: Products
+-------------------------------------------------------------------
+DATA TABLE with columns: Image thumbnail, Name/Category, Details (material/warranty), Price (with SALE badge), Actions (Edit/Delete).
+SEARCH: Filters by product name or category.
+ACTIONS:
+  - Edit button → opens Product Modal pre-filled.
+  - Delete button → confirmation dialog → supabase.from('products').delete().
+EMPTY STATE: Package icon + "Products not found" message.
+
+-------------------------------------------------------------------
+TAB: Promotions
+-------------------------------------------------------------------
+DATA TABLE showing only products where is_on_sale=true.
+COLUMNS: Image, Product name/category, Discount %, Sale price (with original strikethrough), End date, Actions.
+ACTIONS:
+  - Edit → opens Product Modal.
+  - Stop Sale → sets is_on_sale=false.
+EMPTY STATE: "No active promotions" message.
+
+-------------------------------------------------------------------
+TAB: Categories
+-------------------------------------------------------------------
+GRID of category cards (1-4 columns responsive).
+EACH CARD: Image (with hover zoom), Category name, Product count.
+HOVER OVERLAY: Edit and Delete buttons.
+ADD: Opens Category Modal.
+EDIT: Opens Category Modal pre-filled.
+DELETE: Confirmation with warning if category has products.
+
+-------------------------------------------------------------------
+TAB: Orders
+-------------------------------------------------------------------
+DATA TABLE with columns: Order # (truncated UUID), Customer name/phone, Date, Status badge, Total price, Actions.
+STATUS COLORS: pending=amber, processing=blue, shipped=indigo, delivered=green, cancelled=red.
+SEARCH: Filters by customer name, phone, or order ID.
+ACTIONS:
+  - View → opens Order Details Modal.
+  - Delete → confirmation (admin only).
+
+ORDER DETAILS MODAL:
+  - Customer info (type: physical/legal, name, phone, email, personal ID/company ID, address).
+  - Customer note.
+  - Order items table: product name, quantity, price, subtotal.
+  - Total price footer.
+  - PDF Receipt download button (calls generateOrderReceipt()).
+  - Status update buttons: pending, processing, shipped, delivered, cancelled.
+  - When status changes to "delivered", automatically calls supabase.rpc('process_order_sale') for accounting.
+
+-------------------------------------------------------------------
+TAB: POS (Point of Sale)
+-------------------------------------------------------------------
+COMPONENT: POSModule (src/components/admin/pos/POSModule.tsx)
+PURPOSE: In-store direct sales for consultants.
+FEATURES: Product selection, customer info, payment method (cash/card/installment), receipt generation.
+
+-------------------------------------------------------------------
+TAB: Accounting
+-------------------------------------------------------------------
+SUB-NAVIGATION TABS (11 sub-modules):
+  1. Dashboard (📊 დეშბორდი) → AccountingDashboard
+  2. Journal (📒 ჟურნ.) → JournalEntries — Double-entry bookkeeping
+  3. Invoices (🧾 ინვოის.) → InvoicesList
+  4. Inventory (📦 მარაგი) → InventoryModule
+  5. VAT (🏛 დღგ) → VatModule — Georgian 18% VAT management
+  6. HR/Payroll (👥 HR/ხელფ.) → HrPayroll — Employee salaries
+  7. Returns (🔁 დაბრუნ.) → ReturnsModule — RMA management
+  8. RS.ge (🚚 RS.ge) → WaybillsModule — Georgian tax authority integration
+  9. Fixed Assets (🏢 ძირ. აქტ.) → FixedAssetsModule — Asset depreciation
+  10. Taxes (💸 გადასახ.) → TaxesModule — Corporate/profit tax
+  11. Reports (📈 ანგ.) → FinancialReports — P&L, Balance Sheet, Cash Flow
+
+RS.ge badge shows "STUB" status indicator.
+
+-------------------------------------------------------------------
+TAB: Manufacturing
+-------------------------------------------------------------------
+COMPONENT: ManufacturingModule (src/components/admin/accounting/ManufacturingModule.tsx)
+PURPOSE: Production recipes, BOM (Bill of Materials), raw material tracking.
+FEATURES: Create production orders, track raw material inventory, calculate production costs.
+
+-------------------------------------------------------------------
+TAB: Team
+-------------------------------------------------------------------
+COMPONENT: ConsultantsList + InviteConsultantModal
+PURPOSE: Manage staff (admin, consultant, accountant roles).
+FEATURES: View team members, send invitations, assign roles.
+
+-------------------------------------------------------------------
+TAB: Messages
+-------------------------------------------------------------------
+COMPONENT: ContactMessages
+PURPOSE: View messages submitted through the public contact form.
+
+-------------------------------------------------------------------
+TAB: Settings
+-------------------------------------------------------------------
+COMPONENT: CompanySettings
+PURPOSE: Global company configuration.
+FEATURES: VAT toggle (is company VAT registered), installment settings, company info.
+
+-------------------------------------------------------------------
+TAB: Guide
+-------------------------------------------------------------------
+COMPONENT: AdminGuide
+PURPOSE: Built-in documentation/manual for the ERP system.
+
+-------------------------------------------------------------------
+MODALS
+-------------------------------------------------------------------
+
+PRODUCT MODAL (Add/Edit):
+  Section 1 - Basic Info: Name, Price, In Stock checkbox, Category selector (with inline "create new category" form).
+  Section 2 - Details: Material, Warranty, Description, Colors (comma-separated input with tag preview).
+  Section 3 - Promotions: Is On Sale checkbox. If checked: Discount %, Sale Price (auto-calculated), Start Date, End Date.
+  Section 4 - Media: Drag-and-drop image upload to Supabase Storage. Image grid preview with remove buttons. First image shows "Main" badge.
+  Footer: Cancel and Save buttons.
+
+CATEGORY MODAL (Add/Edit):
+  - Category name input.
+  - Image upload with preview.
+  - Save/Cancel buttons.
+
+ORDER DETAILS MODAL: (described above in Orders tab)
+
+INVITE CONSULTANT MODAL:
+  - Send invitation to join as team member with role selection.
+
+===================================================================
+PART 3: OTHER PAGES
+===================================================================
+
+PRODUCT PAGE (src/pages/ProductPage.tsx)
+ROUTE: /product/:id
+- Full product detail view with image gallery, description, specs, add to cart.
+
+CHECKOUT PAGE (src/pages/CheckoutPage.tsx)
+ROUTE: /checkout
+- Customer info form (physical/legal entity).
+- Order summary.
+- Payment method selection.
+
+PAYMENT SUCCESS PAGE (src/pages/PaymentSuccessPage.tsx)
+ROUTE: /payment/success
+- Order confirmation with details.
+
+===================================================================
+PART 4: CONTEXT PROVIDERS
+===================================================================
+
+AuthContext: Supabase auth state, user profile, role checks (isAdmin/isConsultant/isAccountant).
+CartContext: Shopping cart state (items, addToCart, removeFromCart, totalItems, isCartOpen).
+WishlistContext: Wishlist state (wishlist array, toggleWishlist, isInWishlist).
+
+===================================================================
+DESIGN INSTRUCTIONS SUMMARY
+===================================================================
+
+1. Keep ALL functionality, routes, buttons, and data flows EXACTLY as described.
+2. Redesign ONLY the visual layer using the luxury Obsidian + Gold aesthetic.
+3. Use 0px border-radius everywhere (sharp edges).
+4. Use glassmorphism for overlays, modals, and navigation.
+5. Use Framer Motion for all entrance animations and hover effects.
+6. The Admin Panel sidebar should be deep dark obsidian with gold accent on active tab.
+7. Tables should use tonal background shifts instead of borders.
+8. All modals should have backdrop-blur and semi-transparent dark overlay.
+9. Mobile responsiveness is CRITICAL — especially the Hero Section and mobile menu.
+10. Use Noto Serif for display/headline text, Inter for labels, Manrope for body text.
