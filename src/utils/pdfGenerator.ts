@@ -1,3 +1,7 @@
+/**
+ * PDF Generator Utility for Kale Group ERP
+ * Handles order receipts and invoices with Georgian font support
+ */
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
