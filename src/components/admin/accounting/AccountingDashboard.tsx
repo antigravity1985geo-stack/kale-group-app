@@ -322,7 +322,7 @@ export default function AccountingDashboard() {
                   </div>
                   <span className="text-slate-400 text-xs">{MONTH_NAMES[(m.month || 1) - 1]}</span>
                   {/* Tooltip */}
-                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-stone-800 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-stone-800 border border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none shadow-xl">
                     <div className="text-emerald-400">შემოს: {GEL(m.revenue || 0)}</div>
                     <div className="text-violet-400">მოგება: {GEL(m.net_profit || 0)}</div>
                   </div>

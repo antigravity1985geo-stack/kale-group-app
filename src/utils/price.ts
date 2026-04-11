@@ -5,14 +5,11 @@ import type { Product } from '../types/product';
  * If the product is on sale and has a valid sale_price, returns sale_price.
  * Otherwise, returns the regular price.
  */
+import { isProductOnActiveSale } from './promotions';
+
 export const getEffectivePrice = (product: Product): number => {
-  if (
-    product.is_on_sale &&
-    product.sale_price !== undefined &&
-    product.sale_price !== null &&
-    product.sale_price > 0
-  ) {
-    return product.sale_price;
+  if (isProductOnActiveSale(product)) {
+    return product.sale_price!;
   }
   return product.price;
 };

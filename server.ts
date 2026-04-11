@@ -30,18 +30,21 @@ async function setupApp() {
 
   app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
   const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://kalegroup.vercel.app',
+    'https://kale-group.ge',
+    'https://www.kale-group.ge',
+    'https://admin.kale-group.ge',
+    'https://kale-staging.vercel.app',
     process.env.APP_URL,
-  ].filter(Boolean);
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:5173'] : []),
+  ].filter(Boolean) as string[];
 
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (e.g., curl, Postman, same-origin Vercel serverless)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(null, true); // permissive on Vercel — tighten if needed
+      console.warn(`[CORS] Blocked: ${origin}`);
+      return callback(new Error(`CORS: origin '${origin}' not allowed`));
     },
     credentials: true,
   }));
@@ -207,7 +210,23 @@ async function setupApp() {
   });
 
   // ── Checkout / Orders API ──
-  app.post("/api/orders/create", async (req, res) => {
+  const orderCreateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 25,
+    skipSuccessfulRequests: false,
+    message: { error: 'Too many requests. Please try again in 15 minutes.', code: 'RATE_LIMIT_EXCEEDED' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      const forwarded = req.headers['x-forwarded-for'];
+      if (forwarded) {
+        return (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',')[0].trim();
+      }
+      return req.ip ?? req.socket?.remoteAddress ?? 'unknown';
+    },
+  });
+
+  app.post("/api/orders/create", orderCreateLimiter, async (req, res) => {
     try {
       const { customerInfo, items, paymentMethod, paymentType } = req.body;
 
@@ -776,21 +795,49 @@ async function setupApp() {
         
       if (existingJournal) return; // Already processed
 
-      // 3. Create System Invoice for the Order
+      // 3. Load VAT Settings to dynamically calculate VAT (BUG-3 fix)
+      const { data: vatSetting, error: settingsError } = await supabaseAdmin
+        .from('company_settings')
+        .select('value')
+        .eq('key', 'vat_registered')
+        .maybeSingle();
+
+      if (settingsError) {
+        console.error('[processSuccessfulOrder] company_settings load failed:', settingsError);
+        await supabaseAdmin.from('orders').update({ accounting_status: 'FAILED', accounting_error: 'company_settings unavailable' }).eq('id', orderId);
+        return;
+      }
+
+      const vatEnabled = vatSetting?.value === true || vatSetting?.value === 'true';
+      const vatRate = vatEnabled ? 0.18 : 0; 
+      
+      const totalAmount = order.total_price;
+      const vatAmount = vatRate > 0 ? parseFloat((totalAmount * vatRate / (1 + vatRate)).toFixed(2)) : 0;
+      const revenueAmount = parseFloat((totalAmount - vatAmount).toFixed(2));
+
+      // Calculate COGS
+      let totalCogs = 0;
+      order.order_items.forEach((item: any) => {
+         const cost = item.products?.cost_price || 0;
+         totalCogs += (cost * item.quantity);
+      });
+
+      // 4. Create System Invoice for the Order (BUG-2 fix)
       const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
       
       const { data: invoice } = await supabaseAdmin
         .from('invoices')
         .insert({
-          invoice_type: 'SALES',
+          invoice_type: 'B2C',
           invoice_number: `INV-WEB-${orderId.substring(0,6).toUpperCase()}`,
-          customer_id: null, // Web guest
           customer_name: `${order.customer_first_name} ${order.customer_last_name}`,
           invoice_date: new Date().toISOString().split('T')[0],
           due_date: new Date().toISOString().split('T')[0],
-          total_amount: order.total_price,
-          tax_amount: parseFloat((order.total_price * 0.18).toFixed(2)), // 18% VAT
-          paid_amount: order.total_price,
+          subtotal: revenueAmount,
+          vat_rate: vatRate * 100, // as percentage e.g. 18
+          vat_amount: vatAmount,
+          total_amount: totalAmount,
+          paid_amount: totalAmount,
           payment_status: 'PAID',
           fiscal_period_id: currPeriod,
           notes: `E-commerce order via ${provider}`
@@ -798,89 +845,94 @@ async function setupApp() {
         .select().single();
 
       if (invoice) {
-        // Insert Invoice Items
-        const invoiceItems = order.order_items.map((item: any) => ({
-          invoice_id: invoice.id,
-          product_id: item.product_id,
-          description: item.product_name,
-          quantity: item.quantity,
-          unit_price: item.price_at_purchase,
-          total_price: item.price_at_purchase * item.quantity,
-          tax_rate: 18,
-          tax_amount: parseFloat(((item.price_at_purchase * item.quantity) * 0.18).toFixed(2))
-        }));
+        // Insert Invoice Items (BUG-2 fix)
+        const invoiceItems = order.order_items.map((item: any) => {
+          const lineTotal = item.price_at_purchase * item.quantity;
+          const lineVat = vatRate > 0 ? parseFloat((lineTotal * vatRate / (1 + vatRate)).toFixed(2)) : 0;
+          return {
+            invoice_id: invoice.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.price_at_purchase,
+            line_total: lineTotal,
+            vat_rate: vatRate * 100,
+            vat_amount: lineVat
+          };
+        });
         await supabaseAdmin.from('invoice_items').insert(invoiceItems);
       }
 
-      // 4. Generate Double-Entry Journal Document
-      const totalAmount = order.total_price;
-      const vatAmount = parseFloat((totalAmount * 0.18).toFixed(2));
-      const revenueAmount = parseFloat((totalAmount - vatAmount).toFixed(2));
-      
-      // Calculate COGS (Cost of Goods Sold)
-      let totalCogs = 0;
-      order.order_items.forEach((item: any) => {
-         const cost = item.products?.cost_price || 0;
-         totalCogs += (cost * item.quantity);
-      });
+      // 5. Fetch vital accounts (BUG-1 fix)
+      const accountCodesToFetch = ['1110', '1310', '6100', '7100'];
+      if (vatRate > 0) accountCodesToFetch.push('3200');
 
-      // Fetch vital accounts
-      const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', ['1110', '1610', '3330', '6110', '7110']);
+      const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', accountCodesToFetch);
       const accCash = accounts?.find((a: any) => a.code === '1110')?.id; // National Currency in Bank
-      const accInventory = accounts?.find((a: any) => a.code === '1610')?.id; // Inventory
-      const accVat = accounts?.find((a: any) => a.code === '3330')?.id; // VAT Payable
-      const accRev = accounts?.find((a: any) => a.code === '6110')?.id; // Revenue from Sales
-      const accCogs = accounts?.find((a: any) => a.code === '7110')?.id; // Cost of Goods Sold
+      const accInventory = accounts?.find((a: any) => a.code === '1310')?.id; // Inventory
+      const accVat = accounts?.find((a: any) => a.code === '3200')?.id; // VAT Payable
+      const accRev = accounts?.find((a: any) => a.code === '6100')?.id; // Revenue from Sales
+      const accCogs = accounts?.find((a: any) => a.code === '7100')?.id; // Cost of Goods Sold
 
-      if (accCash && accInventory && accVat && accRev && accCogs) {
-        // Create Posted Journal Entry
-        const { data: journal } = await supabaseAdmin
-          .from('journal_entries')
-          .insert({
-            entry_date: new Date().toISOString().split('T')[0],
-            description: `SALE - E-commerce Order #${orderId.substring(0,8)}`,
+      const vatAccountRequired = vatRate > 0;
+
+      if (!accCash || !accInventory || !accRev || !accCogs || (vatAccountRequired && !accVat)) {
+        console.error('[processSuccessfulOrder] CRITICAL: accounting accounts not found', { orderId, vatRate, missingCodes: {
+          accCash: !accCash ? '1110' : 'OK',
+          accInventory: !accInventory ? '1310' : 'OK',
+          accVat: (vatAccountRequired && !accVat) ? '3200' : 'OK',
+          accRev: !accRev ? '6100' : 'OK',
+          accCogs: !accCogs ? '7100' : 'OK',
+        }});
+        await supabaseAdmin.from('orders').update({ accounting_status: 'FAILED', accounting_error: 'Missing account codes' }).eq('id', orderId);
+        return;
+      }
+
+      // Create Posted Journal Entry
+      const { data: journal } = await supabaseAdmin
+        .from('journal_entries')
+        .insert({
+          entry_date: new Date().toISOString().split('T')[0],
+          description: `SALE - E-commerce Order #${orderId.substring(0,8)}`,
+          reference_type: 'SALES_ORDER',
+          reference_id: orderId,
+          fiscal_period_id: currPeriod,
+          status: 'POSTED',
+        })
+        .select().single();
+
+      if (journal) {
+        const jLines = [
+          // Cash Asset Increases (Debit)
+          { journal_entry_id: journal.id, account_id: accCash, debit: totalAmount, credit: 0, description: 'Payment Received' },
+          // Revenue Increases (Credit)
+          { journal_entry_id: journal.id, account_id: accRev, debit: 0, credit: revenueAmount, description: 'Sales Revenue' },
+          // VAT Payable Liability Increases (Credit)
+          ...(vatAmount > 0 && accVat ? [{ journal_entry_id: journal.id, account_id: accVat, debit: 0, credit: vatAmount, description: 'VAT on Sale' }] : []),
+        ];
+
+        if (totalCogs > 0) {
+          // COGS Expense Increases (Debit)
+          jLines.push({ journal_entry_id: journal.id, account_id: accCogs, debit: totalCogs, credit: 0, description: 'Cost of Goods Sold' });
+          // Inventory Asset Decreases (Credit)
+          jLines.push({ journal_entry_id: journal.id, account_id: accInventory, debit: 0, credit: totalCogs, description: 'Inventory Out' });
+          
+          // Note: Inventory sync trigger usually handles stock_levels, but since this relies on manual `inventory_transactions`, we must create them!
+          const invTx = order.order_items.map((item: any) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            transaction_type: 'SALE_OUT',
+            unit_cost: item.products?.cost_price || 0,
+            total_cost: (item.products?.cost_price || 0) * item.quantity,
             reference_type: 'SALES_ORDER',
             reference_id: orderId,
-            fiscal_period_id: currPeriod,
-            status: 'POSTED',
-          })
-          .select().single();
-
-        if (journal) {
-          const jLines = [
-            // Cash Asset Increases (Debit)
-            { journal_entry_id: journal.id, account_id: accCash, debit: totalAmount, credit: 0, description: 'Payment Received' },
-            // Revenue Increases (Credit)
-            { journal_entry_id: journal.id, account_id: accRev, debit: 0, credit: revenueAmount, description: 'Sales Revenue' },
-            // VAT Payable Liability Increases (Credit)
-            { journal_entry_id: journal.id, account_id: accVat, debit: 0, credit: vatAmount, description: 'VAT on Sale' },
-          ];
-
-          if (totalCogs > 0) {
-            // COGS Expense Increases (Debit)
-            jLines.push({ journal_entry_id: journal.id, account_id: accCogs, debit: totalCogs, credit: 0, description: 'Cost of Goods Sold' });
-            // Inventory Asset Decreases (Credit)
-            jLines.push({ journal_entry_id: journal.id, account_id: accInventory, debit: 0, credit: totalCogs, description: 'Inventory Out' });
-            
-            // Note: Inventory sync trigger usually handles stock_levels, but since this relies on manual `inventory_transactions`, we must create them!
-            const invTx = order.order_items.map((item: any) => ({
-              product_id: item.product_id,
-              quantity: item.quantity,
-              transaction_type: 'SALE_OUT',
-              unit_cost: item.products?.cost_price || 0,
-              total_cost: (item.products?.cost_price || 0) * item.quantity,
-              reference_type: 'SALES_ORDER',
-              reference_id: orderId,
-              notes: `Order fulfillment via Website`,
-              fiscal_period_id: currPeriod
-            }));
-            await supabaseAdmin.from('inventory_transactions').insert(invTx);
-            
-            // The `sync_stock_levels` trigger on `inventory_transactions` will automatically decrement stock_levels.
-          }
-          
-          await supabaseAdmin.from('journal_lines').insert(jLines);
+            notes: `Order fulfillment via Website`,
+            fiscal_period_id: currPeriod
+          }));
+          await supabaseAdmin.from('inventory_transactions').insert(invTx);
         }
+        
+        await supabaseAdmin.from('journal_lines').insert(jLines);
       }
       // 5. Fire RS.GE Logic (Phase 4 Integration)
       try {
@@ -1441,6 +1493,56 @@ async function setupApp() {
 
       const runItems = items.map((i: any) => ({ ...i, payroll_run_id: run.id }));
       await supabaseAdmin.from('payroll_items').insert(runItems);
+
+      // Create Payroll Journal Entry
+      const SALARY_EXPENSE_CODE = '8100'; 
+      const SALARIES_PAYABLE_CODE = '3300';
+
+      const { data: payrollAccounts } = await supabaseAdmin
+        .from('accounts').select('id, code')
+        .in('code', [SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE]);
+
+      const accSalaryExpense = payrollAccounts?.find(a => a.code === SALARY_EXPENSE_CODE)?.id;
+      const accSalariesPayable = payrollAccounts?.find(a => a.code === SALARIES_PAYABLE_CODE)?.id;
+
+      if (!accSalaryExpense || !accSalariesPayable) {
+        console.error('[Payroll] Accounts not found', { SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE });
+      } else {
+        const { data: je, error: jeErr } = await supabaseAdmin
+          .from('journal_entries')
+          .insert({
+            entry_date: new Date().toISOString().split('T')[0],
+            description: `Payroll Run #${run.run_code}`,
+            reference_type: 'PAYROLL',
+            reference_id: run.id,
+            status: 'POSTED',
+            fiscal_period_id
+          })
+          .select('id')
+          .single();
+
+        if (jeErr || !je) {
+          console.error('[Payroll] JE header failed:', jeErr);
+        } else {
+          const { error: linesErr } = await supabaseAdmin
+            .from('journal_lines')
+            .insert([
+              { journal_entry_id: je.id, account_id: accSalaryExpense,   debit: totalGross, credit: 0,            description: 'Salary expense' },
+              { journal_entry_id: je.id, account_id: accSalariesPayable, debit: 0,            credit: totalGross, description: 'Salaries payable' },
+            ]);
+
+          if (linesErr) {
+            console.error('[Payroll] JE lines failed — rolling back header:', linesErr);
+            const { error: deleteErr } = await supabaseAdmin
+              .from('journal_entries').delete().eq('id', je.id);
+            if (deleteErr) {
+              console.error('[Payroll] CRITICAL: rollback failed — manual cleanup needed', {
+                journal_entry_id: je.id,
+              });
+            }
+          }
+        }
+      }
 
       res.json({ success: true, run_id: run.id, run_code: run.run_code, total_gross: totalGross, total_net: totalNet });
     } catch (err: any) {

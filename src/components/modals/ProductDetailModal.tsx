@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { Countdown } from '../sections/ProductsSection';
 import type { Product } from '../../types/product';
+import ProtectedImage from '../ui/ProtectedImage';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -60,17 +61,21 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
           <div className="w-full md:w-1/2 p-6 flex flex-col gap-4 bg-brand-50/50">
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-white shadow-inner group">
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImageIndex} 
-                  initial={{ opacity: 0, scale: 1.1 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  exit={{ opacity: 0, scale: 1.1 }} 
-                  transition={{ duration: 0.4 }} 
-                  src={product.images[activeImageIndex]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover" 
-                />
+               <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeImageIndex}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.1 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full h-full"
+                >
+                  <ProtectedImage 
+                    src={product.images[activeImageIndex]} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover" 
+                  />
+                </motion.div>
               </AnimatePresence>
               
               {product.is_on_sale && product.discount_percentage ? (
@@ -95,12 +100,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2 px-2">
               {product.images.map((img: string, i: number) => (
-                <button 
+                 <button 
                   key={i} 
                   onClick={() => setActiveImageIndex(i)} 
                   className={`flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === i ? 'border-brand-900 scale-105 shadow-xl' : 'border-transparent opacity-50 hover:opacity-100'}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" alt={`Thumbnail ${i}`}  />
+                  <ProtectedImage src={img} className="w-full h-full object-cover" alt={`Thumbnail ${i}`} watermarkText=""  />
                 </button>
               ))}
             </div>

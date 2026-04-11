@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
+import { isProductOnActiveSale } from '../../../utils/promotions';
 import {
   ShoppingCart, Plus, Minus, Trash2, Search, CreditCard,
   Banknote, Calendar, CheckCircle2, Loader2, X, Package
@@ -148,7 +149,7 @@ export default function POSModule() {
         product_name: i.product.name,
         quantity: i.quantity,
         price_at_purchase: getProductPrice(i.product),
-        is_promotional_sale: i.product.is_on_sale && i.product.sale_price != null && i.product.sale_price > 0,
+        is_promotional_sale: isProductOnActiveSale(i.product),
       }));
 
       const { error: itemErr } = await supabase.from('order_items').insert(items);

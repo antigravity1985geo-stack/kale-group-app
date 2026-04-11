@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types/product';
+import { isProductOnActiveSale } from '../utils/promotions';
 
 // ─────────────────────────────────────────────
 // 🔧 Base Generic Hook (DRY)
@@ -72,10 +73,7 @@ export function useProducts(activeCategory?: string) {
   const products = React.useMemo(() => {
     if (!data) return [];
     return data.map(p => {
-      if (p.is_on_sale && p.sale_end_date && new Date(p.sale_end_date).getTime() <= new Date().getTime()) {
-        return { ...p, is_on_sale: false };
-      }
-      return p;
+      return { ...p, is_on_sale: isProductOnActiveSale(p) };
     });
   }, [data]);
 

@@ -8,6 +8,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useTranslation } from 'react-i18next';
 import { Countdown } from '../components/sections/ProductsSection';
+import ProtectedImage from '../components/ui/ProtectedImage';
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -67,17 +68,21 @@ export default function ProductPage() {
           {/* Images Section */}
           <div className="w-full lg:w-1/2 flex flex-col gap-6">
             <div className="relative aspect-square md:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden bg-brand-100 shadow-xl group">
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImageIndex} 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  exit={{ opacity: 0 }} 
-                  transition={{ duration: 0.4 }} 
-                  src={product.images[activeImageIndex]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover" 
-                />
+               <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeImageIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full h-full"
+                >
+                  <ProtectedImage 
+                    src={product.images[activeImageIndex]} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover" 
+                  />
+                </motion.div>
               </AnimatePresence>
               
               {product.is_on_sale && product.discount_percentage ? (
@@ -114,12 +119,12 @@ export default function ProductPage() {
             {/* Thumbnails */}
             <div className="flex gap-4 overflow-x-auto pb-2 px-1 scrollbar-hide">
               {product.images.map((img, i) => (
-                <button 
+                 <button 
                   key={i} 
                   onClick={() => setActiveImageIndex(i)} 
                   className={`flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 transition-all ${activeImageIndex === i ? 'border-brand-900 shadow-lg scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" alt={`${product.name} ${i + 1}`}  />
+                  <ProtectedImage src={img} className="w-full h-full object-cover" alt={`${product.name} ${i + 1}`} watermarkText="" />
                 </button>
               ))}
             </div>

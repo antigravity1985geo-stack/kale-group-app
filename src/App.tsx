@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
@@ -18,7 +18,7 @@ import AIChatBot from './components/ui/AIChatBot';
 import ReloadPrompt from './components/ui/ReloadPrompt';
 
 function ScrollToTopManager() {
-  const { pathname, hash } = window.location;
+  const { pathname, hash } = useLocation();
   
   React.useEffect(() => {
     // If there's a hash, let browser handle scrolling

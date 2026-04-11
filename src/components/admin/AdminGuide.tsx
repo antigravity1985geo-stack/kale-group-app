@@ -23,7 +23,7 @@ export default function AdminGuide() {
           <div className="grid gap-4 mt-6">
             <div className="p-5 bg-stone-900/40 rounded-2xl border border-stone-800/80 backdrop-blur-sm">
               <strong className="text-amber-400 flex items-center gap-2 mb-2"><ShieldAlert size={18}/> ადმინისტრატორი (Admin)</strong>
-              <span className="text-stone-400 text-sm leading-relaxed block">სრული წვდომა ყველა მოდულზე (პროდუქცია, ფინანსები, HR, სისტემური აუდიტი, მომხმარებელთა მართვა).</span>
+              <span className="text-stone-400 text-sm leading-relaxed block">სრული წვდომა ყველა მოდულზე (პროდუქცია, ფინანსები, HR, სისტემური აუდიტი, კომპანიის პარამეტრები და მომხმარებელთა მართვა).</span>
             </div>
             <div className="p-5 bg-stone-900/40 rounded-2xl border border-stone-800/80 backdrop-blur-sm">
               <strong className="text-blue-400 flex items-center gap-2 mb-2"><Calculator size={18}/> ბუღალტერი (Accountant)</strong>
@@ -34,6 +34,10 @@ export default function AdminGuide() {
               <span className="text-stone-400 text-sm leading-relaxed block">აქვს წვდომა მხოლოდ პროდუქციის მართვისა და შემოსული შეკვეთების სექციაზე. ბუღალტერია სრულად დაფარულია.</span>
             </div>
           </div>
+          <div className="mt-6 p-4 border-l-4 border-emerald-500 bg-stone-900/40 rounded-r-xl">
+            <h5 className="font-bold text-white mb-2">სისტემის უსაფრთხოება (v3.1 განახლება)</h5>
+            <p className="text-sm text-stone-400">კრიტიკულ API ენდფოინთებზე (მაგ. შეკვეთების შექმნა) მოქმედებს Rate Limiting სისტემა. არაავტორიზებული ან სპამ-შეტევებისგან თავდასაცავად, სისტემა აბლოკირებს ბიჯებს თუ ის 15-წუთიან ლიმიტს გადააჭარბებს. კომპანიის Settings-ებიდან იმართება დღგ-ს სტატუსის დინამიური ინტეგრაცია.</p>
+          </div>
         </div>
       )
     },
@@ -43,11 +47,11 @@ export default function AdminGuide() {
       icon: ShoppingCart,
       content: (
         <div className="space-y-4 text-[15px] text-stone-300 leading-relaxed">
-          <p>შეკვეთების მიღება და დამუშავება არის სრულად ავტომატიზირებული BOG, TBC და Credo ბანკების სინქრონიზაციის გზით.</p>
+          <p>შეკვეთების მიღება და დამუშავება არის სრულად ავტომატიზირებული <strong>BOG, TBC</strong> და <strong>Credo</strong> ბანკების API სინქრონიზაციის გზით. გადახდილი თანხები პირდაპირ აისახება ბუღალტერიაში.</p>
           
           <div className="mt-8 border-l-2 border-amber-500 pl-6 py-2 space-y-3 relative before:absolute before:left-[calc(-0.45rem-1px)] before:top-4 before:w-4 before:h-4 before:bg-stone-950 before:border-2 before:border-amber-500 before:rounded-full">
             <h4 className="text-white font-bold text-lg flex items-center gap-2">ეტაპი 1: შეკვეთის შემოსვლა</h4>
-            <p className="text-sm text-stone-400">როდესაც კლიენტი წარმატებით იხდის ვებსაიტზე, შეკვეთის სტატუსი ავტომატურად ხდება <strong className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">Confirmed (Paid)</strong>. ჩვენი ERP სისტემა ამ დროს ავტომატურად აკეთებს შესაბამის ბუღალტრულ გატარებას.</p>
+            <p className="text-sm text-stone-400">როდესაც კლიენტი წარმატებით იხდის ვებსაიტზე, შეკვეთის სტატუსი ავტომატურად ხდება <strong className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">Confirmed (Paid)</strong>. ჩვენი ERP სისტემა ამ დროს ავტომატურად აკეთებს შესაბამის ბუღალტრულ გატარებას (1110 / 6100 / 3200).</p>
           </div>
           
           <div className="border-l-2 border-brand-500 pl-6 py-2 space-y-3 relative before:absolute before:left-[calc(-0.45rem-1px)] before:top-4 before:w-4 before:h-4 before:bg-stone-950 before:border-2 before:border-brand-500 before:rounded-full">
@@ -63,22 +67,45 @@ export default function AdminGuide() {
       )
     },
     {
+      id: 'promotions',
+      title: 'აქციები და მარკეტინგი',
+      icon: Tag,
+      content: (
+        <div className="space-y-4 text-[15px] text-stone-300 leading-relaxed">
+          <p>KALE GROUP პლატფორმაზე დანერგილია <strong>ჭკვიანი ფასდაკლებების სისტემა</strong>, რომელიც ავტომატურად აკონტროლებს პროდუქტის ფასს მიმდინარე თარიღთან მიმართებაში.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+            <div className="p-4 bg-stone-900/40 rounded-xl border border-brand-500/30">
+              <h5 className="text-brand-400 font-bold mb-2">მიმდინარე აქციები [აქტიური]</h5>
+              <p className="text-xs text-stone-400">პროდუქტები, რომლებსაც უწერიათ მოქმედი აქციის ვადა. საიტზეც და POS სისტემაშიც აღიქმება ფასდაკლებით.</p>
+            </div>
+            <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-600/50">
+              <h5 className="text-stone-300 font-bold mb-2">ისტორია [ვადაგასული]</h5>
+              <p className="text-xs text-stone-400">დასრულებული ფასდაკლებები. საიტზე უბრუნდება ძველ ფასს. ისტორიის ტაბი ეხმარება ბუღალტერიასა და მენეჯმენტს ჩანაწერების აღრიცხვაში.</p>
+            </div>
+          </div>
+          <p className="text-sm p-4 bg-fuchsia-900/10 border border-fuchsia-500/30 rounded-xl">
+            <strong className="text-fuchsia-400">ფინანსური ინტეგრაცია:</strong> ყოველი გაყიდვა, რომელიც ვადაში მყოფი ფასდაკლებით ხორციელდება, ბაზაში ფიქსირდება დროშით `is_promotional_sale`. მისი დინამიკის ნახვა ბუღალტერიას დეშბორდზე <strong>"აქციით გაყიდვების"</strong> ველში შეუძლია.
+          </p>
+        </div>
+      )
+    },
+    {
       id: 'accounting',
-      title: 'ბუღალტერია და მოდულები',
+      title: 'ბუღალტერია (ERP v3.1)',
       icon: Workflow,
       content: (
         <div className="space-y-4 text-sm text-stone-300 leading-relaxed">
           <div className="bg-gradient-to-r from-amber-500/10 to-transparent p-5 rounded-2xl border-l-4 border-amber-500 mb-8">
-            <p className="text-[15px]">KALE GROUP ERP ფინანსური მოდული v3.0 დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე. სისტემა სრულად ინტეგრირებულია <strong>ესტონური მოდელის</strong> მოგების გადასახადთან, ავტომატიზებულ პეიროლთან და დინამიურ ფინანსურ რეპორტინგთან.</p>
+            <p className="text-[15px]">KALE GROUP ERP ფინანსური მოდული ვერსია 3.1 დაფუძნებულია <strong>ორმაგი ჩანაწერის (Double-Entry Bookkeeping)</strong> სტანდარტზე საფუძვლიანი აუდიტით. სისტემა სრულად ინტეგრირებულია <strong>ესტონური მოდელის</strong> მოგების აღრიცხვასთან და ავტომატიზბულ გატარებებთან.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-800/50">
-              <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> FIFO მეთოდი</h5>
-              <p className="text-xs text-stone-400">მარაგების თვითღირებულება (COGS) ითვლება ავტომატურად, რაც უზრუნველყოფს მოგების ზუსტ ასახვას.</p>
+               <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> დინამიური დღგ (VAT)</h5>
+              <p className="text-xs text-stone-400">B2C ონლაინ გაყიდვებისას სისტემა Settings-ებიდან ამოწმებს დღგ-ს სტატუსს და ინვოისებში დინამიურად ითვლის ინკლუზიურ (Inclusive) 18%-ს საბუღალტრო 3200 ანგარიშში.</p>
             </div>
             <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-800/50">
-              <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> საგადასახადო ავტომატიზაცია</h5>
-              <p className="text-xs text-stone-400">დღგ, საშემოსავლო და მოგების გადასახადი ითვლება და ირიცხება ავტომატურად ტრანზაქციების დროს.</p>
+              <h5 className="text-white font-bold mb-1 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> ავტომატიზებული ხელფასები</h5>
+              <p className="text-xs text-stone-400">Payroll Run-ისას ავტომატურად იქმნება Journal Entry 8100 და 3300 ანგარიშებზე ჯამური ხარჯებისა და ვალდებულებების ზუსტი ასახვით.</p>
             </div>
           </div>
           <p className="text-stone-500 text-xs uppercase tracking-[0.2em] font-bold mt-8 mb-4">მოდულების დეტალური აღწერა</p>
@@ -91,62 +118,62 @@ export default function AdminGuide() {
     {
       title: '📊 დეშბორდი (Dashboard)',
       icon: <BarChart2 size={18} className="text-amber-500" />,
-      text: 'ფინანსური მდგომარეობის მყისიერი მიმოხილვა. აჩვენებს: ჯამურ შემოსავალს, COGS (რეალიზებულის თვითღირებულებას), მთლიან და ნეტო მოგებას, მარაგების ნაშთს და დღგ-ს. დიაგრამაზე შეგიძლიათ ადევნოთ თვალი შემოსავლებისა და ნეტო მოგების დინამიკას თვეების მიხედვით.'
+      text: 'ფინანსური მდგომარეობის მყისიერი მიმოხილვა. აჩვენებს: ჯამურ შემოსავალს, COGS, მთლიან და ნეტო მოგებას, მარაგების ნაშთს და დღგ-ს. ასევე ზუსტად გამოყოფს "აქციით გენერირებულ გაყიდვებს" მარკეტინგული ROI-ს საზომად.'
     },
     {
       title: '📒 ჟურნალი (Journal Entries)',
       icon: <Book size={18} className="text-blue-400" />,
-      text: 'აქ გროვდება ყველა ფინანსური ტრანზაქცია. შეგიძლიათ მექანიკურადაც დაამატოთ ჩანაწერი. აუცილებელია, რომ დებეტისა და კრედიტის ჯამი ერთმანეთს უდრიდეს, სხვაგვარად სვეტი არ შეინახება. ვების (საიტის) მეშვეობით განხორციელებული შესყიდვები აქ ავტომატურად (POSTED) ისახება.',
+      text: 'აქ გროვდება ყველა ფინანსური ტრანზაქცია. შეგიძლიათ მექანიკურადაც დაამატოთ ჩანაწერი. ვების (სავაჭრო პლატფორმის) მეშვეობით განხორციელებული B2C შეკვეთები და ხელფასების დარიცხვა აქ ავტომატურად (POSTED) ისახება.'
     },
     {
       title: '🧾 ინვოისები (Invoices)',
       icon: <Receipt size={18} className="text-emerald-500" />,
-      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან. თითოეულ ინვოისს აქვს თავისი სტატუსი (PENDING, PAID). PAID-ზე გადასვლისას სისტემა ავტომატურად წარმოქმნის შიდა გატარებებს. ინტეგრირებულია RS.ge-სთან B2B ინვოისების ასატვირთად.'
+      text: 'ავტომატურად ინახება B2B და B2C ინვოისები გაყიდვებიდან, რელევანტური subtotal, vat_rate და vat_amount ველებით. ინტეგრირებულია RS.ge-სთან B2B ინვოისების ასატვირთად.'
     },
     {
       title: '🛒 შესყიდვები (Purchases)',
       icon: <ShoppingCart size={18} className="text-purple-400" />,
-      text: 'მოდული Suppliers, Purchase Orders (PO) და Goods Receipts (GRN) სამართავად. 3-Way Matching სისტემა უზრუნველყოფს, რომ მიღებული საქონელი (GRN) ზუსტად ემთხვეოდეს შეკვეთილსა (PO) და მოწოდებულ ინვოისს. GRN-ის დადასტურებისას საქონელი ავტომატურად აისახება მარაგებში.'
+      text: 'მოდული Suppliers, Purchase Orders (PO) და Goods Receipts (GRN) სამართავად. 3-Way Matching სისტემა უზრუნველყოფს მოწოდებული ინვოისისა და GRN-ის დამთხვევას.'
     },
     {
       title: '📦 სასაქონლო მარაგი (Inventory)',
       icon: <Warehouse size={18} className="text-brand-400" />,
-      text: 'მარაგების რეალურ დროში მართვა FIFO მეთოდით. თითოეული პროდუქტისთვის დათვლილია "საშუალო ღირებულება" და "ხელმისაწვდომი რაოდენობა". RS.ge-დან შემოსული ზედნადებები ავტომატურად უკავშირდება პროდუქტებს და ქმნის თვითღირებულების ფენებს (Cost Layers).'
+      text: 'მარაგების რეალურ დროში მართვა FIFO მეთოდით. თითოეული პროდუქტისთვის დათვლილია საშუალო ღირებულება. საიტიდან ნივთის გაყიდვა (SALE_OUT) პირდაპირ ამცირებს მარაგს ინვენტარის ტრანზაქციებით.'
     },
     {
       title: '📈 ფინანსური რეპორტინგი (Reports)',
       icon: <BarChart2 size={18} className="text-emerald-400" />,
-      text: 'დინამიური ფინანსური ანგარიშგება: მოგება-ზარალი (P&L), ბალანსი და საცდელი ბალანსი. რეპორტების გაფილტვრა შესაძლებელია ნებისმიერი თარიღების შუალედით. ინტეგრირებულია CSV/Excel ექსპორტის ფუნქციონალი სიღრმისეული ანალიზისთვის.'
+      text: 'დინამიური ფინანსური ანგარიშგება: მოგება-ზარალი (P&L), ბალანსი და საცდელი ბალანსი.'
     },
     {
       title: '🏭 წარმოება (Manufacturing)',
       icon: <Factory size={18} className="text-orange-400" />,
-      text: 'ავეჯის წარმოების პროცესის მართვა. საშუალებას გაძლევთ შექმნათ BOM (Bill of Materials), ანუ მასალების რეცეპტი. Production Run-ის გაშვებისას სისტემა საწყობიდან ავტომატურად ჩამოწერს ნედლეულს და ბალანსზე დასვამს მზა პროდუქციას (მასალის ხარჯების დამატებით).'
+      text: 'ავეჯის წარმოების პროცესის მართვა. საშუალებას გაძლევთ შექმნათ BOM (Bill of Materials). Production Run ჩამოწერს ნედლეულს და დაამატებს მზა პროდუქციას.'
     },
     {
       title: '🔁 დაბრუნებები (RMA)',
       icon: <RefreshCcw size={18} className="text-rose-400" />,
-      text: 'მომხმარებელთა დაბრუნებების ავტომატიზაცია. ირჩევთ მიზეზს (Damaged, Refused). თუ პროდუქტი გამოსადეგია (Resellable), ის ისევ ჯდება საწყობში, ხოლო დაზიანებულის შემთხვევაში უქმდება (Write-off). ორივე შემთხვევაში ავტომატურად კეთდება საპირისპირო ბუღალტრული დოკუმენტი (Reversal).'
+      text: 'მომხმარებელთა დაბრუნებების ავტომატიზაცია. ირჩევთ მიზეზს (Damaged, Refused) და სისტემა აკეთებს Reversal ბუღალტრულ ჩანაწერსა და მარაგების უკან დაბრუნებას.'
     },
     {
       title: '🏛 დღგ მოდული (VAT)',
       icon: <Percent size={18} className="text-teal-400" />,
-      text: 'ფიქსირდება ყველა შემომავალი (Input) და გამომავალი (Output) დღგ. "ყოველთვ. შეჯამების" (Summary) გვერდზე იხილავთ კონკრეტული თვის სანეტო დღგ-ს. სისტემა ავტომატურად გამოყოფს პროფორმებსა და დაბრუნებებს სწორი დეკლარირებისთვის.'
+      text: 'ფიქსირდება შეყვანილი და გამოყვანილი დღგ დინამიურ Summary-ში. კომპანიის Settings-ებიდან იმართება დღგ-ს სტატუსი (დღგ-ს გადამხდელია თუ არა).'
     },
     {
       title: '💎 ესტონური მოდელი (Profit Tax)',
       icon: <Calculator size={18} className="text-amber-400" />,
-      text: 'ესტონური მოდელის მიხედვით მოგების გადასახადის (15%) მართვა. დივიდენდების გაცემისას სისტემა ავტომატურად ითვლის გადასახადს ფორმულით Amounts / 0.85 * 0.15 და ქმნის შესაბამის საბუღალტრო გატარებებს.'
+      text: 'ესტონური მოდელის მიხედვით მოგების გადასახადის მართვა (15% დივიდენდები).'
     },
     {
       title: '👥 HR / ხელფასები (Payroll)',
       icon: <Users size={18} className="text-indigo-400" />,
-      text: 'კადრების მართვა და ხელფასების ავტომატიზაცია. Payroll Run-ის გაშვებისას სისტემა ავტომატურად ითვლის 20%-იან საშემოსავლო გადასახადს და აგენერირებს Journal Entry-ს სახელფასო ვალდებულებების ასახვით.'
+      text: 'კადრების მართვა. Payroll Run გაშვებისას სისტემა ითვლის საშემოსავლო გადასახადს და ავტომატურად ქმნის Journal Entry-ს სახელფასო ხარჯის (8100) და ვალდებულების (3300) ასახვით.'
     },
     {
       title: '🛡 სისტემური აუდიტი (Audit Log)',
       icon: <ShieldAlert size={18} className="text-red-500" />,
-      text: 'უსაფრთხოების კრიტიკული კომპონენტი, განკუთვნილი მხოლოდ ადმინისტრატორებისთვის. იწერება ყველა INSERT, UPDATE და DELETE მოქმედება ფინანსურ ტრანზაქციებზე. გიჩვენებთ ძველ და ახალ მონაცემებს (Diff), ცვლილების დროს და პასუხისმგებელი მომხმარებლის ვინაობას.'
+      text: 'უსაფრთხოების კრიტიკული კომპონენტი, განკუთვნილი მხოლოდ ადმინისტრატორებისთვის. იწერება ყველა INSERT, UPDATE და DELETE მოქმედება.'
     }
   ];
 
@@ -162,7 +189,7 @@ export default function AdminGuide() {
 
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full text-[11px] font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">
-            <FileSignature size={14} /> Documentation & User Manual
+            <FileSignature size={14} /> ERP v3.1 Documentation & User Manual
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
             სისტემის <br/>
@@ -171,7 +198,7 @@ export default function AdminGuide() {
             </span>
           </h2>
           <p className="text-stone-400 text-lg mt-5 max-w-2xl leading-relaxed">
-            დეტალური ინსტრუქციები ტერმინოლოგიაზე, ERP მოდულების ფუნქციონალებზე და აღრიცხვის ავტომატიზებულ მეთოდოლოგიურ პროცესებზე.
+            დეტალური ინსტრუქციები ტერმინოლოგიაზე, ფინანსური მოდულების ავტომატიზაციასა და მარკეტინგული აქციების ინტეგრაციაზე.
           </p>
         </div>
       </div>

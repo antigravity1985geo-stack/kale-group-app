@@ -8,6 +8,7 @@ import ProductSkeleton from '../ui/ProductSkeleton';
 import { useNavigate } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import { useTranslation } from 'react-i18next';
+import ProtectedImage from '../ui/ProtectedImage';
 
 export const Countdown = ({ endDate }: { endDate: string }) => {
   const [timeLeft, setTimeLeft] = React.useState('');
@@ -290,7 +291,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                           className="relative aspect-[4/5] overflow-hidden rounded-xl md:rounded-2xl bg-brand-100 shadow-md md:shadow-lg cursor-pointer"
                           onClick={() => navigate(`/product/${product.id}`)}
                         >
-                          <img 
+                          <ProtectedImage 
                             src={product.images[0]} 
                             alt={product.name} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
