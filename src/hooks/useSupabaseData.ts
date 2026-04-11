@@ -68,7 +68,18 @@ export function useProducts(activeCategory?: string) {
     },
     [activeCategory]
   );
-  return { products: data ?? [], loading, error, refetch };
+
+  const products = React.useMemo(() => {
+    if (!data) return [];
+    return data.map(p => {
+      if (p.is_on_sale && p.sale_end_date && new Date(p.sale_end_date).getTime() <= new Date().getTime()) {
+        return { ...p, is_on_sale: false };
+      }
+      return p;
+    });
+  }, [data]);
+
+  return { products, loading, error, refetch };
 }
 
 // ─────────────────────────────────────────────
@@ -111,7 +122,11 @@ export function useProduct(id: string | undefined) {
           .eq('id', id)
           .single();
         if (err) throw err;
-        if (!cancelled) setProduct(data as unknown as Product);
+        let p = data as unknown as Product;
+        if (p.is_on_sale && p.sale_end_date && new Date(p.sale_end_date).getTime() <= new Date().getTime()) {
+          p = { ...p, is_on_sale: false };
+        }
+        if (!cancelled) setProduct(p);
       } catch (err: any) {
         console.error('[useProduct] Error:', err);
         if (!cancelled) setError(err.message ?? 'პროდუქტი ვერ მოიძებნა');
