@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
+import { Helmet } from "react-helmet-async"
 import { motion } from "framer-motion"
 import { Loader2 } from "lucide-react"
 import { Sidebar } from "@/src/components/admin-new/Sidebar"
@@ -423,6 +424,10 @@ export function AdminPanel() {
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex, nofollow" />
+          <title>Kale Group — Admin Panel</title>
+        </Helmet>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -480,6 +485,10 @@ export function AdminPanel() {
   // ── Main Layout ──
   return (
     <div className="flex min-h-screen bg-background">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Kale Group — Admin Panel</title>
+      </Helmet>
       {/* Ambient Background Blobs */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div

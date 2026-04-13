@@ -434,10 +434,14 @@ async function setupApp() {
   }
 
   function verifyBogCallback(req: any): boolean {
-    if (!process.env.BOG_CLIENT_SECRET) return true;
+    if (!process.env.BOG_CLIENT_SECRET) {
+      console.error('[BOG Callback] CRITICAL: BOG_CLIENT_SECRET is not set. Rejecting callback for safety.');
+      return false;
+    }
     const signature = req.headers['callback-signature'] || req.headers['x-bog-signature'];
     if (!signature) {
-      console.warn('[BOG Callback] No signature header — will verify via DB lookup');
+      console.warn('[BOG Callback] No signature header from IP:', getClientIp(req), '— relying on DB lookup for verification');
+      // Allow through but log — defense-in-depth via verifyPaymentExists in handler
       return true;
     }
     try {
@@ -781,6 +785,18 @@ async function setupApp() {
         .single();
 
       if (!order) return;
+
+      // Guard: prevent duplicate invoice creation on retry/double callback
+      const { data: existingInvoice } = await supabaseAdmin
+        .from('invoices')
+        .select('id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      if (existingInvoice) {
+        console.warn(`[processSuccessfulOrder] Invoice already exists for order ${orderId}, skipping.`);
+        return;
+      }
 
       // Ensure we don't double-process the journal
       const { data: existingJournal } = await supabaseAdmin
@@ -1132,7 +1148,7 @@ async function setupApp() {
         // Payment method breakdown from orders
         supabaseAdmin
           .from('orders')
-          .select('payment_method, total_price, status')
+          .select('payment_method, payment_provider, sale_source, total_price, status')
           .in('status', ['delivered', 'confirmed', 'completed']),
         supabaseAdmin.from('order_items').select('price_at_purchase, quantity').eq('is_promotional_sale', true)
       ]);
@@ -1146,20 +1162,34 @@ async function setupApp() {
       const latestVatPayable = vatRes.data?.[0]?.net_vat_payable || 0;
       const promotionalSales = (promoSalesRes?.data || []).reduce((sum: number, item: any) => sum + ((Number(item.price_at_purchase) || 0) * (Number(item.quantity) || 1)), 0);
 
-      // Compute payment method breakdown
-      const orders = paymentBreakdownRes.data || [];
-      const paymentBreakdown: Record<string, { count: number; total: number }> = {
-        cash: { count: 0, total: 0 },
-        card: { count: 0, total: 0 },
-        bank_transfer: { count: 0, total: 0 },
-        installment: { count: 0, total: 0 },
-        other: { count: 0, total: 0 },
+      // Compute payment method breakdown — grouped by bank (bog, tbc, credo, cash)
+      const ordersData = paymentBreakdownRes.data || [];
+      const paymentBreakdown: Record<string, { count: number; total: number; onlineTotal: number; showroomTotal: number }> = {
+        bog: { count: 0, total: 0, onlineTotal: 0, showroomTotal: 0 },
+        tbc: { count: 0, total: 0, onlineTotal: 0, showroomTotal: 0 },
+        credo: { count: 0, total: 0, onlineTotal: 0, showroomTotal: 0 },
+        cash: { count: 0, total: 0, onlineTotal: 0, showroomTotal: 0 },
       };
-      for (const o of orders) {
-        const method = o.payment_method || 'other';
-        const key = method in paymentBreakdown ? method : 'other';
+      for (const o of ordersData) {
+        // Determine bank key from payment_method or payment_provider
+        const rawMethod = (o.payment_method || o.payment_provider || '').toLowerCase();
+        let key = 'cash'; // default
+        if (rawMethod.includes('bog') || rawMethod === 'bank_of_georgia') key = 'bog';
+        else if (rawMethod.includes('tbc') || rawMethod === 'tpay') key = 'tbc';
+        else if (rawMethod.includes('credo') || rawMethod === 'installment') key = 'credo';
+        else if (rawMethod === 'card' || rawMethod === 'bank_transfer') key = 'bog'; // default card to bog
+        else if (rawMethod === 'cash') key = 'cash';
+
+        const amount = Number(o.total_price || 0);
+        const source = (o.sale_source || 'website').toLowerCase();
+
         paymentBreakdown[key].count += 1;
-        paymentBreakdown[key].total += Number(o.total_price || 0);
+        paymentBreakdown[key].total += amount;
+        if (source === 'website' || source === 'online') {
+          paymentBreakdown[key].onlineTotal += amount;
+        } else {
+          paymentBreakdown[key].showroomTotal += amount;
+        }
       }
 
       // Monthly summary for chart
@@ -1648,7 +1678,7 @@ async function setupApp() {
   }
 }
 
-setupApp();
+const setupPromise = setupApp();
 
+export { setupPromise };
 export default app;
-

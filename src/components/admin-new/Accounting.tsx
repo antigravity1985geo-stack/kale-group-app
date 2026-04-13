@@ -4,8 +4,11 @@ import {
   BarChart3, BookOpen, FileText, Package, Building2, Users, RotateCcw, Truck,
   Landmark, Receipt, FileBarChart, TrendingUp, DollarSign, Percent, CreditCard,
   Banknote, Calendar, Loader2, RefreshCw, AlertTriangle, CheckCircle, Clock,
-  XCircle, ChevronDown, Eye, Upload, X, FileCheck, ShoppingCart
+  XCircle, ChevronDown, Eye, Upload, X, FileCheck, ShoppingCart, Warehouse, Globe
 } from "lucide-react"
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+} from "recharts"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
 import Invoices from "./accounting/Invoices"
@@ -48,10 +51,49 @@ export function Accounting() {
   const [accounts, setAccounts] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [invoices, setInvoices] = useState<any[]>([])
+  const [dashboardData, setDashboardData] = useState<any>(null)
+  const [trialBalanceData, setTrialBalanceData] = useState<any>(null)
 
   useEffect(() => {
     fetchInitialData()
+    fetchDashboardData()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'reports' && !trialBalanceData) {
+      fetchTrialBalance()
+    }
+  }, [activeTab])
+
+  const fetchDashboardData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/accounting/dashboard', {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setDashboardData(data)
+      }
+    } catch (err) {
+      console.error("Dashboard fetch error:", err)
+    }
+  }
+
+  const fetchTrialBalance = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/accounting/reports/trial-balance', {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTrialBalanceData(data)
+      }
+    } catch (err) {
+      console.error("Trial Balance fetch error:", err)
+    }
+  }
 
   const fetchInitialData = async () => {
     setIsLoading(true)
@@ -118,14 +160,37 @@ export function Accounting() {
     <div className="flex min-h-screen w-full flex-col bg-background p-6">
       {/* ── HEADER ── */}
       <div className="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
+            {accountingTabs.find(t => t.id === activeTab)?.icon}
+          </div>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <span className="text-primary/50">ბუღალტერია</span>
-              <span className="text-muted-foreground/30 font-light">/</span>
-              <span>ფინანსური მართვა</span>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {activeTab === "dashboard" && "ბუღალტერიის დეშბორდი"}
+              {activeTab === "journal" && "ბუღალტრული ჟურნალი"}
+              {activeTab === "invoices" && "ინვოისების მართვა"}
+              {activeTab === "inventory" && "მარაგების მართვა"}
+              {activeTab === "vat" && "დღგ-ს მართვა"}
+              {activeTab === "hr" && "ხელფასები და პერსონალი"}
+              {activeTab === "returns" && "პროდუქციის დაბრუნება (RMA)"}
+              {activeTab === "waybills" && "RS.ge ზედნადებები"}
+              {activeTab === "fixed-assets" && "ძირითადი აქტივები"}
+              {activeTab === "taxes" && "გადასახადების მართვა"}
+              {activeTab === "reports" && "ფინანსური ანგარიშგება"}
             </h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Kale Group ERP · საბუღალტრო მოდული</p>
+            <p className="text-xs text-muted-foreground font-medium">
+              {activeTab === "dashboard" && "რეალური ფინანსური მაჩვენებლების ანალიზი"}
+              {activeTab === "journal" && "გატარებების ისტორია და რეესტრი"}
+              {activeTab === "invoices" && "გაყიდვების დოკუმენტაცია და სტატუსები"}
+              {activeTab === "inventory" && "ნედლეული, მასალები და მზა პროდუქცია"}
+              {activeTab === "vat" && "საგადასახადო ვალდებულებები და დეკლარირება"}
+              {activeTab === "hr" && "თანამშრომელთა ბარათები, ხელფასები და უწყისები"}
+              {activeTab === "returns" && "დაბრუნებების ისტორია და აღრიცხვა"}
+              {activeTab === "waybills" && "ინტეგრაცია შემოსავლების სამსახურთან"}
+              {activeTab === "fixed-assets" && "აქტივების რეესტრი და ამორტიზაცია"}
+              {activeTab === "taxes" && "ბიუჯეტთან ანგარიშსწორება"}
+              {activeTab === "reports" && "ბალანსი, მოგება-ზარალი და საცდელი ბალანსი"}
+            </p>
           </div>
         </div>
         
@@ -137,7 +202,7 @@ export function Accounting() {
               className={cn(
                 "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all",
                 activeTab === tab.id
-                  ? "bg-background text-primary shadow-sm border border-border/50"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
                   : "text-muted-foreground hover:bg-background/50"
               )}
             >
@@ -159,61 +224,142 @@ export function Accounting() {
         <AnimatePresence mode="wait">
           {/* ═══════════════════ DASHBOARD ═══════════════════ */}
           {activeTab === "dashboard" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Income */}
-              <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-[#0a1510] to-[#040806] p-6 shadow-xl group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={48} className="text-emerald-500" /></div>
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 border border-emerald-500/20">
-                  <TrendingUp size={20} />
-                </div>
-                <h4 className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest">მთლიანი შემოსავალი</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">₾ 142,500</span>
-                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+12%</span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/40 to-transparent" />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-8">
+              {/* 9 Vibrant KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-9 gap-4">
+                {[
+                  { label: 'შემოსავალი', value: `₾ ${Number(dashboardData?.kpis?.revenue || 0).toLocaleString()}`, icon: <TrendingUp size={16}/>, color: 'bg-emerald-500', trend: '' },
+                  { label: 'COGS', value: `₾ ${Number(dashboardData?.kpis?.cogs || 0).toLocaleString()}`, icon: <Package size={16}/>, color: 'bg-orange-500', trend: '' },
+                  { label: 'მარჟა %', value: `${dashboardData?.kpis?.grossMarginPct || 0}%`, icon: <Percent size={16}/>, color: 'bg-blue-500', trend: '' },
+                  { label: 'მთლ. მოგება', value: `₾ ${Number(dashboardData?.kpis?.grossProfit || 0).toLocaleString()}`, icon: <DollarSign size={16}/>, color: 'bg-violet-500', trend: '' },
+                  { label: 'დღგ გადასახ.', value: `₾ ${Number(dashboardData?.kpis?.vatPayable || 0).toLocaleString()}`, icon: <Receipt size={16}/>, color: 'bg-rose-500', trend: '' },
+                  { label: 'გადახ. ინვ.', value: `₾ ${Number(dashboardData?.kpis?.totalPaidRevenue || 0).toLocaleString()}`, icon: <FileCheck size={16}/>, color: 'bg-cyan-500', trend: '' },
+                  { label: 'მარაგის ღირ.', value: `₾ ${Number(dashboardData?.kpis?.inventoryValue || 0).toLocaleString()}`, icon: <Warehouse size={16}/>, color: 'bg-teal-500', trend: '' },
+                  { label: 'ნეტო მოგება', value: `₾ ${Number(dashboardData?.kpis?.netProfit || 0).toLocaleString()}`, icon: <Landmark size={16}/>, color: 'bg-indigo-500', trend: '' },
+                  { label: 'აქცია გაყ.', value: `₾ ${Number(dashboardData?.kpis?.promotionalSales || 0).toLocaleString()}`, icon: <Percent size={16}/>, color: 'bg-pink-500', trend: '' },
+                ].map((card, i) => (
+                  <div key={i} className={cn("relative overflow-hidden rounded-2xl p-4 shadow-lg group transition-transform hover:-translate-y-1", card.color)}>
+                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:scale-125 transition-transform text-white">{card.icon}</div>
+                    <p className="text-[9px] font-bold text-white/70 uppercase tracking-tighter mb-1">{card.label}</p>
+                    <p className="text-sm font-bold text-white whitespace-nowrap">{card.value}</p>
+                    {card.trend && <span className="text-[8px] font-bold text-white bg-white/20 px-1 py-0.5 rounded mt-1 inline-block">{card.trend}</span>}
+                  </div>
+                ))}
               </div>
 
-              {/* Expense */}
-              <div className="relative overflow-hidden rounded-3xl border border-rose-500/20 bg-gradient-to-br from-[#1a0b0d] to-[#080405] p-6 shadow-xl group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><RotateCcw size={48} className="text-rose-500" /></div>
-                <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4 border border-rose-500/20">
-                  <Banknote size={20} />
-                </div>
-                <h4 className="text-[10px] font-bold text-rose-500/60 uppercase tracking-widest">მთლიანი ხარჯი</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">₾ 89,200</span>
-                  <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">+4%</span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500/40 to-transparent" />
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Payment Breakthrough Frame */}
+                <div className="bg-card/40 backdrop-blur-md border border-border/40 rounded-3xl p-6 shadow-xl space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold flex items-center gap-2"><CreditCard size={18} className="text-primary"/> გადახდის მეთოდების დაშლა</h3>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">ბოლო 30 დღე</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { 
+                        label: 'საქართველოს ბანკი', 
+                        val: `₾ ${Number(dashboardData?.paymentBreakdown?.bog?.total || 0).toLocaleString()}`, 
+                        count: (dashboardData?.paymentBreakdown?.bog?.count || 0), 
+                        online: `₾ ${Number(dashboardData?.paymentBreakdown?.bog?.onlineTotal || 0).toLocaleString()}`,
+                        showroom: `₾ ${Number(dashboardData?.paymentBreakdown?.bog?.showroomTotal || 0).toLocaleString()}`,
+                        color: 'bg-orange-500' 
+                      },
+                      { 
+                        label: 'თიბისი ბანკი', 
+                        val: `₾ ${Number(dashboardData?.paymentBreakdown?.tbc?.total || 0).toLocaleString()}`, 
+                        count: (dashboardData?.paymentBreakdown?.tbc?.count || 0), 
+                        online: `₾ ${Number(dashboardData?.paymentBreakdown?.tbc?.onlineTotal || 0).toLocaleString()}`,
+                        showroom: `₾ ${Number(dashboardData?.paymentBreakdown?.tbc?.showroomTotal || 0).toLocaleString()}`,
+                        color: 'bg-blue-500' 
+                      },
+                      { 
+                        label: 'კრედო (განვადება)', 
+                        val: `₾ ${Number(dashboardData?.paymentBreakdown?.credo?.total || 0).toLocaleString()}`, 
+                        count: (dashboardData?.paymentBreakdown?.credo?.count || 0), 
+                        online: `₾ ${Number(dashboardData?.paymentBreakdown?.credo?.onlineTotal || 0).toLocaleString()}`,
+                        showroom: `₾ ${Number(dashboardData?.paymentBreakdown?.credo?.showroomTotal || 0).toLocaleString()}`,
+                        color: 'bg-blue-600' 
+                      },
+                      { 
+                        label: 'ნაღდი (შოურუმი)', 
+                        val: `₾ ${Number(dashboardData?.paymentBreakdown?.cash?.total || 0).toLocaleString()}`, 
+                        count: (dashboardData?.paymentBreakdown?.cash?.count || 0), 
+                        online: `₾ 0`, // Cash is usually showroom only
+                        showroom: `₾ ${Number(dashboardData?.paymentBreakdown?.cash?.total || 0).toLocaleString()}`,
+                        color: 'bg-emerald-500' 
+                      },
+                    ].map(pm => (
+                      <div key={pm.label} className="p-4 rounded-2xl bg-muted/10 border border-border/20 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className={cn("w-2 h-2 rounded-full", pm.color)} />
+                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">{pm.label}</span>
+                          </div>
+                          <p className="text-lg font-bold">{pm.val}</p>
+                          <p className="text-[9px] text-muted-foreground mt-1 font-medium">{pm.count} ტრანზაქცია</p>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-border/20 flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between text-[10px] font-bold">
+                            <span className="flex items-center gap-1 text-muted-foreground"><Globe size={10}/> ონლაინ:</span>
+                            <span>{pm.online}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] font-bold">
+                            <span className="flex items-center gap-1 text-muted-foreground"><Building2 size={10}/> შოურუმი:</span>
+                            <span>{pm.showroom}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Profit */}
-              <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0b101a] to-[#040508] p-6 shadow-xl group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><DollarSign size={48} className="text-blue-500" /></div>
-                <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-4 border border-blue-500/20">
-                  <DollarSign size={20} />
+                  <div className="h-3 w-full bg-muted/20 rounded-full overflow-hidden flex">
+                    {/* Visual breakdown bar */}
+                    {(Object.values(dashboardData?.paymentBreakdown || {}) as any[]).map((data: any, i: number) => {
+                      const total: number = (Object.values(dashboardData?.paymentBreakdown || {}) as any[]).reduce((acc: number, cur: any) => acc + (cur.total || 0), 0);
+                      const pct = total > 0 ? (data.total / total) * 100 : 0;
+                      const colors = ['bg-orange-500', 'bg-blue-500', 'bg-blue-600', 'bg-emerald-500', 'bg-violet-500', 'bg-gray-400'];
+                      if (pct === 0) return null;
+                      return <div key={i} className={cn("h-full", colors[i % colors.length])} style={{ width: `${pct}%` }} />
+                    })}
+                  </div>
+                  {!dashboardData?.paymentBreakdown && <div className="h-3 w-full animate-pulse bg-muted/20 rounded-full" />}
                 </div>
-                <h4 className="text-[10px] font-bold text-blue-500/60 uppercase tracking-widest">წმინდა მოგება</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">₾ 53,300</span>
-                  <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">+18%</span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500/40 to-transparent" />
-              </div>
 
-              {/* VAT */}
-              <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-[#1a130b] to-[#080604] p-6 shadow-xl group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Percent size={48} className="text-amber-500" /></div>
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 border border-amber-500/20">
-                  <Receipt size={20} />
+                {/* Monthly Statistics Chart Frame */}
+                <div className="bg-card/40 backdrop-blur-md border border-border/40 rounded-3xl p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2"><FileBarChart size={18} className="text-primary"/> ყოველთვიური სტატისტიკა</h3>
+                  </div>
+                  <div className="h-64">
+                    {(dashboardData?.monthlySummary || []).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={dashboardData.monthlySummary.slice(-8).map((m: any) => {
+                          const monthNames = ['იანვ', 'თებ', 'მარ', 'აპრ', 'მაი', 'ივნ', 'ივლ', 'აგვ', 'სექ', 'ოქტ', 'ნოე', 'დეკ'];
+                          return { month: monthNames[m.month - 1] || m.month, revenue: m.revenue || 0, profit: m.net_profit || 0 };
+                        })}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                          <XAxis dataKey="month" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₾${(v / 1000).toFixed(0)}k`} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', fontSize: 12 }}
+                            formatter={(value: number) => [`₾ ${value.toLocaleString()}`, '']}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                          <Bar dataKey="revenue" name="შემოსავალი" fill="#10b981" radius={[6, 6, 0, 0]} />
+                          <Bar dataKey="profit" name="მოგება" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3 opacity-40">
+                          <FileBarChart size={32} className="text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">მონაცემები იტვირთება...</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest">დღგ-ს ვალდებულება</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">₾ 12,450</span>
-                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">დღგ</span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/40 to-transparent" />
               </div>
             </motion.div>
           )}
@@ -383,14 +529,31 @@ export function Accounting() {
                        </tr>
                      </thead>
                      <tbody className="divide-y divide-border/30">
-                       {accounts.map(acc => (
-                         <tr key={acc.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => setSelectedDrillDownAccount(acc)}>
-                           <td className="px-6 py-3 font-mono text-primary">{acc.code}</td>
-                           <td className="px-6 py-3">{acc.name_ka}</td>
-                           <td className="px-6 py-3 text-right font-mono font-bold">₾ 0.00</td>
-                         </tr>
-                       ))}
+                       {(trialBalanceData?.accounts || accounts).map((acc: any) => {
+                         const balance = Number(acc.total_debit || 0) - Number(acc.total_credit || 0);
+                         return (
+                           <tr key={acc.id || acc.code} className="hover:bg-muted/20 cursor-pointer" onClick={() => setSelectedDrillDownAccount(acc)}>
+                             <td className="px-6 py-3 font-mono text-primary">{acc.code}</td>
+                             <td className="px-6 py-3">{acc.name_ka || acc.name}</td>
+                             <td className={cn("px-6 py-3 text-right font-mono font-bold", balance > 0 ? "text-emerald-500" : balance < 0 ? "text-red-500" : "text-muted-foreground")}>
+                               ₾ {Math.abs(balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                             </td>
+                           </tr>
+                         );
+                       })}
                      </tbody>
+                     <tfoot className="bg-muted/50 border-t-2 border-border">
+                       <tr>
+                         <td className="px-6 py-3 font-bold text-sm" colSpan={2}>ჯამი</td>
+                         <td className="px-6 py-3 text-right font-mono font-bold text-sm">
+                           {trialBalanceData ? (
+                             <span className={trialBalanceData.balanced ? "text-emerald-500" : "text-red-500"}>
+                               {trialBalanceData.balanced ? "✓ ბალანსი სწორია" : "✗ ბალანსი არაზუსტია"}
+                             </span>
+                           ) : "იტვირთება..."}
+                         </td>
+                       </tr>
+                     </tfoot>
                    </table>
                 </div>
               </div>
@@ -419,8 +582,61 @@ export function Accounting() {
               <button onClick={() => setSelectedDrillDownAccount(null)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-muted transition-colors"><X /></button>
             </div>
             <div className="flex-1 overflow-auto p-6">
-              {/* Drill down logic here */}
-              <EmptyState icon={Clock} text="ამ ანგარიშზე ჩანაწერები არ იძებნება" />
+              {(() => {
+                const accountLines = journalLines.filter(l => l.account_id === selectedDrillDownAccount.id);
+                if (accountLines.length === 0) {
+                  return <EmptyState icon={Clock} text="ამ ანგარიშზე ჩანაწერები არ იძებნება" />;
+                }
+                const totalDebit = accountLines.reduce((s, l) => s + Number(l.debit || 0), 0);
+                const totalCredit = accountLines.reduce((s, l) => s + Number(l.credit || 0), 0);
+                return (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+                        <p className="text-[10px] text-emerald-500 font-bold uppercase">სულ დებეტი</p>
+                        <p className="text-xl font-bold text-emerald-500 mt-1">₾ {totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      </div>
+                      <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4">
+                        <p className="text-[10px] text-amber-500 font-bold uppercase">სულ კრედიტი</p>
+                        <p className="text-xl font-bold text-amber-500 mt-1">₾ {totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      </div>
+                      <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4">
+                        <p className="text-[10px] text-primary font-bold uppercase">ბალანსი</p>
+                        <p className="text-xl font-bold text-primary mt-1">₾ {(totalDebit - totalCredit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-border/40 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground">
+                            <th className="px-6 py-3 text-left">თარიღი</th>
+                            <th className="px-6 py-3 text-left">აღწერა</th>
+                            <th className="px-6 py-3 text-right">დებეტი</th>
+                            <th className="px-6 py-3 text-right">კრედიტი</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/20">
+                          {accountLines.map((line, idx) => {
+                            const entry = journalEntries.find(e => e.id === line.journal_entry_id);
+                            return (
+                              <tr key={idx} className="hover:bg-muted/20 transition-colors">
+                                <td className="px-6 py-3 font-mono text-xs">{entry ? new Date(entry.entry_date).toLocaleDateString('ka-GE') : '—'}</td>
+                                <td className="px-6 py-3">{line.description || entry?.description || '—'}</td>
+                                <td className="px-6 py-3 text-right font-mono font-bold text-emerald-500">
+                                  {line.debit > 0 ? `₾ ${Number(line.debit).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
+                                </td>
+                                <td className="px-6 py-3 text-right font-mono font-bold text-amber-500">
+                                  {line.credit > 0 ? `₾ ${Number(line.credit).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         </div>

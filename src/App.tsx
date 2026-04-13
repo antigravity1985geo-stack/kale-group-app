@@ -37,41 +37,55 @@ function ScrollToTopManager() {
   return null;
 }
 
-export default function App() {
+function AppLayout() {
+  const location = useLocation();
   const [isWishlistOpen, setIsWishlistOpen] = React.useState(false);
+  const isAdminRoute = location.pathname.toLowerCase().startsWith('/admin');
 
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTopManager />
-      <AuthProvider>
-      <HelmetProvider>
-        <WishlistProvider>
-          <CartProvider>
-          <div className="min-h-screen bg-brand-50 text-brand-900 font-sans selection:bg-brand-200 flex flex-col">
-            <Toaster position="bottom-right" reverseOrder={false} />
-            <Header onOpenWishlist={() => setIsWishlistOpen(true)} />
-            <main className="flex-1">
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/payment/success" element={<PaymentSuccessPage />} />
-                <Route path="/product/:id" element={<ProductPage />} />
-                
-                {/* Admin Route (No generic Header/Footer) */}
-                <Route path="/admin" element={<AdminPanel />} />
-              </Routes>
-            </main>
-            <Footer />
+      <div className="min-h-screen bg-brand-50 text-brand-900 font-sans selection:bg-brand-200 flex flex-col">
+        <Toaster position="bottom-right" reverseOrder={false} />
+        {!isAdminRoute && <Header onOpenWishlist={() => setIsWishlistOpen(true)} />}
+        <main className="flex-1">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/product/:id" element={<ProductPage />} />
             
+            {/* Admin Route (No generic Header/Footer) */}
+            <Route path="/admin" element={<AdminPanel />} />
+          </Routes>
+        </main>
+        {!isAdminRoute && <Footer />}
+        
+        {!isAdminRoute && (
+          <>
             <CartDrawer />
             <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <AIChatBot />
-            <ReloadPrompt />
-          </div>
-        </CartProvider>
-      </WishlistProvider>
-      </HelmetProvider>
+          </>
+        )}
+        <ReloadPrompt />
+      </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <HelmetProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <AppLayout />
+            </CartProvider>
+          </WishlistProvider>
+        </HelmetProvider>
       </AuthProvider>
     </BrowserRouter>
   );
