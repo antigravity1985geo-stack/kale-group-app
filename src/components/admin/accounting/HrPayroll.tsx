@@ -91,13 +91,13 @@ export default function HrPayroll() {
   const DEPT_COLORS: Record<string, string> = { SALES: 'text-emerald-300 bg-emerald-900/30', ADMIN: 'text-blue-300 bg-blue-900/30', LOGISTICS: 'text-orange-300 bg-orange-900/30', IT: 'text-violet-300 bg-violet-900/30', MANAGEMENT: 'text-amber-300 bg-amber-900/30' };
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       {toast && <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border ${toast.type === 'ok' ? 'bg-emerald-900 text-emerald-200 border-emerald-700' : 'bg-red-900 text-red-200 border-red-700'}`}>{toast.msg}</div>}
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><Users size={22} /> HR & ხელფასი</h2>
-          <p className="text-slate-500 text-sm mt-1">თანამშრომ. მართვა · Payroll Processing</p>
+          <h2 className="text-2xl font-bold text-admin-text flex items-center gap-2"><Users size={22} /> HR & ხელფასი</h2>
+          <p className="text-admin-muted text-sm mt-1">თანამშრომ. მართვა · Payroll Processing</p>
         </div>
         <div className="text-right">
           <p className="text-slate-400 text-xs">ყოველთვ. ფონდი</p>
@@ -106,9 +106,9 @@ export default function HrPayroll() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white shadow-sm/50 border border-slate-200 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-white shadow-sm/50 border border-admin-muted/10 p-1 rounded-xl w-fit">
         {([['employees', 'თანამ. ბაზა'], ['payroll', 'პეიროლი']] as const).map(([t, l]) => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === t ? 'bg-brand-600 text-slate-800' : 'text-slate-500 hover:text-slate-800'}`}>{l}</button>
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm transition-all ${tab === t ? 'bg-brand-600 text-admin-text' : 'text-admin-muted hover:text-admin-text'}`}>{l}</button>
         ))}
       </div>
 
@@ -117,18 +117,18 @@ export default function HrPayroll() {
         <>
           <div className="flex justify-between items-center">
             <div className="flex gap-4 text-sm">
-              <span className="text-slate-500">სულ: <strong className="text-slate-800">{employees.length}</strong></span>
-              <span className="text-slate-500">აქტ.: <strong className="text-emerald-300">{employees.filter(e => e.status === 'ACTIVE').length}</strong></span>
+              <span className="text-admin-muted">სულ: <strong className="text-admin-text">{employees.length}</strong></span>
+              <span className="text-admin-muted">აქტ.: <strong className="text-emerald-300">{employees.filter(e => e.status === 'ACTIVE').length}</strong></span>
             </div>
-            <button onClick={() => setShowAddEmp(!showAddEmp)} className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-slate-800 rounded-xl text-sm font-medium transition-all">
+            <button onClick={() => setShowAddEmp(!showAddEmp)} className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-admin-bg0 text-admin-text rounded-xl text-sm font-medium transition-all">
               <Plus size={14} /> თანამშ. დამ.
             </button>
           </div>
 
           {showAddEmp && (
-            <form onSubmit={handleAddEmployee} className="bg-white shadow-sm/90 border border-slate-200 rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleAddEmployee} className="bg-white shadow-sm/90 border border-admin-muted/10 rounded-2xl p-6 space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-slate-800 font-semibold">👤 ახალი თანამშრომელი</h3>
+                <h3 className="text-admin-text font-semibold">👤 ახალი თანამშრომელი</h3>
                 <button type="button" onClick={() => setShowAddEmp(false)}><X size={18} className="text-slate-400" /></button>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -142,22 +142,22 @@ export default function HrPayroll() {
                   ['phone', 'ტელ.', 'text', false],
                 ].map(([key, label, type, req]) => (
                   <div key={key as string}>
-                    <label className="text-slate-500 text-xs mb-1 block">{label as string}</label>
+                    <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">{label as string}</label>
                     <input type={type as string} required={req as boolean} value={(empForm as any)[key as string]} onChange={e => setEmpForm({ ...empForm, [key as string]: e.target.value })}
-                      className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                      className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
                   </div>
                 ))}
                 <div>
-                  <label className="text-slate-500 text-xs mb-1 block">დეპ.</label>
+                  <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">დეპ.</label>
                   <select value={empForm.department} onChange={e => setEmpForm({ ...empForm, department: e.target.value })}
-                    className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600">
+                    className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm">
                     {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setShowAddEmp(false)} className="px-4 py-2 text-sm text-slate-500 border border-slate-300 rounded-xl">გ/ება</button>
-                <button type="submit" className="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-slate-800 text-sm rounded-xl font-medium">შენახვა</button>
+                <button type="button" onClick={() => setShowAddEmp(false)} className="px-4 py-2 text-sm text-admin-muted border border-admin-muted/10 rounded-xl">გ/ება</button>
+                <button type="submit" className="px-5 py-2 bg-brand-600 hover:bg-admin-bg0 text-admin-text text-sm rounded-xl font-medium">შენახვა</button>
               </div>
             </form>
           )}
@@ -167,20 +167,20 @@ export default function HrPayroll() {
           ) : (
             <div className="space-y-2">
               {employees.map(emp => (
-                <div key={emp.id} className="flex items-center gap-4 bg-white shadow-sm/80 border border-slate-200/50 rounded-xl px-5 py-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-slate-800 font-semibold text-sm shrink-0">
+                <div key={emp.id} className="flex items-center gap-4 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] rounded-2xl border border-admin-muted/5 hover:shadow-lg transition-all px-5 py-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-admin-text font-semibold text-sm shrink-0">
                     {emp.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 font-medium text-sm">{emp.full_name}</p>
-                    <p className="text-slate-500 text-xs">{emp.position} · {emp.employee_code}</p>
+                    <p className="text-admin-text font-medium text-sm">{emp.full_name}</p>
+                    <p className="text-admin-muted text-xs">{emp.position} · {emp.employee_code}</p>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${DEPT_COLORS[emp.department] || 'text-slate-600 bg-stone-800'}`}>{emp.department}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${DEPT_COLORS[emp.department] || 'text-slate-600 bg-admin-bg'}`}>{emp.department}</span>
                   <div className="text-right">
-                    <p className="text-slate-800 font-semibold text-sm">{GEL(emp.gross_salary)}</p>
+                    <p className="text-admin-text font-semibold text-sm">{GEL(emp.gross_salary)}</p>
                     <p className="text-slate-400 text-xs">სუფ: {GEL(emp.gross_salary * 0.8)}</p>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${emp.status === 'ACTIVE' ? 'border-emerald-700/40 text-emerald-300 bg-emerald-900/30' : 'border-stone-600/40 text-slate-400 bg-stone-800/30'}`}>{emp.status === 'ACTIVE' ? 'აქტ.' : 'გათ.'}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${emp.status === 'ACTIVE' ? 'border-emerald-700/40 text-emerald-300 bg-emerald-900/30' : 'border-stone-600/40 text-slate-400 bg-admin-bg/30'}`}>{emp.status === 'ACTIVE' ? 'აქტ.' : 'გათ.'}</span>
                 </div>
               ))}
             </div>
@@ -192,35 +192,35 @@ export default function HrPayroll() {
       {tab === 'payroll' && (
         <>
           <div className="flex justify-end">
-            <button onClick={() => setShowRunForm(!showRunForm)} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-slate-800 rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-900/30">
+            <button onClick={() => setShowRunForm(!showRunForm)} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-admin-text rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-900/30">
               <PlayCircle size={16} /> პეიროლის გაშვება
             </button>
           </div>
 
           {showRunForm && (
-            <form onSubmit={handleRunPayroll} className="bg-white shadow-sm/90 border border-slate-200 rounded-2xl p-6 space-y-4 max-w-sm">
+            <form onSubmit={handleRunPayroll} className="bg-white shadow-sm/90 border border-admin-muted/10 rounded-2xl p-6 space-y-4 max-w-sm">
               <div className="flex justify-between">
-                <h3 className="text-slate-800 font-semibold">🚀 პეიროლ-ი</h3>
+                <h3 className="text-admin-text font-semibold">🚀 პეიროლ-ი</h3>
                 <button type="button" onClick={() => setShowRunForm(false)}><X size={18} className="text-slate-400" /></button>
               </div>
               <div>
-                <label className="text-slate-500 text-xs mb-1 block">თვე</label>
+                <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">თვე</label>
                 <select value={runForm.period_month} onChange={e => setRunForm({ ...runForm, period_month: Number(e.target.value) })}
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600">
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm">
                   {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-slate-500 text-xs mb-1 block">ფისკ. პერ.</label>
+                <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">ფისკ. პერ.</label>
                 <select value={runForm.fiscal_period_id} onChange={e => setRunForm({ ...runForm, fiscal_period_id: e.target.value })}
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" required>
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" required>
                   {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div className="bg-amber-900/20 border border-amber-800/40 rounded-xl p-3 text-xs text-amber-300">
                 📢 {employees.filter(e => e.status === 'ACTIVE').length} თანამ. | ფონდი: {GEL(totalSalaryBudget)} (20% საშ.გ.)
               </div>
-              <button type="submit" className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-slate-800 rounded-xl text-sm font-medium">გაშვება</button>
+              <button type="submit" className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-admin-text rounded-xl text-sm font-medium">გაშვება</button>
             </form>
           )}
 
@@ -231,32 +231,32 @@ export default function HrPayroll() {
           ) : (
             <div className="space-y-3">
               {runs.map(run => (
-                <div key={run.id} className="bg-white shadow-sm/80 border border-slate-200/50 rounded-xl overflow-hidden">
+                <div key={run.id} className="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] rounded-2xl border border-admin-muted/5 hover:shadow-lg transition-all overflow-hidden">
                   <button onClick={() => setExpandedRun(expandedRun === run.id ? null : run.id)}
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-100/50/30 transition-colors">
                     <div className="flex items-center gap-4">
                       <span className="font-mono text-amber-400 text-sm">{run.run_code}</span>
-                      <span className="text-slate-800">{MONTHS[run.period_month - 1]} {run.period_year}</span>
+                      <span className="text-admin-text">{MONTHS[run.period_month - 1]} {run.period_year}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${run.status === 'PAID' ? 'bg-emerald-900/30 text-emerald-300 border-emerald-700/40' : 'bg-amber-900/30 text-amber-300 border-amber-700/40'}`}>{run.status}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right text-sm">
-                        <span className="text-slate-500">Gross: </span><span className="text-slate-800">{GEL(run.total_gross)}</span>
+                        <span className="text-admin-muted">Gross: </span><span className="text-admin-text">{GEL(run.total_gross)}</span>
                         <span className="text-stone-600 mx-2">|</span>
-                        <span className="text-slate-500">Net: </span><span className="text-emerald-300 font-semibold">{GEL(run.total_net)}</span>
+                        <span className="text-admin-muted">Net: </span><span className="text-emerald-300 font-semibold">{GEL(run.total_net)}</span>
                       </div>
                       <ChevronDown size={16} className={`text-stone-600 transition-transform ${expandedRun === run.id ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {expandedRun === run.id && run.payroll_items?.length > 0 && (
-                    <div className="border-t border-slate-200 px-5 py-3">
+                    <div className="border-t border-admin-muted/10 px-5 py-3">
                       <table className="w-full text-xs">
                         <thead><tr className="text-slate-400"><th className="text-left py-1">თანამ.</th><th className="text-left py-1">პოზ.</th><th className="text-right py-1">Gross</th><th className="text-right py-1">სახ.გ.</th><th className="text-right py-1">Net</th></tr></thead>
                         <tbody>
                           {run.payroll_items.map((item: any, i: number) => (
-                            <tr key={i} className="border-t border-slate-200/50">
-                              <td className="py-1.5 text-slate-800">{item.employees?.full_name}</td>
-                              <td className="py-1.5 text-slate-500">{item.employees?.position}</td>
+                            <tr key={i} className="border-t border-admin-muted/10/50">
+                              <td className="py-1.5 text-admin-text">{item.employees?.full_name}</td>
+                              <td className="py-1.5 text-admin-muted">{item.employees?.position}</td>
                               <td className="py-1.5 text-right text-slate-600">{GEL(item.gross_salary)}</td>
                               <td className="py-1.5 text-right text-red-300">{GEL(item.income_tax)}</td>
                               <td className="py-1.5 text-right text-emerald-300 font-semibold">{GEL(item.net_salary)}</td>

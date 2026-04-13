@@ -189,13 +189,13 @@ export default function POSModule() {
         <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
           <CheckCircle2 size={40} className="text-emerald-600" />
         </div>
-        <h2 className="text-3xl font-serif text-brand-900 mb-2">გაყიდვა დასრულდა!</h2>
+        <h2 className="text-3xl font-sans font-bold text-admin-text mb-2">გაყიდვა დასრულდა!</h2>
         <p className="text-brand-500 mb-1">შეკვეთა #{successOrder.id.slice(0, 8).toUpperCase()}</p>
-        <p className="text-2xl font-bold text-brand-900 mb-6">₾{Number(successOrder.total_price).toLocaleString()}</p>
+        <p className="text-2xl font-bold text-admin-text mb-6">₾{Number(successOrder.total_price).toLocaleString()}</p>
         <div className="flex gap-3">
           <button
             onClick={() => setSuccessOrder(null)}
-            className="px-8 py-3 bg-brand-900 text-gold-400 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-950 transition-all border-none cursor-pointer"
+            className="px-8 py-3 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all font-bold text-sm uppercase tracking-widest hover:bg-brand-950 transition-all border-none cursor-pointer"
           >
             <Plus size={16} className="inline mr-2" />
             ახალი გაყიდვა
@@ -222,7 +222,7 @@ export default function POSModule() {
 
         {isLoading ? (
           <div className="flex items-center justify-center flex-1">
-            <Loader2 className="animate-spin text-brand-400" size={32} />
+            <Loader2 className="animate-spin text-admin-muted" size={32} />
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-3 gap-3 pr-2">
@@ -238,7 +238,7 @@ export default function POSModule() {
                 >
                   <div className="w-full relative">
                     {inCart && (
-                      <span className="absolute -top-2 -right-2 w-6 h-6 bg-gold-400 text-brand-900 rounded-full text-xs font-bold flex items-center justify-center z-20">
+                      <span className="absolute -top-2 -right-2 w-6 h-6 bg-gold-400 text-admin-text rounded-full text-xs font-bold flex items-center justify-center z-20">
                         {inCart.quantity}
                       </span>
                     )}
@@ -256,17 +256,17 @@ export default function POSModule() {
                     </div>
                   </div>
                   <div className="flex flex-col flex-1 pb-1">
-                    <p className="text-xs font-semibold text-brand-900 leading-tight mb-1 line-clamp-2">{p.name}</p>
-                    <p className="text-[10px] text-brand-400 uppercase tracking-wider">{p.category}</p>
+                    <p className="text-xs font-semibold text-admin-text leading-tight mb-1 line-clamp-2">{p.name}</p>
+                    <p className="text-[10px] text-admin-muted uppercase tracking-wider">{p.category}</p>
                   </div>
                   <div className="flex items-end mt-1 w-full gap-2">
                     {isOnSale ? (
                       <div className="flex flex-col">
-                        <span className="text-[10px] text-brand-400 line-through leading-none">₾{Number(p.price).toLocaleString()}</span>
+                        <span className="text-[10px] text-admin-muted line-through leading-none">₾{Number(p.price).toLocaleString()}</span>
                         <span className="text-sm font-bold text-red-600 leading-tight">₾{price.toLocaleString()}</span>
                       </div>
                     ) : (
-                      <span className="text-sm font-bold text-brand-900">₾{price.toLocaleString()}</span>
+                      <span className="text-sm font-bold text-admin-text">₾{price.toLocaleString()}</span>
                     )}
                   </div>
                 </button>
@@ -280,7 +280,7 @@ export default function POSModule() {
       <div className="w-96 flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Cart Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-serif text-brand-900 text-lg flex items-center gap-2">
+          <h3 className="font-sans font-bold text-admin-text text-lg flex items-center gap-2">
             <ShoppingCart size={20} /> კალათა
           </h3>
           {cart.length > 0 && (
@@ -307,9 +307,9 @@ export default function POSModule() {
                   className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-brand-900 truncate">{item.product.name}</p>
+                  <p className="text-xs font-semibold text-admin-text truncate">{item.product.name}</p>
                   <div className="flex items-baseline gap-1.5">
-                    <p className={`text-xs font-bold ${isProductOnSale(item.product) ? 'text-red-600' : 'text-brand-400'}`}>₾{getProductPrice(item.product).toLocaleString()} / ც.</p>
+                    <p className={`text-xs font-bold ${isProductOnSale(item.product) ? 'text-red-600' : 'text-admin-muted'}`}>₾{getProductPrice(item.product).toLocaleString()} / ც.</p>
                     {isProductOnSale(item.product) && (
                       <p className="text-[10px] text-brand-300 line-through">₾{Number(item.product.price).toLocaleString()}</p>
                     )}
@@ -319,7 +319,7 @@ export default function POSModule() {
                   <button onClick={() => updateQty(item.product.id, -1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-red-50 hover:border-red-200 text-gray-600 hover:text-red-500 transition-all cursor-pointer">
                     <Minus size={12} />
                   </button>
-                  <span className="w-6 text-center text-sm font-bold text-brand-900">{item.quantity}</span>
+                  <span className="w-6 text-center text-sm font-bold text-admin-text">{item.quantity}</span>
                   <button onClick={() => updateQty(item.product.id, 1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-200 text-gray-600 hover:text-green-500 transition-all cursor-pointer">
                     <Plus size={12} />
                   </button>
@@ -340,21 +340,21 @@ export default function POSModule() {
             placeholder="მომხმარებლის სახელი *"
             value={customerName}
             onChange={e => setCustomerName(e.target.value)}
-            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
+            className="w-full px-3 py-2.5 bg-admin-bg text-admin-muted rounded-2xl hover:bg-white hover:text-admin-primary transition-all shadow-sm text-sm focus:outline-none focus:border-gold-400 transition-all"
           />
           <input
             type="text"
             placeholder="პირადი ნომერი (სურვ.)"
             value={customerIdNumber}
             onChange={e => setCustomerIdNumber(e.target.value)}
-            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
+            className="w-full px-3 py-2.5 bg-admin-bg text-admin-muted rounded-2xl hover:bg-white hover:text-admin-primary transition-all shadow-sm text-sm focus:outline-none focus:border-gold-400 transition-all"
           />
           <input
             type="tel"
             placeholder="ტელეფონი (სურვ.)"
             value={customerPhone}
             onChange={e => setCustomerPhone(e.target.value)}
-            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
+            className="w-full px-3 py-2.5 bg-admin-bg text-admin-muted rounded-2xl hover:bg-white hover:text-admin-primary transition-all shadow-sm text-sm focus:outline-none focus:border-gold-400 transition-all"
           />
 
           {/* Payment Method */}
@@ -367,7 +367,7 @@ export default function POSModule() {
                   onClick={() => setPaymentMethod(method)}
                   className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
                     paymentMethod === method
-                      ? 'bg-brand-900 text-gold-400 border-brand-900'
+                      ? 'bg-brand-900 text-admin-primary border-brand-900'
                       : 'bg-gray-50 text-brand-500 border-gray-200 hover:border-brand-300'
                   }`}
                 >
@@ -391,7 +391,7 @@ export default function POSModule() {
             placeholder="შენიშვნა (სურვ.)"
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-all"
+            className="w-full px-3 py-2.5 bg-admin-bg text-admin-muted rounded-2xl hover:bg-white hover:text-admin-primary transition-all shadow-sm text-sm focus:outline-none focus:border-gold-400 transition-all"
           />
 
           {/* Totals */}
@@ -406,7 +406,7 @@ export default function POSModule() {
                 <span>+₾{installmentSurcharge.toLocaleString('ka-GE', { minimumFractionDigits: 2 })}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-brand-900 pt-1 border-t border-gray-200">
+            <div className="flex justify-between font-bold text-admin-text pt-1 border-t border-gray-200">
               <span>სულ</span>
               <span>₾{total.toLocaleString('ka-GE', { minimumFractionDigits: 2 })}</span>
             </div>
@@ -415,7 +415,7 @@ export default function POSModule() {
           <button
             onClick={handleCheckout}
             disabled={isSubmitting || cart.length === 0}
-            className="w-full py-3.5 bg-brand-900 text-gold-400 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-950 transition-all border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all font-bold text-sm uppercase tracking-widest hover:bg-brand-950 transition-all border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <Loader2 size={18} className="animate-spin" />

@@ -138,14 +138,14 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden border border-admin-muted/10">
+        <div className="p-6 border-b border-admin-muted/10 flex justify-between items-center bg-slate-50">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-admin-text flex items-center gap-2">
               <Upload size={22} className="text-blue-500" />
               საბანკო ამონაწერის იმპორტი
             </h2>
-            <p className="text-sm text-slate-500 mt-1">აირჩიეთ ბანკიდან ჩამოტვირთული .csv ფაილი</p>
+            <p className="text-sm text-admin-muted mt-1">აირჩიეთ ბანკიდან ჩამოტვირთული .csv ფაილი</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition bg-transparent border-none cursor-pointer">
             <X size={24} />
@@ -161,7 +161,7 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
           )}
 
           {csvData.length === 0 ? (
-            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-16 flex flex-col items-center justify-center text-slate-500 hover:border-blue-400 transition cursor-pointer relative bg-white">
+            <div className="border-2 border-dashed border-admin-muted/10 rounded-2xl p-16 flex flex-col items-center justify-center text-admin-muted hover:border-blue-400 transition cursor-pointer relative bg-white">
               <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               {isParsing ? (
                 <Loader2 size={48} className="text-slate-300 mb-4 animate-spin" />
@@ -174,9 +174,9 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="admin-fade-in space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="font-bold text-slate-800">ნაპოვნია {csvData.length} ტრანზაქცია</h4>
+                <h4 className="font-bold text-admin-text">ნაპოვნია {csvData.length} ტრანზაქცია</h4>
                 <button
                   onClick={() => setCsvData([])}
                   className="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 font-bold hover:bg-rose-100 transition cursor-pointer"
@@ -185,10 +185,10 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
                 </button>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white border border-admin-muted/10 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-widest text-slate-500">
+                    <tr className="bg-slate-50 border-b border-admin-muted/10 text-xs uppercase tracking-widest text-admin-muted">
                       <th className="p-4 font-semibold">თარიღი/დანიშნულება</th>
                       <th className="p-4 font-semibold text-center">ტიპი</th>
                       <th className="p-4 font-semibold text-right">თანხა</th>
@@ -197,11 +197,11 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
                   </thead>
                   <tbody>
                     {csvData.map((t) => (
-                      <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
+                      <tr key={t.id} className="border-b border-admin-muted/10 last:border-0 hover:bg-slate-50 transition">
                         <td className="p-4">
                           <p className="font-mono text-xs text-slate-400 mb-1">{t.date}</p>
-                          <p className="text-sm font-semibold text-slate-800">{t.type === 'IN' ? t.payee : t.beneficiary}</p>
-                          <p className="text-xs text-slate-500 mt-0.5 truncate max-w-xs" title={t.purpose}>{t.purpose}</p>
+                          <p className="text-sm font-semibold text-admin-text">{t.type === 'IN' ? t.payee : t.beneficiary}</p>
+                          <p className="text-xs text-admin-muted mt-0.5 truncate max-w-xs" title={t.purpose}>{t.purpose}</p>
                         </td>
                         <td className="p-4 text-center">
                           {t.type === 'IN' ? (
@@ -211,7 +211,7 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
                           )}
                         </td>
                         <td className="p-4 text-right">
-                          <p className={`font-bold ${t.type === 'IN' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                          <p className={`font-bold ${t.type === 'IN' ? 'text-emerald-600' : 'text-admin-text'}`}>
                             {t.type === 'IN' ? '+' : '-'}₾{t.amount.toFixed(2)}
                           </p>
                         </td>
@@ -219,7 +219,7 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
                           <select
                             value={t.account_target}
                             onChange={(e) => updateTargetAccount(t.id, e.target.value)}
-                            className="w-full text-xs p-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white transition"
+                            className="w-full text-xs p-2 rounded-xl border border-admin-muted/10 bg-slate-50 focus:bg-white transition"
                           >
                             <option value="">აირჩიეთ ანგარიში...</option>
                             {accounts.map(a => (
@@ -238,7 +238,7 @@ export default function BankStatementImporter({ onClose, onImportSuccess }: { on
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3">
+        <div className="p-6 border-t border-admin-muted/10 bg-white flex justify-end gap-3">
           <button onClick={onClose} className="px-6 py-2.5 rounded-xl text-slate-600 text-sm font-bold bg-slate-100 hover:bg-slate-200 transition border-none cursor-pointer">
             გაუქმება
           </button>

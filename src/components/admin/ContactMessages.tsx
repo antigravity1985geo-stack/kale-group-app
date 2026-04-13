@@ -40,7 +40,7 @@ export default function ContactMessages() {
   const unreadCount = messages.filter(m => !m.read).length;
 
   return (
-    <div className="space-y-5">
+    <div className="admin-fade-in space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -48,14 +48,14 @@ export default function ContactMessages() {
             <MessageSquare size={20} className="text-violet-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800">კონტაქტ-შეტყობინებები</h2>
+            <h2 className="text-lg font-bold text-admin-text">კონტაქტ-შეტყობინებები</h2>
             {unreadCount > 0 && (
               <p className="text-xs text-violet-600 font-semibold">{unreadCount} წაუკითხავი</p>
             )}
           </div>
         </div>
         <button onClick={fetchMessages}
-          className="p-2.5 bg-slate-100 rounded-xl hover:bg-slate-200 transition border-none cursor-pointer text-slate-500">
+          className="p-2.5 bg-slate-100 rounded-xl hover:bg-slate-200 transition border-none cursor-pointer text-admin-muted">
           <RefreshCw size={16} />
         </button>
       </div>
@@ -64,7 +64,7 @@ export default function ContactMessages() {
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
         {(['all', 'unread', 'read'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer ${filter === f ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-700'}`}>
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer ${filter === f ? 'bg-white text-admin-text shadow-sm' : 'bg-transparent text-admin-muted hover:text-slate-700'}`}>
             {f === 'all' ? `ყველა (${messages.length})` : f === 'unread' ? `წაუკითხავი (${unreadCount})` : `წაკითხული (${messages.length - unreadCount})`}
           </button>
         ))}
@@ -74,19 +74,19 @@ export default function ContactMessages() {
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-slate-400" /></div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-admin-muted/10">
           <Inbox size={48} className="mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500 font-semibold">შეტყობინება არ მოძებნეს</p>
+          <p className="text-admin-muted font-semibold">შეტყობინება არ მოძებნეს</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map(msg => (
             <div key={msg.id}
-              className={`bg-white rounded-2xl p-5 border shadow-sm hover:shadow-md transition-all ${!msg.read ? 'border-violet-200 border-l-4 border-l-violet-400' : 'border-slate-100'}`}>
+              className={`bg-white rounded-2xl p-5 border shadow-sm hover:shadow-md transition-all ${!msg.read ? 'border-violet-200 border-l-4 border-l-violet-400' : 'border-admin-muted/10'}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-slate-800 text-sm">{msg.name}</span>
+                    <span className="font-bold text-admin-text text-sm">{msg.name}</span>
                     {!msg.read && (
                       <span className="text-[9px] font-bold bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full uppercase tracking-widest">
                         ახალი

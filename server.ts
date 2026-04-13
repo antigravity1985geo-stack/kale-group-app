@@ -219,13 +219,6 @@ async function setupApp() {
     message: { error: 'Too many requests. Please try again in 15 minutes.', code: 'RATE_LIMIT_EXCEEDED' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-      const forwarded = req.headers['x-forwarded-for'];
-      if (forwarded) {
-        return (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',')[0].trim();
-      }
-      return req.ip ?? req.socket?.remoteAddress ?? 'unknown';
-    },
   });
 
   app.post("/api/orders/create", orderCreateLimiter, async (req, res) => {

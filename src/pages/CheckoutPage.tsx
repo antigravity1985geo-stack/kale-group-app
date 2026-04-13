@@ -59,8 +59,8 @@ export default function CheckoutPage() {
     const phone = customerInfo.phone.replace(/\s+/g, '');
     const email = customerInfo.email?.trim();
 
-    // Phone validation (simple Georgian format check)
-    const phoneRegex = /^(\+?995)?5\d{8}$/;
+    // Phone validation (permissive format check)
+    const phoneRegex = /^\+?[0-9]{8,15}$/;
     if (!phoneRegex.test(phone)) {
       toast.error(t('checkout.errorPhone'), {
         style: { borderRadius: '12px', background: '#333', color: '#fff' }

@@ -191,35 +191,35 @@ export default function RawMaterialsManager() {
   };
 
   const renderFormBlock = () => (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-      <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+    <div className="bg-white border border-admin-muted/10 rounded-2xl p-6 mb-6 shadow-sm">
+      <h3 className="font-semibold text-admin-text mb-4 flex items-center gap-2">
         <Package size={18} /> {editingId ? 'ნედლეულის რედაქტირება' : 'ახალი ნედლეული'}
       </h3>
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="text-xs text-slate-500 mb-1 block">სახელი *</label>
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="მაგ: შპონი, ლამინატი, შურუპი M4..." className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm focus:border-amber-500 outline-none" />
+          <label className="text-xs text-admin-muted mb-1 block">სახელი *</label>
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="მაგ: შპონი, ლამინატი, შურუპი M4..." className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm focus:border-gold-500 focus:bg-white transition-all shadow-sm outline-none" />
         </div>
         <div>
-          <label className="text-xs text-slate-500 mb-1 block">ზომის ერთეული</label>
-          <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm outline-none">
+          <label className="text-xs text-admin-muted mb-1 block">ზომის ერთეული</label>
+          <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm outline-none">
             {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-xs text-slate-500 mb-1 block">საწყისი რაოდ.</label>
-          <input type="number" min="0" step="0.01" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+          <label className="text-xs text-admin-muted mb-1 block">საწყისი რაოდ.</label>
+          <input type="number" min="0" step="0.01" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm outline-none" />
         </div>
         <div>
-          <label className="text-xs text-slate-500 mb-1 block">შეკვეთის ზღვარი</label>
-          <input type="number" min="0" step="0.01" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+          <label className="text-xs text-admin-muted mb-1 block">შეკვეთის ზღვარი</label>
+          <input type="number" min="0" step="0.01" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm outline-none" />
         </div>
         <div>
-          <label className="text-xs text-slate-500 mb-1 block">ერთ. ღირ. (₾)</label>
-          <input type="number" min="0" step="0.01" value={form.unit_cost} onChange={e => setForm({ ...form, unit_cost: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+          <label className="text-xs text-admin-muted mb-1 block">ერთ. ღირ. (₾)</label>
+          <input type="number" min="0" step="0.01" value={form.unit_cost} onChange={e => setForm({ ...form, unit_cost: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm outline-none" />
         </div>
         
-        <div className="col-span-2 bg-slate-100/50 p-4 rounded-xl border border-slate-200 mt-1">
+        <div className="col-span-2 bg-slate-100/50 p-4 rounded-xl border border-admin-muted/10 mt-1">
           <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3 cursor-pointer">
             <input type="checkbox" checked={form.has_package} onChange={e => setForm({...form, has_package: e.target.checked})} className="w-4 h-4 text-brand-600 rounded" />
             აქვს შეფუთვის ერთეული? (ორმაგი აღრიცხვა, მაგ: ფილა → მ²)
@@ -228,12 +228,12 @@ export default function RawMaterialsManager() {
           {form.has_package && (
             <div className="grid grid-cols-4 gap-4">
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">შეფუთვის დასახელება</label>
-                <input value={form.package_unit} onChange={e => setForm({...form, package_unit: e.target.value})} placeholder="მაგ: ფილა, რულონი..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm focus:border-amber-500 outline-none" />
+                <label className="text-xs text-admin-muted mb-1 block">შეფუთვის დასახელება</label>
+                <input value={form.package_unit} onChange={e => setForm({...form, package_unit: e.target.value})} placeholder="მაგ: ფილა, რულონი..." className="w-full bg-white border border-admin-muted/10 rounded-xl p-2.5 text-admin-text text-sm focus:border-gold-500 focus:bg-white transition-all shadow-sm outline-none" />
               </div>
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">1 {form.package_unit || 'შეკვრა'} = ? {form.unit}</label>
-                <input type="number" min="0.01" step="0.01" value={form.units_per_package} onChange={e => setForm({...form, units_per_package: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm outline-none" />
+                <label className="text-xs text-admin-muted mb-1 block">1 {form.package_unit || 'შეკვრა'} = ? {form.unit}</label>
+                <input type="number" min="0.01" step="0.01" value={form.units_per_package} onChange={e => setForm({...form, units_per_package: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-admin-muted/10 rounded-xl p-2.5 text-admin-text text-sm outline-none" />
               </div>
               <div>
                 <label className="text-xs text-amber-600 mb-1 block font-bold">შემოტანა შეფუთვით</label>
@@ -244,7 +244,7 @@ export default function RawMaterialsManager() {
                     const packages = parseFloat(e.target.value) || 0;
                     setForm({...form, quantity: packages * form.units_per_package});
                   }} 
-                  className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-amber-500" 
+                  className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" 
                 />
                 <p className="text-[10px] text-amber-600 mt-1 leading-tight">ავტომატურად გადათვლის<br/>"საწყის რაოდენობას"</p>
               </div>
@@ -259,7 +259,7 @@ export default function RawMaterialsManager() {
                       setForm(prev => ({ ...prev, unit_cost: Number((packPrice / prev.units_per_package).toFixed(3)) }));
                     }
                   }} 
-                  className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-amber-500" 
+                  className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-amber-900 text-sm outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" 
                 />
                 <p className="text-[10px] text-amber-600 mt-1 leading-tight">ავტომატურად გადათვლის<br/>"ერთ. ღირ (₾)"</p>
               </div>
@@ -268,22 +268,22 @@ export default function RawMaterialsManager() {
         </div>
 
         <div className="col-span-2">
-          <label className="text-xs text-slate-500 mb-1 block">შენიშვნა</label>
-          <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+          <label className="text-xs text-admin-muted mb-1 block">შენიშვნა</label>
+          <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text text-sm outline-none" />
         </div>
       </div>
       <div className="flex gap-3">
-        <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-sm font-bold transition hover:bg-brand-950 border-none cursor-pointer">
+        <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all text-sm font-bold transition hover:bg-brand-950 border-none cursor-pointer">
           <Save size={16} /> შენახვა
         </button>
-        <button onClick={() => { setIsAdding(false); setEditingId(null); setForm({ name: '', unit: 'ცალი', quantity: 0, reorder_point: 5, unit_cost: 0, notes: '', package_unit: 'ფილა', units_per_package: 0, has_package: false }); }} className="px-5 py-2.5 border border-slate-200 text-slate-500 rounded-xl text-sm hover:bg-slate-50 transition border cursor-pointer bg-transparent">
+        <button onClick={() => { setIsAdding(false); setEditingId(null); setForm({ name: '', unit: 'ცალი', quantity: 0, reorder_point: 5, unit_cost: 0, notes: '', package_unit: 'ფილა', units_per_package: 0, has_package: false }); }} className="px-5 py-2.5 border border-admin-muted/10 text-admin-muted rounded-xl text-sm hover:bg-slate-50 transition border cursor-pointer bg-transparent">
           გაუქმება
         </button>
       </div>
     </div>
   );
 
-  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-brand-400" /></div>;
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-admin-muted" /></div>;
 
   return (
     <div>
@@ -294,7 +294,7 @@ export default function RawMaterialsManager() {
       )}
 
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2"><Package size={20} /> ნედლეულის მარაგი</h2>
+        <h2 className="text-xl font-semibold text-admin-text flex items-center gap-2"><Package size={20} /> ნედლეულის მარაგი</h2>
         <div className="flex gap-2">
           {!isAdding && !showPurchase && (
             <>
@@ -308,7 +308,7 @@ export default function RawMaterialsManager() {
               <button onClick={() => setShowPurchase(true)} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition border-none cursor-pointer">
                 <ShoppingCart size={16} /> შესყიდვის რეგისტრაცია
               </button>
-              <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-sm font-bold hover:bg-brand-950 transition border-none cursor-pointer">
+              <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all text-sm font-bold hover:bg-brand-950 transition border-none cursor-pointer">
                 <Plus size={16} /> ნედლეულის დამატება
               </button>
             </>
@@ -325,7 +325,7 @@ export default function RawMaterialsManager() {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="text-xs text-emerald-700 mb-1 block font-semibold">მომწოდებელი *</label>
-              <select value={purchaseForm.supplier_id} onChange={e => setPurchaseForm({...purchaseForm, supplier_id: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none focus:border-emerald-500">
+              <select value={purchaseForm.supplier_id} onChange={e => setPurchaseForm({...purchaseForm, supplier_id: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none focus:border-emerald-500">
                 <option value="">-- აირჩიეთ მომწოდებელი --</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -335,7 +335,7 @@ export default function RawMaterialsManager() {
               <select value={purchaseForm.raw_material_id} onChange={e => {
                 const mat = materials.find(m => m.id === e.target.value);
                 setPurchaseForm({...purchaseForm, raw_material_id: e.target.value, use_packages: !!(mat?.package_unit)});
-              }} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none focus:border-emerald-500">
+              }} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none focus:border-emerald-500">
                 <option value="">-- აირჩიეთ ნედლეული --</option>
                 {materials.map(m => <option key={m.id} value={m.id}>{m.name} ({m.unit}) — ნაშთი: {m.quantity}</option>)}
               </select>
@@ -349,7 +349,7 @@ export default function RawMaterialsManager() {
                     <label className="text-xs text-emerald-700 mb-1 block font-semibold">
                       რაოდენობა {hasPkg ? `(${selectedMat!.unit})` : ''} *
                     </label>
-                    <input type="number" min="0.01" step="0.01" value={purchaseForm.quantity} onChange={e => setPurchaseForm({...purchaseForm, quantity: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+                    <input type="number" min="0.01" step="0.01" value={purchaseForm.quantity} onChange={e => setPurchaseForm({...purchaseForm, quantity: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none" />
                     {hasPkg && (
                       <p className="text-[11px] text-emerald-600 mt-1">≈ {(purchaseForm.quantity / selectedMat!.units_per_package!).toFixed(2)} {selectedMat!.package_unit}</p>
                     )}
@@ -360,7 +360,7 @@ export default function RawMaterialsManager() {
                       <input type="number" min="0" step="1" placeholder={`რამდენი ${selectedMat!.package_unit}?`} onChange={e => {
                         const pkgs = parseFloat(e.target.value) || 0;
                         setPurchaseForm({...purchaseForm, quantity: pkgs * selectedMat!.units_per_package!});
-                      }} className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-sm outline-none focus:border-amber-500" />
+                      }} className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-sm outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
                     </div>
                   )}
                 </>
@@ -368,14 +368,14 @@ export default function RawMaterialsManager() {
             })()}
             <div>
               <label className="text-xs text-emerald-700 mb-1 block font-semibold">ერთეულის ფასი (₾) *</label>
-              <input type="number" min="0" step="0.01" value={purchaseForm.unit_cost} onChange={e => setPurchaseForm({...purchaseForm, unit_cost: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+              <input type="number" min="0" step="0.01" value={purchaseForm.unit_cost} onChange={e => setPurchaseForm({...purchaseForm, unit_cost: parseFloat(e.target.value) || 0})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none" />
               {purchaseForm.quantity > 0 && purchaseForm.unit_cost > 0 && (
                 <p className="text-[11px] text-emerald-600 mt-1 font-semibold">ჯამი: ₾{(purchaseForm.quantity * purchaseForm.unit_cost).toLocaleString('ka-GE', {minimumFractionDigits: 2})}</p>
               )}
             </div>
             <div>
               <label className="text-xs text-emerald-700 mb-1 block font-semibold">გადახდის მეთოდი</label>
-              <select value={purchaseForm.payment_method} onChange={e => setPurchaseForm({...purchaseForm, payment_method: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none">
+              <select value={purchaseForm.payment_method} onChange={e => setPurchaseForm({...purchaseForm, payment_method: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none">
                 <option value="bank_transfer">საბანკო გადარიცხვა</option>
                 <option value="cash">ნაღდი ფული</option>
                 <option value="credit">ნისიაზე (მომწოდებლის ვალი)</option>
@@ -383,7 +383,7 @@ export default function RawMaterialsManager() {
             </div>
             <div className="col-span-2">
               <label className="text-xs text-emerald-700 mb-1 block">შენიშვნა</label>
-              <input value={purchaseForm.notes} onChange={e => setPurchaseForm({...purchaseForm, notes: e.target.value})} placeholder="მაგ: ინვოისი #123" className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-slate-800 text-sm outline-none" />
+              <input value={purchaseForm.notes} onChange={e => setPurchaseForm({...purchaseForm, notes: e.target.value})} placeholder="მაგ: ინვოისი #123" className="w-full bg-white border border-emerald-200 rounded-xl p-3 text-admin-text text-sm outline-none" />
             </div>
           </div>
           <div className="flex gap-3">
@@ -401,12 +401,12 @@ export default function RawMaterialsManager() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-slate-500 mb-1">სახეობები</p>
-          <p className="text-2xl font-bold text-slate-800">{materials.length}</p>
+        <div className="bg-white border border-admin-muted/10 rounded-xl p-4 shadow-sm">
+          <p className="text-xs text-admin-muted mb-1">სახეობები</p>
+          <p className="text-2xl font-bold text-admin-text">{materials.length}</p>
         </div>
-        <div className={`rounded-xl p-4 border shadow-sm ${materials.filter(m => m.quantity <= m.reorder_point).length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
-          <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+        <div className={`rounded-xl p-4 border shadow-sm ${materials.filter(m => m.quantity <= m.reorder_point).length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-admin-muted/10'}`}>
+          <p className="text-xs text-admin-muted mb-1 flex items-center gap-1">
             {materials.filter(m => m.quantity <= m.reorder_point).length > 0 && <AlertTriangle size={12} className="text-red-500" />}
             Low Stock
           </p>
@@ -414,8 +414,8 @@ export default function RawMaterialsManager() {
             {materials.filter(m => m.quantity <= m.reorder_point).length}
           </p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-slate-500 mb-1">სულ ღირ.</p>
+        <div className="bg-white border border-admin-muted/10 rounded-xl p-4 shadow-sm">
+          <p className="text-xs text-admin-muted mb-1">სულ ღირ.</p>
           <p className="text-2xl font-bold text-teal-600">
             ₾{materials.reduce((s, m) => s + m.quantity * m.unit_cost, 0).toLocaleString('ka-GE', { minimumFractionDigits: 0 })}
           </p>
@@ -423,10 +423,10 @@ export default function RawMaterialsManager() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-admin-muted/10 rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-widest">
+            <tr className="bg-slate-50 border-b border-admin-muted/10 text-xs text-admin-muted uppercase tracking-widest">
               <th className="text-left py-3 px-5">დასახელება</th>
               <th className="text-right py-3 px-5">ნაშთი</th>
               <th className="text-right py-3 px-5">ზღვარი</th>
@@ -444,21 +444,21 @@ export default function RawMaterialsManager() {
               return (
                 <tr key={mat.id} className={`hover:bg-slate-50 transition-colors ${isLow ? 'bg-red-50/50' : ''}`}>
                   <td className="py-3 px-5">
-                    <p className="font-semibold text-slate-800">{mat.name}</p>
+                    <p className="font-semibold text-admin-text">{mat.name}</p>
                     {mat.package_unit && mat.units_per_package ? (
                       <p className="text-xs text-amber-600 font-medium mt-0.5">1 {mat.package_unit} = {mat.units_per_package} {mat.unit}</p>
                     ) : null}
                     {mat.notes && <p className="text-xs text-slate-400 mt-0.5">{mat.notes}</p>}
                   </td>
-                  <td className={`py-3 px-5 text-right font-bold ${isLow ? 'text-red-600' : 'text-slate-800'}`}>
+                  <td className={`py-3 px-5 text-right font-bold ${isLow ? 'text-red-600' : 'text-admin-text'}`}>
                     {mat.quantity} <span className="text-xs font-normal text-slate-400">{mat.unit}</span>
                     {mat.package_unit && mat.units_per_package ? (
-                      <div className="text-xs font-normal text-slate-500 mt-1 bg-white inline-block px-2 py-0.5 rounded-md border border-slate-200 shadow-sm">
+                      <div className="text-xs font-normal text-admin-muted mt-1 bg-white inline-block px-2 py-0.5 rounded-md border border-admin-muted/10 shadow-sm">
                         ≈ {Number((mat.quantity / mat.units_per_package).toFixed(2))} {mat.package_unit}
                       </div>
                     ) : null}
                   </td>
-                  <td className="py-3 px-5 text-right text-slate-500">{mat.reorder_point} {mat.unit}</td>
+                  <td className="py-3 px-5 text-right text-admin-muted">{mat.reorder_point} {mat.unit}</td>
                   <td className="py-3 px-5 text-right text-slate-600">₾{mat.unit_cost.toLocaleString('ka-GE', { minimumFractionDigits: 2 })}</td>
                   <td className="py-3 px-5 text-right font-semibold text-teal-600">₾{(mat.quantity * mat.unit_cost).toLocaleString('ka-GE', { minimumFractionDigits: 2 })}</td>
                   <td className="py-3 px-5 text-center">

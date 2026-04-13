@@ -17,7 +17,7 @@ export default function AdminGuide() {
       title: 'ზოგადი მიმოხილვა',
       icon: BookOpen,
       content: (
-        <div className="space-y-5 text-[15px] text-stone-300 leading-relaxed">
+        <div className="admin-fade-in space-y-5 text-[15px] text-stone-300 leading-relaxed">
           <p className="text-xl font-medium text-white mb-2">კეთილი იყოს თქვენი მობრძანება KALE GROUP ERP სისტემაში.</p>
           <p>აღრიცხვისა და მართვის პანელზე წვდომა დაყოფილია ინდივიდუალურ როლებად, რათა უზრუნველყოფილი იყოს მონაცემთა მაქსიმალური უსაფრთხოება:</p>
           <div className="grid gap-4 mt-6">
@@ -56,7 +56,7 @@ export default function AdminGuide() {
           
           <div className="border-l-2 border-brand-500 pl-6 py-2 space-y-3 relative before:absolute before:left-[calc(-0.45rem-1px)] before:top-4 before:w-4 before:h-4 before:bg-stone-950 before:border-2 before:border-brand-500 before:rounded-full">
             <h4 className="text-white font-bold text-lg flex items-center gap-2">ეტაპი 2: ლოჯისტიკა</h4>
-            <p className="text-sm text-stone-400">კურიერის გამოსვლის შემდეგ გადაიყვანეთ შეკვეთა <strong className="text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded">Shipped</strong> სტატუსზე. RS.ge კრედენციალების შეყვანის შემდეგ, ზედნადების გენერირება მოხდება ერთი კლიკით.</p>
+            <p className="text-sm text-stone-400">კურიერის გამოსვლის შემდეგ გადაიყვანეთ შეკვეთა <strong className="text-admin-muted bg-admin-bg0/10 px-2 py-0.5 rounded">Shipped</strong> სტატუსზე. RS.ge კრედენციალების შეყვანის შემდეგ, ზედნადების გენერირება მოხდება ერთი კლიკით.</p>
           </div>
           
           <div className="pl-6 py-2 pb-6 space-y-3 relative before:absolute before:left-[calc(-0.4rem-1px)] before:top-4 before:w-[17px] before:h-[17px] before:bg-emerald-500 before:rounded-full">
@@ -75,7 +75,7 @@ export default function AdminGuide() {
           <p>KALE GROUP პლატფორმაზე დანერგილია <strong>ჭკვიანი ფასდაკლებების სისტემა</strong>, რომელიც ავტომატურად აკონტროლებს პროდუქტის ფასს მიმდინარე თარიღთან მიმართებაში.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
             <div className="p-4 bg-stone-900/40 rounded-xl border border-brand-500/30">
-              <h5 className="text-brand-400 font-bold mb-2">მიმდინარე აქციები [აქტიური]</h5>
+              <h5 className="text-admin-muted font-bold mb-2">მიმდინარე აქციები [აქტიური]</h5>
               <p className="text-xs text-stone-400">პროდუქტები, რომლებსაც უწერიათ მოქმედი აქციის ვადა. საიტზეც და POS სისტემაშიც აღიქმება ფასდაკლებით.</p>
             </div>
             <div className="p-4 bg-stone-900/40 rounded-xl border border-stone-600/50">
@@ -137,7 +137,7 @@ export default function AdminGuide() {
     },
     {
       title: '📦 სასაქონლო მარაგი (Inventory)',
-      icon: <Warehouse size={18} className="text-brand-400" />,
+      icon: <Warehouse size={18} className="text-admin-muted" />,
       text: 'მარაგების რეალურ დროში მართვა FIFO მეთოდით. თითოეული პროდუქტისთვის დათვლილია საშუალო ღირებულება. საიტიდან ნივთის გაყიდვა (SALE_OUT) პირდაპირ ამცირებს მარაგს ინვენტარის ტრანზაქციებით.'
     },
     {
@@ -182,13 +182,13 @@ export default function AdminGuide() {
       {/* Header Profile - Premium Glassmorphism */}
       <div className="relative overflow-hidden bg-gradient-to-br from-stone-900 via-stone-900/90 to-black border border-stone-800 p-8 md:p-12 rounded-[2rem] shadow-2xl">
         {/* Abstract Background Element */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-admin-bg0/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute top-0 right-0 p-8 md:p-12 opacity-[0.03] pointer-events-none transform -rotate-12">
           <BookOpen strokeWidth={0.5} size={250} />
         </div>
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full text-[11px] font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-admin-bg0/10 border border-brand-500/20 text-admin-muted rounded-full text-[11px] font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">
             <FileSignature size={14} /> ERP v3.1 Documentation & User Manual
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
@@ -213,11 +213,11 @@ export default function AdminGuide() {
               className={`w-full group flex items-center justify-between px-6 py-4 rounded-2xl text-left transition-all duration-300 font-medium border ${
                 activeSection === sec.id 
                   ? 'bg-gradient-to-r from-brand-900/40 to-stone-900/40 border-brand-700/50 text-amber-400 shadow-[0_0_30px_rgba(217,119,6,0.1)]' 
-                  : 'bg-stone-900/40 border-stone-800/50 text-stone-400 hover:text-white hover:bg-stone-800 hover:border-stone-700'
+                  : 'bg-stone-900/40 border-stone-800/50 text-stone-400 hover:text-white hover:bg-admin-bg hover:border-stone-700'
               }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-xl transition-all duration-300 ${activeSection === sec.id ? 'bg-brand-500/20 text-amber-400 scale-110' : 'bg-stone-800 text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
+                <div className={`p-2.5 rounded-xl transition-all duration-300 ${activeSection === sec.id ? 'bg-admin-bg0/20 text-amber-400 scale-110' : 'bg-admin-bg text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
                   <sec.icon size={20} />
                 </div>
                 <span className="text-base font-semibold">{sec.title}</span>
@@ -283,7 +283,7 @@ function GuideCard({ title, content, icon, index }: { title: string; content: st
           </div>
           <span className="text-base font-bold text-stone-200 tracking-wide group-hover:text-white transition-colors">{title}</span>
         </div>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${open ? 'bg-amber-500/20 text-amber-500' : 'bg-stone-800/80 text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${open ? 'bg-amber-500/20 text-amber-500' : 'bg-admin-bg/80 text-stone-500 group-hover:bg-stone-700 group-hover:text-stone-300'}`}>
           <ChevronDown size={18} className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
         </div>
       </button>

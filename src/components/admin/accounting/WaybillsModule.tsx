@@ -150,16 +150,16 @@ export default function WaybillsModule() {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-brand-400" /></div>;
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-admin-muted" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-serif text-slate-800 flex items-center gap-2 mb-1">
+          <h2 className="text-2xl font-sans font-bold text-admin-text flex items-center gap-2 mb-1">
             <Truck size={24} /> RS.ge ზედნადებები
           </h2>
-          <p className="text-sm text-slate-500">მზა პროდუქციის და ნედლეულის ტრანსპორტირების მართვა</p>
+          <p className="text-sm text-admin-muted">მზა პროდუქციის და ნედლეულის ტრანსპორტირების მართვა</p>
         </div>
         <div className="flex gap-2">
           <button onClick={fetchData} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-200 transition border-none cursor-pointer flex items-center gap-2">
@@ -168,11 +168,11 @@ export default function WaybillsModule() {
         </div>
       </div>
 
-      <div className="flex gap-2 bg-slate-50 border border-slate-200 p-1 rounded-xl w-fit">
+      <div className="flex gap-2 bg-slate-50 border border-admin-muted/10 p-1 rounded-xl w-fit">
         <button
           onClick={() => setActiveTab('outgoing')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition border-none cursor-pointer ${
-            activeTab === 'outgoing' ? 'bg-white shadow text-slate-800' : 'bg-transparent text-slate-500 hover:text-slate-700'
+            activeTab === 'outgoing' ? 'bg-white shadow text-admin-text' : 'bg-transparent text-admin-muted hover:text-slate-700'
           }`}
         >
           📤 გამავალი (გაყიდვები)
@@ -180,7 +180,7 @@ export default function WaybillsModule() {
         <button
           onClick={() => setActiveTab('incoming')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition border-none cursor-pointer ${
-            activeTab === 'incoming' ? 'bg-white shadow text-slate-800' : 'bg-transparent text-slate-500 hover:text-slate-700'
+            activeTab === 'incoming' ? 'bg-white shadow text-admin-text' : 'bg-transparent text-admin-muted hover:text-slate-700'
           }`}
         >
           📥 შემომავალი (შესყიდვები)
@@ -190,30 +190,30 @@ export default function WaybillsModule() {
       {activeTab === 'outgoing' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Outstanding Orders */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white border border-admin-muted/10 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-admin-text mb-4 flex items-center gap-2">
             <AlertTriangle size={18} className="text-amber-500" /> გასაგზავნი შეკვეთები (დრაფტის გარეშე)
           </h3>
           
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
             {orders.length === 0 ? (
-              <p className="text-sm text-slate-400 p-4text-center bg-slate-50 border border-slate-100 rounded-xl">
+              <p className="text-sm text-slate-400 p-4text-center bg-slate-50 border border-admin-muted/10 rounded-xl">
                 გასაგზავნი შეკვეთები არ არის
               </p>
             ) : (
               orders.map(o => (
-                <div key={o.id} className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between">
+                <div key={o.id} className="bg-slate-50 border border-admin-muted/10 p-3 rounded-xl flex items-center justify-between">
                   <div>
                     <p className="text-xs text-slate-400 uppercase tracking-wider mb-0.5">#{o.id.split('-')[0]}</p>
-                    <p className="text-sm font-semibold text-slate-800">{o.customer_first_name} {o.customer_last_name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate w-48" title={o.customer_address}>{o.customer_city || '—'} / {o.customer_address || '—'}</p>
+                    <p className="text-sm font-semibold text-admin-text">{o.customer_first_name} {o.customer_last_name}</p>
+                    <p className="text-xs text-admin-muted mt-0.5 truncate w-48" title={o.customer_address}>{o.customer_city || '—'} / {o.customer_address || '—'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-teal-600 mb-2">₾{(o.total_price || 0).toLocaleString()}</p>
                     <button 
                       onClick={() => createDraft(o)}
                       disabled={isDrafting === o.id}
-                      className="px-3 py-1.5 bg-brand-900 text-gold-400 text-xs font-bold rounded-lg uppercase border-none cursor-pointer hover:bg-brand-950 transition disabled:opacity-50"
+                      className="px-3 py-1.5 bg-brand-900 text-admin-primary text-xs font-bold rounded-lg uppercase border-none cursor-pointer hover:bg-brand-950 transition disabled:opacity-50"
                     >
                       {isDrafting === o.id ? <Loader2 size={12} className="animate-spin inline" /> : <Plus size={12} className="inline mr-1" />}
                       დრაფტი
@@ -226,19 +226,19 @@ export default function WaybillsModule() {
         </div>
 
         {/* Right: Waybills List */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white border border-admin-muted/10 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-admin-text mb-4 flex items-center gap-2">
             <FileText size={18} className="text-blue-500" /> შექმნილი ზედნადებები
           </h3>
           
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
             {waybills.length === 0 ? (
-              <p className="text-sm text-slate-400 p-4 text-center bg-slate-50 border border-slate-100 rounded-xl">
+              <p className="text-sm text-slate-400 p-4 text-center bg-slate-50 border border-admin-muted/10 rounded-xl">
                 ზედნადებები არ მოიძებნა
               </p>
             ) : (
               waybills.map(w => (
-                <div key={w.id} className="border border-slate-200 p-4 rounded-xl relative overflow-hidden group">
+                <div key={w.id} className="border border-admin-muted/10 p-4 rounded-xl relative overflow-hidden group">
                   {w.status === 'SENT' && <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />}
                   {w.status === 'DRAFT' && <div className="absolute top-0 left-0 w-1 h-full bg-amber-400" />}
                   
@@ -247,7 +247,7 @@ export default function WaybillsModule() {
                       <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">
                         #{w.order_id.split('-')[0]}
                       </p>
-                      <p className="text-sm font-bold text-slate-800">
+                      <p className="text-sm font-bold text-admin-text">
                         {w.orders?.customer_first_name} {w.orders?.customer_last_name}
                       </p>
                     </div>
@@ -266,7 +266,7 @@ export default function WaybillsModule() {
                     <p><strong className="font-medium text-slate-400">საიდან:</strong> {w.start_address}</p>
                     <p><strong className="font-medium text-slate-400">სად:</strong> {w.end_address || '—'}</p>
                     {w.rs_waybill_id && (
-                      <p className="mt-2"><strong className="font-medium text-slate-400">RS ID:</strong> <span className="font-mono bg-slate-100 px-1 rounded text-slate-800">{w.rs_waybill_id}</span></p>
+                      <p className="mt-2"><strong className="font-medium text-slate-400">RS ID:</strong> <span className="font-mono bg-slate-100 px-1 rounded text-admin-text">{w.rs_waybill_id}</span></p>
                     )}
                   </div>
 
@@ -291,14 +291,14 @@ export default function WaybillsModule() {
         </div>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white border border-admin-muted/10 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-admin-text mb-4 flex items-center gap-2">
             <Truck size={18} className="text-brand-500" /> მომწოდებლებისგან მიღებული ზედნადებები (RS.ge)
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 text-sm text-slate-500">
+                <tr className="border-b border-admin-muted/10 text-sm text-admin-muted">
                   <th className="pb-3 text-xs uppercase tracking-wider font-semibold">RS Waybill ID</th>
                   <th className="pb-3 text-xs uppercase tracking-wider font-semibold">მომწოდებელი</th>
                   <th className="pb-3 text-xs uppercase tracking-wider font-semibold text-right">თანხა</th>
@@ -314,13 +314,13 @@ export default function WaybillsModule() {
                   </tr>
                 ) : (
                   incomingWaybills.map(w => (
-                    <tr key={w.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                    <tr key={w.id} className="border-b border-admin-muted/10 hover:bg-slate-50 transition">
                       <td className="py-3 font-mono text-sm text-slate-600">{w.rs_waybill_id}</td>
                       <td className="py-3">
-                        <div className="text-sm font-bold text-slate-800">{w.supplier_name}</div>
-                        <div className="text-xs text-slate-500">ს/ნ: {w.supplier_tin}</div>
+                        <div className="text-sm font-bold text-admin-text">{w.supplier_name}</div>
+                        <div className="text-xs text-admin-muted">ს/ნ: {w.supplier_tin}</div>
                       </td>
-                      <td className="py-3 text-right font-bold text-slate-800">₾{w.total_amount.toLocaleString()}</td>
+                      <td className="py-3 text-right font-bold text-admin-text">₾{w.total_amount.toLocaleString()}</td>
                       <td className="py-3 text-center">
                         {w.status === 'ACCEPTED' ? (
                           <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100">დადასტურებული</span>
@@ -330,7 +330,7 @@ export default function WaybillsModule() {
                           <span className="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs font-bold border border-rose-100">უარყოფილი</span>
                         )}
                       </td>
-                      <td className="py-3 text-sm text-slate-500">{new Date(w.received_at).toLocaleDateString('ka-GE')}</td>
+                      <td className="py-3 text-sm text-admin-muted">{new Date(w.received_at).toLocaleDateString('ka-GE')}</td>
                       <td className="py-3 text-right">
                         {w.status === 'PENDING_ACCEPTANCE' && (
                           <button

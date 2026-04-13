@@ -82,7 +82,7 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
   const getRoleBadge = (role: string) => {
     if (role === 'admin') {
       return (
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-900 text-gold-400">
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-900 text-admin-primary">
           <Shield size={11} /> ადმინი
         </span>
       );
@@ -104,38 +104,38 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32">
-        <Loader2 className="w-12 h-12 animate-spin text-gold-400 mb-4" />
-        <p className="text-brand-400 text-sm tracking-widest uppercase font-semibold">იტვირთება...</p>
+        <Loader2 className="w-12 h-12 animate-spin text-admin-primary mb-4" />
+        <p className="text-admin-muted text-sm tracking-widest uppercase font-semibold">იტვირთება...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="admin-fade-in space-y-8">
       {/* Active Team Members */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-brand-900 flex items-center justify-center">
-              <Users size={20} className="text-gold-400" />
+              <Users size={20} className="text-admin-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-serif text-brand-900">გუნდის წევრები</h3>
-              <p className="text-xs text-brand-400">{consultants.length} აქტიური წევრი</p>
+              <h3 className="text-lg font-sans font-bold text-admin-text">გუნდის წევრები</h3>
+              <p className="text-xs text-admin-muted">{consultants.length} აქტიური წევრი</p>
             </div>
           </div>
           <button
             onClick={onInviteClick}
-            className="flex items-center gap-2 px-5 py-3 bg-brand-900 text-gold-400 rounded-xl hover:bg-brand-950 transition-all font-bold tracking-wider text-xs uppercase shadow-lg shadow-brand-900/20 outline-none border-none cursor-pointer"
+            className="flex items-center gap-2 px-5 py-3 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all hover:bg-brand-950 transition-all font-bold tracking-wider text-xs uppercase shadow-lg shadow-brand-900/20 outline-none border-none cursor-pointer"
           >
             <UserPlus size={16} /> მოწვევა
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+        <div className="bg-admin-card shadow-[0_18px_40px_rgba(112,144,176,0.12)] rounded-3xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] text-brand-400 uppercase tracking-widest">
+              <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] text-admin-muted uppercase tracking-widest">
                 <th className="px-6 py-5 font-bold">მომხმარებელი</th>
                 <th className="px-6 py-5 font-bold">ელ. ფოსტა</th>
                 <th className="px-6 py-5 font-bold">როლი</th>
@@ -149,21 +149,21 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="hover:bg-brand-50/30 transition-colors"
+                  className="hover:bg-admin-bg/30 transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-200 to-brand-300 flex items-center justify-center text-brand-700 font-bold text-sm uppercase">
                         {member.full_name ? member.full_name.charAt(0) : member.email.charAt(0)}
                       </div>
-                      <p className="font-semibold text-brand-900 text-sm">
+                      <p className="font-semibold text-admin-text text-sm">
                         {member.full_name || 'სახელი არ არის'}
                       </p>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-brand-500">{member.email}</td>
                   <td className="px-6 py-4">{getRoleBadge(member.role)}</td>
-                  <td className="px-6 py-4 text-xs text-brand-400">
+                  <td className="px-6 py-4 text-xs text-admin-muted">
                     {new Date(member.created_at).toLocaleDateString('ka-GE')}
                   </td>
                 </motion.tr>
@@ -173,7 +173,7 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
           {consultants.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <Users size={48} className="mb-3 opacity-20" />
-              <p className="text-lg font-serif text-brand-800">გუნდის წევრები ვერ მოიძებნა</p>
+              <p className="text-lg font-sans font-bold text-brand-800">გუნდის წევრები ვერ მოიძებნა</p>
             </div>
           )}
         </div>
@@ -187,15 +187,15 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
               <Mail size={20} className="text-amber-500" />
             </div>
             <div>
-              <h3 className="text-lg font-serif text-brand-900">გაგზავნილი მოწვევები</h3>
-              <p className="text-xs text-brand-400">{invitations.filter(i => i.status === 'pending').length} მოლოდინში</p>
+              <h3 className="text-lg font-sans font-bold text-admin-text">გაგზავნილი მოწვევები</h3>
+              <p className="text-xs text-admin-muted">{invitations.filter(i => i.status === 'pending').length} მოლოდინში</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+          <div className="bg-admin-card shadow-[0_18px_40px_rgba(112,144,176,0.12)] rounded-3xl overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] text-brand-400 uppercase tracking-widest">
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] text-admin-muted uppercase tracking-widest">
                   <th className="px-6 py-5 font-bold">ელ. ფოსტა</th>
                   <th className="px-6 py-5 font-bold">როლი</th>
                   <th className="px-6 py-5 font-bold">სტატუსი</th>
@@ -211,20 +211,20 @@ export default function ConsultantsList({ onInviteClick }: ConsultantsListProps)
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="hover:bg-brand-50/30 transition-colors"
+                    className="hover:bg-admin-bg/30 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Mail size={14} className="text-brand-300" />
-                        <span className="text-sm font-medium text-brand-900">{inv.email}</span>
+                        <span className="text-sm font-medium text-admin-text">{inv.email}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">{getRoleBadge(inv.role)}</td>
                     <td className="px-6 py-4">{getStatusBadge(inv.status)}</td>
-                    <td className="px-6 py-4 text-xs text-brand-400">
+                    <td className="px-6 py-4 text-xs text-admin-muted">
                       {new Date(inv.created_at).toLocaleDateString('ka-GE')}
                     </td>
-                    <td className="px-6 py-4 text-xs text-brand-400">
+                    <td className="px-6 py-4 text-xs text-admin-muted">
                       {new Date(inv.expires_at).toLocaleDateString('ka-GE')}
                     </td>
                     <td className="px-6 py-4 text-right">

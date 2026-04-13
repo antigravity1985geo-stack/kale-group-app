@@ -54,7 +54,7 @@ export default function TaxesModule() {
   const totalDeduction = amountNum + profitTax;
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       {toast && (
         <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border ${toast.type === 'ok' ? 'bg-emerald-900 text-emerald-200 border-emerald-700' : 'bg-red-900 text-red-200 border-red-700'}`}>
           {toast.msg}
@@ -63,39 +63,39 @@ export default function TaxesModule() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-admin-text flex items-center gap-2">
             <Landmark size={24} className="text-brand-600" /> 
             გადასახადები & დივიდენდები
           </h2>
-          <p className="text-slate-500 text-sm mt-1">ჩამოწერეთ მოგება ესტონური მოდელით (15% მოგ. გადასახადი)</p>
+          <p className="text-admin-muted text-sm mt-1">ჩამოწერეთ მოგება ესტონური მოდელით (15% მოგ. გადასახადი)</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Declare Form */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-800 mb-6 flex items-center gap-2">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-admin-muted/10">
+          <h3 className="text-lg font-semibold text-admin-text mb-6 flex items-center gap-2">
             <LogOut size={18} className="text-amber-500" />
             გასანაწილებელი მოგება (დივიდენდი)
           </h3>
           <form onSubmit={handleDeclare} className="space-y-4">
             <div>
-              <label className="text-slate-500 text-xs mb-1 block">ოპერაციის თარიღი</label>
+              <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">ოპერაციის თარიღი</label>
               <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})}
-                className="w-full bg-stone-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
+                className="w-full bg-stone-50 border border-admin-muted/10 rounded-xl px-4 py-2.5 text-admin-text text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
             </div>
             <div>
-              <label className="text-slate-500 text-xs mb-1 block">ფისკალური პერიოდი</label>
+              <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">ფისკალური პერიოდი</label>
               <select required value={form.fiscal_period_id} onChange={e => setForm({...form, fiscal_period_id: e.target.value})}
-                className="w-full bg-stone-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                className="w-full bg-stone-50 border border-admin-muted/10 rounded-xl px-4 py-2.5 text-admin-text text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-slate-500 text-xs mb-1 block">გასაცემი თანხა (NET, ₾)</label>
+              <label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">გასაცემი თანხა (NET, ₾)</label>
               <input type="number" step="0.01" min="1" required placeholder="მაგ. 10000" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})}
-                className="w-full bg-stone-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-semibold focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
+                className="w-full bg-stone-50 border border-admin-muted/10 rounded-xl px-4 py-3 text-admin-text font-semibold focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500" />
               <p className="text-xs text-slate-400 mt-1">თანხა, რომელიც გაიცემა პარტნიორებზე.</p>
             </div>
 
@@ -109,15 +109,15 @@ export default function TaxesModule() {
 
         {/* Info & Calculation Visuals */}
         <div className="bg-gradient-to-br from-brand-600/10 to-transparent rounded-2xl p-6 border border-brand-500/20">
-          <h3 className="text-lg font-semibold text-slate-800 mb-6 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-admin-text mb-6 flex items-center gap-2">
             <Calculator size={18} className="text-brand-600" />
             ესტონური მოდელის კალკულაცია
           </h3>
 
           <div className="space-y-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-brand-500/10 shadow-sm flex items-center justify-between">
-              <span className="text-sm text-slate-500">ხელზე გასაცემი (Net)</span>
-              <span className="font-semibold text-slate-800 text-lg">{GEL(amountNum)}</span>
+              <span className="text-sm text-admin-muted">ხელზე გასაცემი (Net)</span>
+              <span className="font-semibold text-admin-text text-lg">{GEL(amountNum)}</span>
             </div>
 
             <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 shadow-inner flex items-center justify-between relative overflow-hidden">
@@ -135,12 +135,12 @@ export default function TaxesModule() {
               <ChevronRight size={20} className="text-slate-300 rotate-90" />
             </div>
 
-            <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md flex items-center justify-between text-white">
+            <div className="bg-slate-800 rounded-xl p-5 border border-admin-muted/10 shadow-md flex items-center justify-between text-white">
               <div>
                 <span className="text-sm text-slate-300 block">ჯამური ჩამოწერა</span>
                 <span className="text-xs text-slate-400">აკლდება გაუნაწილებელ მოგებას (5200)</span>
               </div>
-              <span className="font-bold text-xl text-brand-400">{GEL(totalDeduction)}</span>
+              <span className="font-bold text-xl text-admin-muted">{GEL(totalDeduction)}</span>
             </div>
           </div>
           

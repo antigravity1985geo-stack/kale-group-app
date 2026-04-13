@@ -91,11 +91,11 @@ export default function FinancialReports() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><BarChart2 size={22} /> ფინანსური ანგარიშგება</h2>
-          <p className="text-slate-500 text-sm mt-1">სტანდარტული ფინანსური ანგარიშგება · {new Date().getFullYear()}</p>
+          <h2 className="text-2xl font-bold text-admin-text flex items-center gap-2"><BarChart2 size={22} /> ფინანსური ანგარიშგება</h2>
+          <p className="text-admin-muted text-sm mt-1">სტანდარტული ფინანსური ანგარიშგება · {new Date().getFullYear()}</p>
         </div>
         
         <button 
@@ -109,32 +109,32 @@ export default function FinancialReports() {
       </div>
 
       {/* Date Filter Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-wrap items-end gap-6">
+      <div className="bg-white border border-admin-muted/10 rounded-2xl p-5 shadow-sm flex flex-wrap items-end gap-6">
         {activeReport === 'balance-sheet' ? (
           <div className="flex-1 min-w-[200px]">
-            <label className="text-slate-500 text-xs mb-1.5 block font-medium uppercase tracking-wider">თარიღისთვის (As of)</label>
+            <label className="text-admin-muted text-xs mb-1.5 block font-medium uppercase tracking-wider">თარიღისთვის (As of)</label>
             <div className="relative">
               <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="date" value={filters.asOfDate} onChange={e => setFilters({...filters, asOfDate: e.target.value})}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
+                className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl pl-10 pr-4 py-2.5 text-admin-text text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
             </div>
           </div>
         ) : (
           <>
             <div className="flex-1 min-w-[160px]">
-              <label className="text-slate-500 text-xs mb-1.5 block font-medium uppercase tracking-wider">დან (Start Date)</label>
+              <label className="text-admin-muted text-xs mb-1.5 block font-medium uppercase tracking-wider">დან (Start Date)</label>
               <div className="relative">
                 <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input type="date" value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
+                  className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl pl-10 pr-4 py-2.5 text-admin-text text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
               </div>
             </div>
             <div className="flex-1 min-w-[160px]">
-              <label className="text-slate-500 text-xs mb-1.5 block font-medium uppercase tracking-wider">მდე (End Date)</label>
+              <label className="text-admin-muted text-xs mb-1.5 block font-medium uppercase tracking-wider">მდე (End Date)</label>
               <div className="relative">
                 <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input type="date" value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
+                  className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl pl-10 pr-4 py-2.5 text-admin-text text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all" />
               </div>
             </div>
           </>
@@ -150,7 +150,7 @@ export default function FinancialReports() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {REPORTS.map(r => (
           <button key={r.id} onClick={() => setActiveReport(r.id)}
-            className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${activeReport === r.id ? 'bg-brand-600 border-brand-500 text-white shadow-xl shadow-brand-600/20' : 'bg-white shadow-sm border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+            className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${activeReport === r.id ? 'bg-brand-600 border-brand-500 text-white shadow-xl shadow-brand-600/20' : 'bg-white shadow-sm border-admin-muted/10 text-admin-muted hover:border-admin-muted/10'}`}>
             {activeReport === r.id && <div className="absolute right-0 top-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />}
             <r.icon size={20} className={`mb-3 ${activeReport === r.id ? 'text-white' : 'text-brand-600'}`} />
             <p className="font-bold text-sm tracking-tight">{r.label}</p>
@@ -167,9 +167,9 @@ export default function FinancialReports() {
             <div className="h-64 bg-slate-50 rounded-2xl" />
           </div>
         ) : !data ? (
-          <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-300">
+          <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-admin-muted/10">
             <BarChart2 size={48} className="mx-auto mb-4 text-slate-300" />
-            <p className="text-slate-500 font-medium">მონაცემები ვერ მოიძებნა მითითებული პერიოდისთვის</p>
+            <p className="text-admin-muted font-medium">მონაცემები ვერ მოიძებნა მითითებული პერიოდისთვის</p>
           </div>
         ) : (
           <>
@@ -181,17 +181,17 @@ export default function FinancialReports() {
                     { label: 'COGS', value: data.summary?.cogs || 0, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-100' },
                     { label: 'საოპ. ხარჯი', value: data.summary?.opex || 0, color: 'text-red-600', bg: 'bg-red-50 border-red-100' },
                     { label: 'მთლიანი მოგება', value: data.summary?.grossProfit || 0, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-                    { label: 'წმინდა მოგება', value: data.summary?.netProfit || 0, color: 'text-white', bg: 'bg-slate-800 border-slate-700 font-bold' },
+                    { label: 'წმინდა მოგება', value: data.summary?.netProfit || 0, color: 'text-white', bg: 'bg-slate-800 border-admin-muted/10 font-bold' },
                   ].map((s, i) => (
                     <div key={i} className={`rounded-2xl p-4 border transition-transform hover:scale-[1.02] ${s.bg}`}>
-                      <p className={`text-[10px] uppercase font-bold tracking-wider mb-1 ${i === 4 ? 'text-slate-400' : 'text-slate-500'}`}>{s.label}</p>
+                      <p className={`text-[10px] uppercase font-bold tracking-wider mb-1 ${i === 4 ? 'text-slate-400' : 'text-admin-muted'}`}>{s.label}</p>
                       <p className={`text-base font-bold truncate ${s.color}`}>{GEL(s.value)}</p>
                     </div>
                   ))}
                 </div>
 
                 {data.summary?.revenue > 0 && (
-                  <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5">
+                  <div className="bg-white shadow-sm border border-admin-muted/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-slate-600 text-sm font-semibold">Gross Profit Margin</span>
                       <span className="text-brand-600 font-bold text-lg">{((data.summary.grossProfit / data.summary.revenue) * 100).toFixed(1)}%</span>
@@ -209,19 +209,19 @@ export default function FinancialReports() {
                   const colors: Record<string, string> = { REVENUE: 'text-emerald-600 bg-emerald-50', COGS: 'text-orange-600 bg-orange-50', EXPENSE: 'text-red-600 bg-red-50' };
                   const labels: Record<string, string> = { REVENUE: 'შემოსავლები', COGS: 'COGS', EXPENSE: 'საოპერაციო ხარჯები' };
                   return (
-                    <div key={type} className="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
-                      <div className={`px-6 py-4 border-b border-slate-100 flex items-center justify-between`}>
-                        <h4 className="font-bold text-slate-800 text-sm">{labels[type]}</h4>
+                    <div key={type} className="bg-white shadow-sm border border-admin-muted/10 rounded-2xl overflow-hidden">
+                      <div className={`px-6 py-4 border-b border-admin-muted/10 flex items-center justify-between`}>
+                        <h4 className="font-bold text-admin-text text-sm">{labels[type]}</h4>
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-lg uppercase ${colors[type]}`}>{type}</span>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <tbody>
                             {typeLines.map((line: any, i: number) => (
-                              <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                              <tr key={i} className="border-b border-admin-muted/10 last:border-0 hover:bg-slate-50 transition-colors">
                                 <td className="py-3 px-6 font-mono text-slate-400 text-xs w-20">{line.code}</td>
                                 <td className="py-3 px-2 text-slate-700 text-sm font-medium">{line.name_ka}</td>
-                                <td className="py-3 px-6 text-right text-slate-900 font-bold text-sm tracking-tight">{GEL(line.amount || 0)}</td>
+                                <td className="py-3 px-6 text-right text-admin-text font-bold text-sm tracking-tight">{GEL(line.amount || 0)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -239,12 +239,12 @@ export default function FinancialReports() {
                   {[
                     { label: 'ჯამური აქტივები', value: data.summary?.assets || 0, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                     { label: 'ჯამური ვალდებულებები', value: data.summary?.liabilities || 0, icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50' },
-                    { label: 'კაპიტალი & მოგება', value: data.summary?.equity || 0, icon: Scale, color: 'text-brand-600', bg: 'bg-brand-50' },
+                    { label: 'კაპიტალი & მოგება', value: data.summary?.equity || 0, icon: Scale, color: 'text-brand-600', bg: 'bg-admin-bg' },
                   ].map((s, i) => (
                     <div key={i} className={`rounded-3xl p-6 border border-white/50 shadow-sm ${s.bg}`}>
                       <div className="flex items-center gap-3 mb-4">
                         <div className={`p-2.5 rounded-2xl bg-white shadow-sm ${s.color}`}><s.icon size={20} /></div>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{s.label}</p>
+                        <p className="text-admin-muted text-xs font-bold uppercase tracking-wider">{s.label}</p>
                       </div>
                       <p className={`text-2xl font-black ${s.color}`}>{GEL(s.value)}</p>
                     </div>
@@ -262,18 +262,18 @@ export default function FinancialReports() {
                   const colors: Record<string, string> = { ASSET: 'text-emerald-600 border-emerald-100', LIABILITY: 'text-red-600 border-red-100', EQUITY: 'text-brand-600 border-brand-100' };
                   
                   return (
-                    <div key={type} className="bg-white shadow-sm border border-slate-200 rounded-3xl overflow-hidden">
-                      <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/50">
-                        <h4 className="font-black text-slate-800 text-xs uppercase tracking-widest">{labels[type]}</h4>
+                    <div key={type} className="bg-white shadow-sm border border-admin-muted/10 rounded-3xl overflow-hidden">
+                      <div className="px-8 py-5 border-b border-admin-muted/10 bg-slate-50/50">
+                        <h4 className="font-black text-admin-text text-xs uppercase tracking-widest">{labels[type]}</h4>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <tbody>
                             {lines.map((line: any, i: number) => (
-                              <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                              <tr key={i} className="border-b border-admin-muted/10 last:border-0 hover:bg-slate-50 transition-colors">
                                 <td className="py-4 px-8 font-mono text-slate-400 text-[10px] w-24">{line.code}</td>
                                 <td className="py-4 px-2 text-slate-700 text-sm font-semibold">{line.name_ka}</td>
-                                <td className="py-4 px-8 text-right text-slate-900 font-black text-sm">{GEL(line.balance || 0)}</td>
+                                <td className="py-4 px-8 text-right text-admin-text font-black text-sm">{GEL(line.balance || 0)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -308,11 +308,11 @@ export default function FinancialReports() {
                   </div>
                 </div>
 
-                <div className="bg-white shadow-xl border border-slate-200 rounded-3xl overflow-hidden">
+                <div className="bg-white shadow-xl border border-admin-muted/10 rounded-3xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100 text-slate-500">
+                        <tr className="bg-slate-50 border-b border-admin-muted/10 text-admin-muted">
                           <th className="text-left py-4 px-8 font-bold text-[10px] uppercase tracking-wider">კოდი</th>
                           <th className="text-left py-4 px-4 font-bold text-[10px] uppercase tracking-wider">ანგარიში</th>
                           <th className="text-right py-4 px-4 font-bold text-[10px] uppercase tracking-wider text-emerald-600">Debit</th>
@@ -322,15 +322,15 @@ export default function FinancialReports() {
                       </thead>
                       <tbody>
                         {(data.accounts || []).filter((a: any) => Math.abs(Number(a.balance)) > 0 || Number(a.total_debit) > 0 || Number(a.total_credit) > 0).map((acc: any, i: number) => (
-                          <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-brand-50/30 transition-colors">
+                          <tr key={i} className="border-b border-admin-muted/10 last:border-0 hover:bg-admin-bg/30 transition-colors">
                             <td className="py-4 px-8 font-mono text-brand-600 text-xs font-bold">{acc.code}</td>
                             <td className="py-4 px-4">
-                              <p className="text-slate-800 font-bold text-sm">{acc.name_ka}</p>
+                              <p className="text-admin-text font-bold text-sm">{acc.name_ka}</p>
                               <p className="text-[10px] text-slate-400 font-medium tracking-tight">{acc.account_type}</p>
                             </td>
                             <td className="py-4 px-4 text-right text-emerald-600 font-bold">{Number(acc.total_debit) > 0 ? GEL(acc.total_debit) : '—'}</td>
                             <td className="py-4 px-4 text-right text-red-600 font-bold">{Number(acc.total_credit) > 0 ? GEL(acc.total_credit) : '—'}</td>
-                            <td className={`py-4 px-8 text-right font-black text-sm ${Number(acc.balance) >= 0 ? 'text-slate-900' : 'text-red-500'}`}>{GEL(acc.balance || 0)}</td>
+                            <td className={`py-4 px-8 text-right font-black text-sm ${Number(acc.balance) >= 0 ? 'text-admin-text' : 'text-red-500'}`}>{GEL(acc.balance || 0)}</td>
                           </tr>
                         ))}
                       </tbody>

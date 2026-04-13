@@ -144,7 +144,7 @@ export default function FixedAssetsModule() {
   const filtered = assets.filter(a => a.name.toLowerCase().includes(search.toLowerCase()) || a.category.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border animate-in slide-in-from-top-2 ${
@@ -155,53 +155,53 @@ export default function FixedAssetsModule() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2"><TrendingDown size={22} /> ძირითადი საშუალებები</h2>
-          <p className="text-slate-500 text-sm mt-1">Fixed Assets & Depreciation Management</p>
+          <h2 className="text-2xl font-bold text-admin-text flex items-center gap-2"><TrendingDown size={22} /> ძირითადი საშუალებები</h2>
+          <p className="text-admin-muted text-sm mt-1">Fixed Assets & Depreciation Management</p>
         </div>
         <div className="flex gap-2">
-           <button onClick={runDepreciation} disabled={depreciating} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all shadow-sm border border-slate-200 disabled:opacity-50">
+           <button onClick={runDepreciation} disabled={depreciating} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all shadow-sm border border-admin-muted/10 disabled:opacity-50">
              <Play size={16} /> 
              {depreciating ? 'მიმდინარეობს...' : 'ცვეთის დარიცხვა'}
            </button>
-           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-800 rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
+           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-admin-bg0 text-admin-text rounded-xl text-sm font-medium transition-all shadow-lg shadow-amber-900/30">
              <Plus size={16} /> {showForm ? 'გაუქმება' : 'დამატება'}
            </button>
         </div>
       </div>
 
       {showForm && (
-        <form onSubmit={handleAdd} className="bg-white shadow-sm/90 border border-slate-200 rounded-2xl p-6 space-y-5 animate-in slide-in-from-top-4">
+        <form onSubmit={handleAdd} className="bg-white shadow-sm/90 border border-admin-muted/10 rounded-2xl p-6 space-y-5 animate-in slide-in-from-top-4">
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div><label className="text-slate-500 text-xs mb-1 block">კოდი (N)</label>
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">კოდი (N)</label>
                 <input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder="FA-001"
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
               </div>
-              <div><label className="text-slate-500 text-xs mb-1 block">დასახელება *</label>
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">დასახელება *</label>
                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
               </div>
-              <div><label className="text-slate-500 text-xs mb-1 block">კატეგორია</label>
-                 <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600">
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">კატეგორია</label>
+                 <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm">
                     <option value="IT Equipment">IT აღჭურვილობა (3 წელი)</option>
                     <option value="Vehicles">მანქანა-დანადგარები (5 წელი)</option>
                     <option value="Furniture">ავეჯი (5 წელი)</option>
                     <option value="Buildings">შენობა-ნაგებობები (20 წელი)</option>
                  </select>
               </div>
-              <div><label className="text-slate-500 text-xs mb-1 block">შეძენის თარიღი</label>
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">შეძენის თარიღი</label>
                 <input type="date" value={form.purchase_date} onChange={e => setForm({...form, purchase_date: e.target.value})} required
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
               </div>
-              <div><label className="text-slate-500 text-xs mb-1 block">ღირებულება *</label>
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">ღირებულება *</label>
                 <input type="number" step="0.01" value={form.purchase_price} onChange={e => setForm({...form, purchase_price: e.target.value})} required
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
               </div>
-              <div><label className="text-slate-500 text-xs mb-1 block">ცვეთის ვადა (თვე)</label>
+              <div><label className="text-brand-600 font-bold tracking-widest text-[10px] uppercase mb-2 block">ცვეთის ვადა (თვე)</label>
                 <input type="number" min="1" value={form.lifespan_months} onChange={e => setForm({...form, lifespan_months: e.target.value})} required
-                  className="w-full bg-stone-800 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-amber-600" />
+                  className="w-full bg-admin-bg border border-admin-muted/10 rounded-xl px-3 py-2 text-admin-text text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-all shadow-sm" />
               </div>
            </div>
-           <div className="flex justify-end"><button type="submit" className="px-6 py-2 bg-brand-600 text-slate-800 font-bold rounded-xl text-sm">დამატება</button></div>
+           <div className="flex justify-end"><button type="submit" className="px-6 py-2 bg-brand-600 text-admin-text font-bold rounded-xl text-sm">დამატება</button></div>
         </form>
       )}
 
@@ -209,18 +209,18 @@ export default function FixedAssetsModule() {
       <div className="relative">
          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ძიება დასახელებით..."
-            className="w-full sm:max-w-md pl-10 pr-4 py-2.5 bg-white shadow-sm border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-brand-500" />
+            className="w-full sm:max-w-md pl-10 pr-4 py-2.5 bg-white border-none shadow-sm rounded-2xl focus:ring-4 focus:ring-admin-primary/5 transition-all text-admin-text text-sm focus:outline-none focus:border-brand-500" />
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="space-y-2">{Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-white shadow-sm animate-pulse rounded-xl" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-400 bg-white shadow-sm rounded-xl border border-slate-200 border-dashed"><TrendingDown size={40} className="mx-auto mb-3 opacity-30" /><p>აქტივები არ მოიძებნა</p></div>
+        <div className="text-center py-16 text-slate-400 bg-white shadow-sm rounded-xl border border-admin-muted/10 border-dashed"><TrendingDown size={40} className="mx-auto mb-3 opacity-30" /><p>აქტივები არ მოიძებნა</p></div>
       ) : (
-        <div className="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
+        <div className="bg-white shadow-sm border border-admin-muted/10 rounded-2xl overflow-hidden">
            <table className="w-full text-left border-collapse">
-              <thead><tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+              <thead><tr className="bg-slate-50 text-admin-muted text-xs uppercase tracking-wider border-b border-admin-muted/10">
                  <th className="py-3 px-4 font-semibold">დასახელება</th>
                  <th className="py-3 px-4 font-semibold">შეძენა</th>
                  <th className="py-3 px-4 font-semibold text-right">ღირებულება</th>
@@ -232,9 +232,9 @@ export default function FixedAssetsModule() {
                     const remaining = asset.purchase_price - asset.accumulated_depreciation;
                     const isFullyDepreciated = remaining <= 0.01;
                     return (
-                       <tr key={asset.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
+                       <tr key={asset.id} className="border-b border-admin-muted/10 last:border-0 hover:bg-slate-50 transition">
                           <td className="py-3 px-4">
-                             <div className="font-semibold text-slate-800 text-sm">{asset.name}</div>
+                             <div className="font-semibold text-admin-text text-sm">{asset.name}</div>
                              <div className="text-[11px] text-slate-400 font-mono mt-0.5">{asset.code} • {asset.category}</div>
                           </td>
                           <td className="py-3 px-4">
@@ -242,7 +242,7 @@ export default function FixedAssetsModule() {
                              <div className="text-slate-400 text-xs mt-0.5">{asset.lifespan_months} თვე</div>
                           </td>
                           <td className="py-3 px-4 text-right">
-                             <div className="text-sm font-semibold text-slate-800">₾ {asset.purchase_price.toFixed(2)}</div>
+                             <div className="text-sm font-semibold text-admin-text">₾ {asset.purchase_price.toFixed(2)}</div>
                              <div className="text-xs text-rose-500 line-through decoration-rose-300 mt-0.5" title="დარიცხული ცვეთა">
                                 - {asset.accumulated_depreciation.toFixed(2)}
                              </div>

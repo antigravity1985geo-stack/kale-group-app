@@ -56,7 +56,7 @@ export default function CompanySettings() {
   const vatRegistered = settings['vat_registered']?.value === true || settings['vat_registered']?.value === 'true';
   const installmentRate = Number(settings['installment_surcharge_rate']?.value) || 5;
 
-  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-brand-400" /></div>;
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-admin-muted" /></div>;
 
   return (
     <div className="max-w-2xl">
@@ -68,28 +68,28 @@ export default function CompanySettings() {
 
       <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 bg-brand-900 rounded-xl flex items-center justify-center">
-          <Settings size={20} className="text-gold-400" />
+          <Settings size={20} className="text-admin-primary" />
         </div>
         <div>
-          <h2 className="text-2xl font-serif text-slate-800">კომპანიის პარამეტრები</h2>
-          <p className="text-sm text-slate-500">გლობალური კონფიგურაცია—ყველა მოდულზე მოქმედებს</p>
+          <h2 className="text-2xl font-sans font-bold text-admin-text">კომპანიის პარამეტრები</h2>
+          <p className="text-sm text-admin-muted">გლობალური კონფიგურაცია—ყველა მოდულზე მოქმედებს</p>
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="admin-fade-in space-y-6">
         {/* VAT Toggle */}
-        <div className={`bg-white border rounded-2xl p-6 shadow-sm transition-all ${vatRegistered ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'}`}>
+        <div className={`bg-white border rounded-2xl p-6 shadow-sm transition-all ${vatRegistered ? 'border-amber-300 bg-amber-50/30' : 'border-admin-muted/10'}`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-slate-800">დღგ-ს გადამხდელი</h3>
+                <h3 className="font-semibold text-admin-text">დღგ-ს გადამხდელი</h3>
                 {vatRegistered && (
                   <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
                     ჩართულია
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-500">{settings['vat_registered']?.description || 'კომპანია დღგ-ს გადამხდელია თუ არა'}</p>
+              <p className="text-sm text-admin-muted">{settings['vat_registered']?.description || 'კომპანია დღგ-ს გადამხდელია თუ არა'}</p>
 
               {vatRegistered && (
                 <div className="mt-3 flex items-start gap-2 p-3 bg-amber-100 border border-amber-200 rounded-xl text-xs text-amber-800">
@@ -98,7 +98,7 @@ export default function CompanySettings() {
                 </div>
               )}
               {!vatRegistered && (
-                <div className="mt-3 flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+                <div className="mt-3 flex items-start gap-2 p-3 bg-slate-50 border border-admin-muted/10 rounded-xl text-xs text-slate-600">
                   <Info size={14} className="shrink-0 mt-0.5" />
                   <p>დღგ გამორთულია. გახდებით გადამხდელი? ჩართეთ ღილაკი — ყველა შემდგომი ტრანზაქცია 18% დღგ-ს გამოყოფს.</p>
                 </div>
@@ -122,17 +122,17 @@ export default function CompanySettings() {
         </div>
 
         {/* Installment surcharge */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-admin-muted/10 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <Percent size={18} className="text-blue-500" />
-            <h3 className="font-semibold text-slate-800">განვადების საკომისიო</h3>
+            <h3 className="font-semibold text-admin-text">განვადების საკომისიო</h3>
           </div>
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-admin-muted mb-4">
             {settings['installment_surcharge_rate']?.description || 'განვადებით ყიდვისას ემატება ამ % კლიენტის ჯამს'}
           </p>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+            <div className="flex items-center bg-slate-50 border border-admin-muted/10 rounded-xl overflow-hidden">
               <input
                 type="number"
                 min="0"
@@ -140,13 +140,13 @@ export default function CompanySettings() {
                 step="0.5"
                 defaultValue={installmentRate}
                 onBlur={e => updateSetting('installment_surcharge_rate', e.target.value)}
-                className="w-24 px-4 py-3 text-slate-800 text-lg font-bold bg-transparent outline-none text-center"
+                className="w-24 px-4 py-3 text-admin-text text-lg font-bold bg-transparent outline-none text-center"
               />
-              <span className="px-3 py-3 bg-slate-100 text-slate-600 font-bold text-lg border-l border-slate-200">%</span>
+              <span className="px-3 py-3 bg-slate-100 text-slate-600 font-bold text-lg border-l border-admin-muted/10">%</span>
             </div>
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-admin-muted">
               მაგ: ₾1,000-ის განვადებაზე კლიენტი გადაიხდის{' '}
-              <strong className="text-slate-800">₾{(1000 * (1 + installmentRate / 100)).toLocaleString('ka-GE')}</strong>
+              <strong className="text-admin-text">₾{(1000 * (1 + installmentRate / 100)).toLocaleString('ka-GE')}</strong>
             </div>
           </div>
         </div>

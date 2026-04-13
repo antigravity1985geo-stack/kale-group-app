@@ -348,7 +348,7 @@ export default function ManufacturingModule() {
 
   if (isLoading && tab !== 'suppliers') return (
     <div className="flex justify-center p-12">
-      <Loader2 className="animate-spin text-brand-400" />
+      <Loader2 className="animate-spin text-admin-muted" />
     </div>
   );
 
@@ -363,7 +363,7 @@ export default function ManufacturingModule() {
 
       {/* Sub-tabs */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-serif text-slate-800 flex items-center gap-2">
+        <h2 className="text-2xl font-sans font-bold text-admin-text flex items-center gap-2">
           <Factory size={24} /> წარმოება
         </h2>
         <div className="flex gap-2 p-1.5 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-fit relative z-10">
@@ -375,7 +375,7 @@ export default function ManufacturingModule() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 py-2.5 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-400 border-none cursor-pointer outline-none relative overflow-hidden ${tab === t ? 'bg-white text-brand-900 shadow-[0_4px_20px_rgb(0,0,0,0.08)] scale-100' : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'}`}
+              className={`px-5 py-2.5 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-400 border-none cursor-pointer outline-none relative overflow-hidden ${tab === t ? 'bg-white text-admin-text shadow-[0_4px_20px_rgb(0,0,0,0.08)] scale-100' : 'bg-transparent text-admin-muted hover:text-admin-text hover:bg-white/50 scale-95 hover:scale-100'}`}
             >
               {l}
             </button>
@@ -390,10 +390,10 @@ export default function ManufacturingModule() {
       {tab === 'suppliers' && (
         <div>
           <div className="flex justify-between items-center mb-5">
-            <p className="text-sm text-slate-500">{suppliers.length} მომწოდებელი სისტემაში</p>
+            <p className="text-sm text-admin-muted">{suppliers.length} მომწოდებელი სისტემაში</p>
             <button
               onClick={openAddSupplier}
-              className="px-6 py-3 bg-brand-900 text-gold-400 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-brand-950 transition-all shadow-lg shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-0.5"
+              className="px-6 py-3 bg-brand-900 text-admin-primary rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-brand-950 transition-all shadow-lg shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-0.5"
             >
               <Plus size={16} /> ახალი მომწოდებელი
             </button>
@@ -403,70 +403,70 @@ export default function ManufacturingModule() {
           {showSuppForm && (
             <div className="fixed inset-0 z-50 bg-brand-950/40 backdrop-blur-md flex items-center justify-center p-4">
               <div className="bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2rem] shadow-[0_20px_60px_rgb(0,0,0,0.1)] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-8 border-b border-slate-200/50">
-                  <h3 className="text-xl font-bold text-brand-900 font-serif">
+                <div className="flex items-center justify-between p-8 border-b border-admin-muted/10/50">
+                  <h3 className="text-xl font-bold text-admin-text font-sans font-bold">
                     {editingSupplier ? '✏️ მომწოდებლის რედაქტირება' : '➕ ახალი მომწოდებელი'}
                   </h3>
-                  <button onClick={() => setShowSuppForm(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 border-none cursor-pointer bg-transparent transition-colors">
+                  <button onClick={() => setShowSuppForm(false)} className="p-2 rounded-xl hover:bg-slate-100 text-admin-muted border-none cursor-pointer bg-transparent transition-colors">
                     <X size={20} />
                   </button>
                 </div>
                 <div className="p-8 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">სახელი / კომპანია *</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">სახელი / კომპანია *</label>
                       <div className="relative">
                         <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" value={suppForm.name} onChange={e => setSuppForm({ ...suppForm, name: e.target.value })}
                           placeholder="შპს მომწოდებელი / ფიზ. პირი"
-                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">საიდ. კოდი (TIN)</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">საიდ. კოდი (TIN)</label>
                       <input type="text" value={suppForm.tin} onChange={e => setSuppForm({ ...suppForm, tin: e.target.value })}
                         placeholder="12345678"
-                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">საკონტაქტო პირი</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">საკონტაქტო პირი</label>
                       <div className="relative">
                         <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" value={suppForm.contact_person} onChange={e => setSuppForm({ ...suppForm, contact_person: e.target.value })}
                           placeholder="გიორგი ბერიძე"
-                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ტელეფონი</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">ტელეფონი</label>
                       <div className="relative">
                         <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="tel" value={suppForm.phone} onChange={e => setSuppForm({ ...suppForm, phone: e.target.value })}
                           placeholder="+995 5XX XXX XXX"
-                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ელ. ფოსტა</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">ელ. ფოსტა</label>
                       <div className="relative">
                         <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="email" value={suppForm.email} onChange={e => setSuppForm({ ...suppForm, email: e.target.value })}
                           placeholder="info@supplier.ge"
-                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">მისამართი</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">მისამართი</label>
                       <input type="text" value={suppForm.address} onChange={e => setSuppForm({ ...suppForm, address: e.target.value })}
                         placeholder="ქ. თბილისი, ..."
-                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ქვეყანა</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">ქვეყანა</label>
                       <div className="relative">
                         <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <select value={suppForm.country} onChange={e => setSuppForm({ ...suppForm, country: e.target.value })}
-                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm appearance-none">
+                          className="w-full pl-9 pr-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm appearance-none">
                           <option value="GE">🇬🇪 საქართველო</option>
                           <option value="TR">🇹🇷 თურქეთი</option>
                           <option value="CN">🇨🇳 ჩინეთი</option>
@@ -480,14 +480,14 @@ export default function ManufacturingModule() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">გადახდის ვადა (დღე)</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">გადახდის ვადა (დღე)</label>
                       <input type="number" min={0} value={suppForm.payment_terms} onChange={e => setSuppForm({ ...suppForm, payment_terms: parseInt(e.target.value) })}
-                        className="w-full px-4 py-3.5 bg-white/50 border border-slate-200/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
+                        className="w-full px-4 py-3.5 bg-white/50 border border-admin-muted/10/60 rounded-2xl outline-none focus:border-gold-400 focus:bg-white focus:shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all text-sm" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">ვალუტა</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">ვალუტა</label>
                       <select value={suppForm.currency} onChange={e => setSuppForm({ ...suppForm, currency: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm">
+                        className="w-full px-4 py-3 bg-slate-50 border border-admin-muted/10 rounded-xl outline-none focus:border-gold-400 text-sm">
                         <option value="GEL">₾ GEL</option>
                         <option value="USD">$ USD</option>
                         <option value="EUR">€ EUR</option>
@@ -495,28 +495,28 @@ export default function ManufacturingModule() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">სტატუსი</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">სტატუსი</label>
                       <select value={suppForm.is_active ? 'true' : 'false'} onChange={e => setSuppForm({ ...suppForm, is_active: e.target.value === 'true' })}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm">
+                        className="w-full px-4 py-3 bg-slate-50 border border-admin-muted/10 rounded-xl outline-none focus:border-gold-400 text-sm">
                         <option value="true">✅ აქტიური</option>
                         <option value="false">⛔ არააქტიური</option>
                       </select>
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">შენიშვნა</label>
+                      <label className="block text-xs font-bold text-admin-muted uppercase tracking-widest mb-1.5">შენიშვნა</label>
                       <textarea value={suppForm.notes} onChange={e => setSuppForm({ ...suppForm, notes: e.target.value })}
                         rows={2} placeholder="დამატებითი ინფო..."
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-gold-400 text-sm resize-none" />
+                        className="w-full px-4 py-3 bg-slate-50 border border-admin-muted/10 rounded-xl outline-none focus:border-gold-400 text-sm resize-none" />
                     </div>
                   </div>
-                  <div className="flex gap-4 pt-4 border-t border-slate-100">
+                  <div className="flex gap-4 pt-4 border-t border-admin-muted/10">
                     <button onClick={handleSaveSupplier} disabled={suppSaving}
-                      className="flex items-center justify-center gap-2 flex-1 py-3.5 bg-brand-900 text-gold-400 rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-brand-950 transition-all shadow-lg hover:shadow-xl border-none cursor-pointer disabled:opacity-60">
+                      className="flex items-center justify-center gap-2 flex-1 py-3.5 bg-brand-900 text-admin-primary rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-brand-950 transition-all shadow-lg hover:shadow-xl border-none cursor-pointer disabled:opacity-60">
                       {suppSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                       {editingSupplier ? 'განახლება' : 'შენახვა'}
                     </button>
                     <button onClick={() => setShowSuppForm(false)}
-                      className="px-8 py-3.5 border border-slate-200/60 bg-white text-slate-500 rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-slate-50 transition cursor-pointer">
+                      className="px-8 py-3.5 border border-admin-muted/10/60 bg-white text-admin-muted rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:bg-slate-50 transition cursor-pointer">
                       გაუქმება
                     </button>
                   </div>
@@ -526,16 +526,16 @@ export default function ManufacturingModule() {
           )}
 
           {suppLoading ? (
-            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-brand-400" /></div>
+            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-admin-muted" /></div>
           ) : suppliers.length === 0 ? (
             <div className="text-center py-20 bg-white/50 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem]">
               <div className="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-white/50">
                 <Truck size={32} className="text-slate-400" />
               </div>
-              <p className="text-slate-700 font-bold mb-2 font-serif text-xl">მომწოდებლები არ არის დამატებული</p>
+              <p className="text-slate-700 font-bold mb-2 font-sans font-bold text-xl">მომწოდებლები არ არის დამატებული</p>
               <p className="text-slate-400 text-sm mb-8">დაამატეთ პირველი მომწოდებელი, რათა შესყიდვის ფორმა ამუშავდეს</p>
               <button onClick={openAddSupplier}
-                className="px-8 py-3.5 bg-brand-900 text-gold-400 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-950 transition-all shadow-xl shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-1">
+                className="px-8 py-3.5 bg-brand-900 text-admin-primary rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-950 transition-all shadow-xl shadow-brand-900/20 border-none cursor-pointer hover:-translate-y-1">
                 + დამატება
               </button>
             </div>
@@ -546,14 +546,14 @@ export default function ManufacturingModule() {
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="font-bold text-slate-800 text-base">{s.name}</h3>
+                      <h3 className="font-bold text-admin-text text-base">{s.name}</h3>
                       {s.tin && <p className="text-xs text-slate-400 mt-0.5">სას. კოდი: {s.tin}</p>}
                     </div>
                     <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${s.is_active !== false ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
                       {s.is_active !== false ? 'აქტ.' : 'არააქტ.'}
                     </span>
                   </div>
-                  <div className="space-y-1.5 text-sm text-slate-600 mb-4">
+                  <div className="admin-fade-in space-y-1.5 text-sm text-slate-600 mb-4">
                     {s.contact_person && <p className="flex items-center gap-2"><User size={13} className="text-slate-400" />{s.contact_person}</p>}
                     {s.phone && <p className="flex items-center gap-2"><Phone size={13} className="text-slate-400" />{s.phone}</p>}
                     {s.email && <p className="flex items-center gap-2"><Mail size={13} className="text-slate-400" />{s.email}</p>}
@@ -561,7 +561,7 @@ export default function ManufacturingModule() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => openEditSupplier(s)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-white/80 border border-slate-100/50 text-brand-600 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-brand-900 hover:shadow-md transition-all cursor-pointer outline-none">
+                      className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-white/80 border border-admin-muted/10/50 text-brand-600 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-admin-text hover:shadow-md transition-all cursor-pointer outline-none">
                       <Edit3 size={14} /> რედაქტ.
                     </button>
                     <button onClick={() => handleDeleteSupplier(s.id)}
@@ -593,7 +593,7 @@ export default function ManufacturingModule() {
             )}
             <button
               onClick={() => setIsAdding(!isAdding)}
-              className="px-4 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer"
+              className="px-4 py-2.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer"
             >
               {isAdding ? <List size={16} /> : <Plus size={16} />}
               {isAdding ? 'რეცეპტების სია' : 'ახალი რეცეპტი'}
@@ -601,24 +601,24 @@ export default function ManufacturingModule() {
           </div>
 
           {isAdding ? (
-            <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 mb-6">
+            <div className="bg-white shadow-sm border border-admin-muted/10 rounded-2xl p-6 mb-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs uppercase text-slate-500 mb-2">რეცეპტის სახელი *</label>
+                  <label className="block text-xs uppercase text-admin-muted mb-2">რეცეპტის სახელი *</label>
                   <input
                     type="text"
                     value={newRecipe.title}
                     onChange={e => setNewRecipe({ ...newRecipe, title: e.target.value })}
                     placeholder="მაგ: კარის სტანდ. კომპლექტი"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none text-sm"
+                    className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text focus:border-gold-500 focus:bg-white transition-all shadow-sm outline-none text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase text-slate-500 mb-2">მზა პროდუქტი *</label>
+                  <label className="block text-xs uppercase text-admin-muted mb-2">მზა პროდუქტი *</label>
                   <select
                     value={newRecipe.finished_good_id}
                     onChange={e => setNewRecipe({ ...newRecipe, finished_good_id: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none text-sm"
+                    className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text focus:border-gold-500 focus:bg-white transition-all shadow-sm outline-none text-sm"
                   >
                     <option value="">-- პროდუქტი --</option>
                     {products.map(p => (
@@ -643,7 +643,7 @@ export default function ManufacturingModule() {
                     <select
                       value={ing.raw_material_ref_id}
                       onChange={e => handleIngredientChange(idx, 'raw_material_ref_id', e.target.value)}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 outline-none text-sm"
+                      className="flex-1 bg-slate-50 border border-admin-muted/10 rounded-xl p-2.5 text-admin-text outline-none text-sm"
                     >
                       <option value="">-- ნედლეული --</option>
                       {rawMaterials.map(m => (
@@ -656,10 +656,10 @@ export default function ManufacturingModule() {
                       type="number" step="0.01" min="0.01"
                       value={ing.quantity_required}
                       onChange={e => handleIngredientChange(idx, 'quantity_required', parseFloat(e.target.value))}
-                      className="w-28 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 outline-none text-sm"
+                      className="w-28 bg-slate-50 border border-admin-muted/10 rounded-xl p-2.5 text-admin-text outline-none text-sm"
                       placeholder="რაოდ."
                     />
-                    <div className="w-8 text-xs text-slate-500 flex items-center">
+                    <div className="w-8 text-xs text-admin-muted flex items-center">
                       {rawMaterials.find(rm => rm.id === ing.raw_material_ref_id)?.unit || ''}
                     </div>
                     <button onClick={() => handleRemoveIngredient(idx)}
@@ -675,21 +675,21 @@ export default function ManufacturingModule() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-xs uppercase text-slate-500 mb-2">ინსტრუქცია (სურვ.)</label>
+                <label className="block text-xs uppercase text-admin-muted mb-2">ინსტრუქცია (სურვ.)</label>
                 <textarea
                   value={newRecipe.instructions}
                   onChange={e => setNewRecipe({ ...newRecipe, instructions: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:border-amber-500 outline-none h-20 text-sm resize-none"
+                  className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text focus:border-gold-500 focus:bg-white transition-all shadow-sm outline-none h-20 text-sm resize-none"
                 />
               </div>
 
               <div className="flex gap-3">
                 <button onClick={handleSaveRecipe}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-900 text-gold-400 rounded-xl font-bold text-sm hover:bg-brand-950 transition border-none cursor-pointer">
+                  className="flex items-center gap-2 px-6 py-2.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all font-bold text-sm hover:bg-brand-950 transition border-none cursor-pointer">
                   <Save size={16} /> შენახვა
                 </button>
                 <button onClick={() => { setIsAdding(false); setIngredients([]); }}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-500 rounded-xl text-sm hover:bg-slate-100 transition cursor-pointer bg-transparent">
+                  className="px-5 py-2.5 border border-admin-muted/10 text-admin-muted rounded-xl text-sm hover:bg-slate-100 transition cursor-pointer bg-transparent">
                   გაუქმება
                 </button>
               </div>
@@ -706,8 +706,8 @@ export default function ManufacturingModule() {
             {recipes.map(r => {
               const hasRawMats = r.ingredients?.some((i: any) => i.raw_mat);
               return (
-                <div key={r.id} className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5">
-                  <h3 className="text-base font-bold text-slate-800 mb-1">{r.title}</h3>
+                <div key={r.id} className="bg-white shadow-sm border border-admin-muted/10 rounded-2xl p-5">
+                  <h3 className="text-base font-bold text-admin-text mb-1">{r.title}</h3>
                   <p className="text-xs text-amber-600 mb-3">🟡 {r.finished_good?.name}</p>
                   {!hasRawMats && (
                     <div className="flex items-center gap-2 text-xs text-orange-500 bg-orange-50 border border-orange-200 rounded-lg p-2 mb-3">
@@ -729,7 +729,7 @@ export default function ManufacturingModule() {
                     <button
                       onClick={() => handleStartProduction(r)}
                       disabled={isProducing === r.id || !hasRawMats}
-                      className="flex-1 py-2.5 bg-brand-900 text-gold-400 rounded-xl text-xs uppercase tracking-widest font-bold flex justify-center items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-2.5 bg-admin-primary text-white rounded-2xl hover:bg-admin-primary-hover shadow-lg shadow-admin-primary/20 transition-all text-xs uppercase tracking-widest font-bold flex justify-center items-center gap-2 hover:bg-brand-950 transition border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isProducing === r.id ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
                       წარმოება

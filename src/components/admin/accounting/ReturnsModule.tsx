@@ -139,31 +139,31 @@ export default function ReturnsModule() {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-brand-400" /></div>;
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-admin-muted" /></div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif text-slate-800 mb-1">პროდუქციის დაბრუნება (RMA)</h2>
-          <p className="text-sm text-slate-500">მართეთ მომხმარებლის მიერ დაბრუნებული პროდუქცია</p>
+          <h2 className="text-2xl font-sans font-bold text-admin-text mb-1">პროდუქციის დაბრუნება (RMA)</h2>
+          <p className="text-sm text-admin-muted">მართეთ მომხმარებლის მიერ დაბრუნებული პროდუქცია</p>
         </div>
-        <button onClick={() => setIsAdding(!isAdding)} className="px-5 py-2.5 bg-brand-600 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2 hover:bg-brand-500 text-white border-none cursor-pointer outline-none shadow-sm hover:shadow-md">
+        <button onClick={() => setIsAdding(!isAdding)} className="px-5 py-2.5 bg-brand-600 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2 hover:bg-admin-bg0 text-white border-none cursor-pointer outline-none shadow-sm hover:shadow-md">
            {isAdding ? 'გაუქმება' : <><Plus size={16}/> მოთხოვნის ახალი დამატება</>}
         </button>
       </div>
 
       {isAdding && (
-         <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8 mb-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 bg-brand-500 h-full"></div>
-            <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
+         <div className="bg-white border border-admin-muted/10 shadow-sm rounded-xl p-8 mb-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 bg-admin-bg0 h-full"></div>
+            <h3 className="text-base font-bold text-admin-text mb-6 flex items-center gap-2">
               <RefreshCcw size={18} className="text-brand-500" />
               ახალი დაბრუნების პროცესირება
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                <div className="relative">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">შეკვეთა (ძებნა P.N, სახელი...)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-admin-muted mb-2">შეკვეთა (ძებნა P.N, სახელი...)</label>
                   <div className="relative">
                      <Search size={16} className="absolute left-4 top-3.5 text-slate-400" />
                      <input
@@ -174,7 +174,7 @@ export default function ReturnsModule() {
                          if (selectedOrder) handleClearOrderSelection();
                        }}
                        placeholder="მოძებნეთ კლიენტი..."
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-10 py-3 text-slate-800 outline-none focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium"
+                       className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl pl-12 pr-10 py-3 text-admin-text outline-none focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium"
                      />
                      {orderQuery && (
                        <button onClick={handleClearOrderSelection} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200 transition-colors">
@@ -186,15 +186,15 @@ export default function ReturnsModule() {
 
                   {/* Search Dropdown */}
                   {orderResults.length > 0 && !selectedOrder && (
-                    <div className="absolute top-full left-0 z-20 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 z-20 w-full mt-2 bg-white border border-admin-muted/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                       {orderResults.map(o => (
                         <div
                           key={o.id}
                           onClick={() => handleSelectOrder(o)}
-                          className="px-5 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
+                          className="px-5 py-3 hover:bg-slate-50 cursor-pointer border-b border-admin-muted/10 last:border-0 transition-colors"
                         >
-                          <div className="text-sm font-bold text-slate-800">{o.customer_first_name} {o.customer_last_name}</div>
-                          <div className="text-xs text-slate-500 font-medium mt-1">P.N: {o.personal_id} <span className="mx-2 text-slate-300">•</span> ID: #{o.id.slice(0,8)}</div>
+                          <div className="text-sm font-bold text-admin-text">{o.customer_first_name} {o.customer_last_name}</div>
+                          <div className="text-xs text-admin-muted font-medium mt-1">P.N: {o.personal_id} <span className="mx-2 text-slate-300">•</span> ID: #{o.id.slice(0,8)}</div>
                         </div>
                       ))}
                     </div>
@@ -202,12 +202,12 @@ export default function ReturnsModule() {
                </div>
                
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">შეძენილი პროდუქტი</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-admin-muted mb-2">შეძენილი პროდუქტი</label>
                   <select 
                     value={newReturn.product_id} 
                     onChange={e => handleSelectProduct(e.target.value)} 
                     disabled={!selectedOrder || orderItems.length === 0}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 outline-none disabled:opacity-50 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium cursor-pointer"
+                    className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text outline-none disabled:opacity-50 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium cursor-pointer"
                   >
                      <option value="">-- აირჩიეთ პროდუქტი --</option>
                      {orderItems.map(item => (
@@ -219,7 +219,7 @@ export default function ReturnsModule() {
                </div>
                
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">დასაბრუნებელი რაოდენობა</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-admin-muted mb-2">დასაბრუნებელი რაოდენობა</label>
                   <input 
                     type="number" 
                     min="1" 
@@ -232,14 +232,14 @@ export default function ReturnsModule() {
                        setNewReturn({...newReturn, quantity: val})
                     }} 
                     disabled={!newReturn.product_id}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 outline-none disabled:opacity-50 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium" 
+                    className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text outline-none disabled:opacity-50 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium" 
                   />
                   {newReturn.product_id && <p className="text-[11px] font-medium text-brand-600 mt-2 flex items-center gap-1"><AlertTriangle size={12}/> მაქსიმალური რაოდენობა შეკვეთიდან: {maxQuantity}</p>}
                </div>
                
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">ფიზიკური მდგომარეობა</label>
-                  <select value={newReturn.condition} onChange={e => setNewReturn({...newReturn, condition: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 outline-none focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium cursor-pointer">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-admin-muted mb-2">ფიზიკური მდგომარეობა</label>
+                  <select value={newReturn.condition} onChange={e => setNewReturn({...newReturn, condition: e.target.value})} className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-3 text-admin-text outline-none focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium cursor-pointer">
                      <option value="RESELLABLE">რეალიზებადი (RESELLABLE) - ბრუნდება მარაგში</option>
                      <option value="DEFECTIVE">წუნდებული (DEFECTIVE) - ბრაკი</option>
                      <option value="DAMAGED">დაზიანებული (DAMAGED) - ჩამოსაწერი</option>
@@ -248,16 +248,16 @@ export default function ReturnsModule() {
             </div>
             
             <div className="mb-6">
-               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">დაბრუნების მიზეზი / კომენტარი</label>
+               <label className="block text-xs font-bold uppercase tracking-wider text-admin-muted mb-2">დაბრუნების მიზეზი / კომენტარი</label>
                <textarea 
                   value={newReturn.return_reason} 
                   onChange={e => setNewReturn({...newReturn, return_reason: e.target.value})} 
                   placeholder="დეტალურად აღწერეთ დაბრუნების მიზეზი პროდუქტისთვის..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-800 outline-none min-h-[100px] focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium resize-y"
+                  className="w-full bg-slate-50 border border-admin-muted/10 rounded-xl p-4 text-admin-text outline-none min-h-[100px] focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all font-medium resize-y"
                ></textarea>
             </div>
             
-            <div className="pt-4 border-t border-slate-200 flex justify-end">
+            <div className="pt-4 border-t border-admin-muted/10 flex justify-end">
                 <button onClick={handleCreateReturn} className="px-8 py-3 bg-slate-900 rounded-xl text-white text-sm font-bold shadow-md hover:shadow-lg hover:bg-black transition-all flex items-center gap-2 border-none cursor-pointer outline-none transform active:scale-[0.98]">
                    <Save size={18}/> დაბრუნების ინიცირება
                 </button>
@@ -265,18 +265,18 @@ export default function ReturnsModule() {
          </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-admin-muted/10 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-               <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+               <thead className="bg-slate-50 text-[11px] font-bold uppercase text-admin-muted tracking-wider">
                   <tr>
-                     <th className="px-6 py-4 border-b border-slate-200"># ID</th>
-                     <th className="px-6 py-4 border-b border-slate-200">პროდუქტი & შემსყიდველი</th>
-                     <th className="px-6 py-4 border-b border-slate-200 text-center">რაოდენობა</th>
-                     <th className="px-6 py-4 border-b border-slate-200">დაბრუნების მიზეზი</th>
-                     <th className="px-6 py-4 border-b border-slate-200 text-center">მდგომარეობა</th>
-                     <th className="px-6 py-4 border-b border-slate-200 text-center">სტატუსი</th>
-                     <th className="px-6 py-4 border-b border-slate-200 text-right">ბუღალტერია</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10"># ID</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10">პროდუქტი & შემსყიდველი</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10 text-center">რაოდენობა</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10">დაბრუნების მიზეზი</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10 text-center">მდგომარეობა</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10 text-center">სტატუსი</th>
+                     <th className="px-6 py-4 border-b border-admin-muted/10 text-right">ბუღალტერია</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
@@ -284,8 +284,8 @@ export default function ReturnsModule() {
                      <tr key={r.id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="px-6 py-4 font-mono text-[11px] font-semibold text-slate-400">{r.id.split('-')[0]}</td>
                         <td className="px-6 py-4">
-                            <div className="font-bold text-slate-800 mb-0.5">{r.product?.name}</div>
-                            <div className="text-[11px] font-medium text-slate-500">მომხმ: {r.order?.customer_first_name} {r.order?.customer_last_name}</div>
+                            <div className="font-bold text-admin-text mb-0.5">{r.product?.name}</div>
+                            <div className="text-[11px] font-medium text-admin-muted">მომხმ: {r.order?.customer_first_name} {r.order?.customer_last_name}</div>
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-slate-700">{r.quantity} ც</td>
                         <td className="px-6 py-4 text-xs font-medium text-slate-600 truncate max-w-[200px]" title={r.return_reason}>{r.return_reason}</td>
@@ -301,7 +301,7 @@ export default function ReturnsModule() {
                         </td>
                         <td className="px-6 py-4 text-right">
                            {r.status === 'PENDING' ? (
-                              <button onClick={() => processReturn(r.id)} className="inline-flex p-2.5 bg-white border border-slate-200 shadow-sm rounded-lg text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all outline-none cursor-pointer group-hover:shadow" title="ბუღალტერიაში გატარება">
+                              <button onClick={() => processReturn(r.id)} className="inline-flex p-2.5 bg-white border border-admin-muted/10 shadow-sm rounded-lg text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all outline-none cursor-pointer group-hover:shadow" title="ბუღალტერიაში გატარება">
                                  <RefreshCcw size={16} className="rotate-0 hover:rotate-180 transition-transform duration-500" />
                               </button>
                            ) : r.status === 'PROCESSED' ? (

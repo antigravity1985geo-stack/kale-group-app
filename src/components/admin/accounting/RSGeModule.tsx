@@ -98,7 +98,7 @@ function DashboardPanel({ health, syncLog, onRefresh }: {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="admin-fade-in space-y-6">
       {/* Mock Mode Banner */}
       {health?.mockMode && (
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -215,7 +215,7 @@ function EInvoicePanel({ onAction }: { onAction: (result: RSGeSyncResult) => voi
         <h3 className="font-semibold text-gray-800">ელ-ინვოისები RS.ge-ზე</h3>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-slate-800 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-admin-text rounded-lg text-sm hover:bg-blue-700 transition-colors"
         >
           <Icons.Send /> ახლის გაგზავნა
         </button>
@@ -237,7 +237,7 @@ function EInvoicePanel({ onAction }: { onAction: (result: RSGeSyncResult) => voi
           </div>
           <div className="flex gap-2">
             <button onClick={handleAutoCreate} disabled={loading === 'create' || !orderId || !invoiceId}
-              className="px-4 py-2 bg-blue-600 text-slate-800 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              className="px-4 py-2 bg-blue-600 text-admin-text rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors">
               {loading === 'create' ? 'იგზავნება...' : 'შექმნა & გაგზავნა'}
             </button>
             <button onClick={() => setShowCreateForm(false)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">გაუქმება</button>
@@ -325,7 +325,7 @@ function WaybillPanel({ onAction }: { onAction: (result: RSGeSyncResult) => void
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-gray-800">ზედნადები RS.ge-ზე</h3>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-slate-800 rounded-lg text-sm hover:bg-green-700 transition-colors">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-admin-text rounded-lg text-sm hover:bg-green-700 transition-colors">
           <Icons.Truck /> ახალი ზედნადები
         </button>
       </div>
@@ -348,7 +348,7 @@ function WaybillPanel({ onAction }: { onAction: (result: RSGeSyncResult) => void
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleCreate} disabled={loading === 'create'} className="px-4 py-2 bg-green-600 text-slate-800 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 transition-colors">
+            <button onClick={handleCreate} disabled={loading === 'create'} className="px-4 py-2 bg-green-600 text-admin-text rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 transition-colors">
               {loading === 'create' ? 'იქმნება...' : 'შექმნა'}
             </button>
             <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">გაუქმება</button>
@@ -439,7 +439,7 @@ function VATPanel({ onAction }: { onAction: (result: RSGeSyncResult) => void }) 
               <button
                 onClick={() => handleSubmit(draft)}
                 disabled={loading === `${draft.period.year}-${draft.period.month}`}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-slate-800 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-admin-text rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
                 <Icons.Send />
                 {loading ? 'იგზავნება...' : 'RS.ge-ზე წარდგენა'}
@@ -616,7 +616,7 @@ export default function RSGeModule() {
     <div className="relative">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all ${toast.ok ? 'bg-green-600 text-slate-800' : 'bg-red-600 text-slate-800'}`}>
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all ${toast.ok ? 'bg-green-600 text-admin-text' : 'bg-red-600 text-admin-text'}`}>
           {toast.ok ? <Icons.Check /> : <Icons.X />}
           {toast.msg}
         </div>
@@ -625,7 +625,7 @@ export default function RSGeModule() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-slate-800 font-bold text-sm">RS</div>
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-admin-text font-bold text-sm">RS</div>
           <h2 className="text-xl font-bold text-gray-900">RS.ge ინტეგრაცია</h2>
           {health?.mockMode && (
             <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">MOCK</span>
