@@ -258,7 +258,10 @@ export function Accounting() {
     }
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { 
+    console.log("Accounting Module v4.0 Loaded");
+    fetchData();
+  }, [fetchData])
 
   // ── Derived metrics ──
   const isVatRegistered = useMemo(() => {
@@ -703,7 +706,7 @@ export function Accounting() {
       {/* ═══════════════════ REPORTS ═══════════════════ */}
       {activeTab === "reports" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">ფინანსური ანგარიშგება</h3>
+          <h3 className="text-lg font-semibold text-foreground">ფინანსური ანგარიშგება <span className="text-[10px] text-primary opacity-50">v4.0</span></h3>
 
           {/* Trial Balance from accounts */}
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
