@@ -706,7 +706,7 @@ export function Accounting() {
       {/* ═══════════════════ REPORTS ═══════════════════ */}
       {activeTab === "reports" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">ფინანსური ანგარიშგება <span className="text-[10px] text-primary opacity-50">v4.0</span></h3>
+          <h3 className="text-lg font-semibold text-foreground">ფინანსური ანგარიშგება</h3>
 
           {/* Trial Balance from accounts */}
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
@@ -739,7 +739,14 @@ export function Accounting() {
 
                     return (
                       <tr key={acc.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-6 py-2 text-sm font-mono text-primary">{acc.code}</td>
+                        <td className="px-6 py-2 text-sm font-mono">
+                          <button 
+                            onClick={() => setSelectedDrillDownAccount(acc)}
+                            className="text-primary hover:underline font-bold"
+                          >
+                            {acc.code}
+                          </button>
+                        </td>
                         <td className="px-6 py-2 text-sm text-foreground">{acc.name_ka}</td>
                         <td className="px-6 py-2">
                           <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", typeColors[acc.account_type] || "")}>
@@ -754,7 +761,7 @@ export function Accounting() {
                               className="group flex items-center gap-1.5 hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
                             >
                               ₾ {balance.toLocaleString()}
-                              <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <Eye className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition-opacity text-primary" />
                             </button>
                           ) : "—"}
                         </td>
