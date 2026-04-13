@@ -38,6 +38,7 @@ const accountingTabs = [
 export function Accounting() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [selectedJournalOrder, setSelectedJournalOrder] = useState<any>(null)
+  const [selectedDrillDownAccount, setSelectedDrillDownAccount] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // ── Bank Importer State ──
@@ -45,6 +46,7 @@ export function Accounting() {
   const [bankCsvData, setBankCsvData] = useState<{
     id: string; date: string; beneficiary: string; payee: string;
     amount: number; type: 'IN' | 'OUT'; purpose: string; account_target: string;
+    matched_invoice_id?: string; match_reason?: string;
   }[]>([])
   const [isBankImporting, setIsBankImporting] = useState(false)
   const [bankImportError, setBankImportError] = useState("")
@@ -87,15 +89,52 @@ export function Accounting() {
           const debitAmt = parseFloat(cols[3]) || 0
           const creditAmt = parseFloat(cols[4]) || 0
           if (debitAmt === 0 && creditAmt === 0) continue
+          
+          const amount = debitAmt > 0 ? debitAmt : creditAmt
+          const type = debitAmt > 0 ? 'IN' : 'OUT'
+          const purpose = cols[5] || 'საბანკო ტრანზაქცია'
+          const partnerName = type === 'IN' ? cols[1] : cols[2]
+
+          // ── Intelligent Matching Logic ──
+          let account_target = ''
+          let matched_invoice_id = undefined
+          let match_reason = undefined
+
+          // 1. Match by Invoice Number in purpose (Search for KALE-XXXX or INV-XXXX)
+          const invMatch = purpose.match(/(KALE|INV)-?\d+/i)
+          if (invMatch) {
+            const potentialInv = invoices.find(inv => inv.invoice_number?.includes(invMatch[0].toUpperCase()))
+            if (potentialInv) {
+              matched_invoice_id = potentialInv.id
+              account_target = accounts.find(a => a.code === '1200')?.id || ''
+              match_reason = `ნაპოვნია ინვოისის ნომრით: ${invMatch[0]}`
+            }
+          }
+
+          // 2. Match by exact amount (if not already matched)
+          if (!matched_invoice_id) {
+            const amountMatch = invoices.find(inv => 
+              inv.payment_status === 'PENDING' && 
+              Math.abs(parseFloat(inv.total_amount) - amount) < 0.01
+            )
+            if (amountMatch) {
+              matched_invoice_id = amountMatch.id
+              account_target = accounts.find(a => a.code === '1200')?.id || ''
+              match_reason = `ნაპოვნია ზუსტი თანხით (₾${amount})`
+            }
+          }
+
           parsed.push({
             id: Math.random().toString(36).substr(2, 9),
             date: cols[0],
             payee: cols[1],
             beneficiary: cols[2],
-            amount: debitAmt > 0 ? debitAmt : creditAmt,
-            type: debitAmt > 0 ? 'IN' : 'OUT',
-            purpose: cols[5] || 'საბანკო ტრანზაქცია',
-            account_target: ''
+            amount,
+            type,
+            purpose,
+            account_target,
+            matched_invoice_id,
+            match_reason
           })
         }
         setBankCsvData(parsed)
@@ -706,7 +745,15 @@ export function Accounting() {
                         </td>
                         <td className="px-6 py-2 text-sm text-muted-foreground">{acc.account_class}</td>
                         <td className="px-6 py-2 text-sm font-medium text-foreground">
-                          {balance !== 0 ? `₾ ${balance.toLocaleString()}` : "—"}
+                          {balance !== 0 ? (
+                            <button 
+                              onClick={() => setSelectedDrillDownAccount(acc)}
+                              className="group flex items-center gap-1.5 hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
+                            >
+                              ₾ {balance.toLocaleString()}
+                              <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          ) : "—"}
                         </td>
                       </tr>
                     )
@@ -831,7 +878,14 @@ export function Accounting() {
                           <tr key={t.id} className="hover:bg-muted/50 transition">
                             <td className="p-3">
                               <p className="font-mono text-xs text-muted-foreground">{t.date}</p>
-                              <p className="text-sm font-medium text-foreground">{t.type === 'IN' ? t.payee : t.beneficiary}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-foreground">{t.type === 'IN' ? t.payee : t.beneficiary}</p>
+                                {t.matched_invoice_id && (
+                                  <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full font-bold" title={t.match_reason}>
+                                    <CheckCircle className="h-3 w-3" /> ავტო-დაწყვილება
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-muted-foreground truncate max-w-xs">{t.purpose}</p>
                             </td>
                             <td className="p-3 text-center">
@@ -964,6 +1018,133 @@ export function Accounting() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* ═══════════════════ DRILL-DOWN MODAL ═══════════════════ */}
+      <AnimatePresence>
+        {selectedDrillDownAccount && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setSelectedDrillDownAccount(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-card border border-border/50 shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border/50 px-6 py-4 bg-muted/20">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-mono font-bold">
+                      {selectedDrillDownAccount.code}
+                    </span>
+                    <h3 className="text-lg font-bold text-foreground">{selectedDrillDownAccount.name_ka}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">ანგარიშის დეტალური გატარებები (General Ledger)</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedDrillDownAccount(null)} 
+                  className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Transactions Table */}
+              <div className="flex-1 overflow-y-auto p-0">
+                <table className="w-full text-left text-sm relative">
+                  <thead className="sticky top-0 bg-card/95 backdrop-blur-md shadow-sm z-10">
+                    <tr className="border-b border-border/50">
+                      <th className="px-6 py-3 font-semibold text-muted-foreground">თარიღი</th>
+                      <th className="px-6 py-3 font-semibold text-muted-foreground">დოკუმენტი / აღწერა</th>
+                      <th className="px-6 py-3 text-right font-semibold text-emerald-600">დებეტი</th>
+                      <th className="px-6 py-3 text-right font-semibold text-red-500">კრედიტი</th>
+                      <th className="px-6 py-3 text-right font-semibold text-foreground">ქმედება</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {journalLines
+                      .filter(l => l.account_id === selectedDrillDownAccount.id)
+                      .map((line, idx) => {
+                        const entry = journalEntries.find(e => e.id === line.journal_entry_id)
+                        return (
+                          <tr key={idx} className="hover:bg-muted/30 transition-colors group">
+                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground font-mono text-xs">
+                              {entry ? new Date(entry.entry_date).toLocaleDateString("ka-GE") : "—"}
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-medium text-foreground">{line.description || entry?.description}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase opacity-70">
+                                {entry?.reference_type} · {entry?.entry_number}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 text-right font-medium text-emerald-600">
+                              {parseFloat(line.debit) > 0 ? `₾ ${parseFloat(line.debit).toLocaleString()}` : "—"}
+                            </td>
+                            <td className="px-6 py-4 text-right font-medium text-red-500">
+                              {parseFloat(line.credit) > 0 ? `₾ ${parseFloat(line.credit).toLocaleString()}` : "—"}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={() => {
+                                  setActiveTab("journal");
+                                  setSelectedDrillDownAccount(null);
+                                  // In a real app we would scroll to this entry, but here we just switch view
+                                }}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
+                                title="ჟურნალში ნახვა"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    {journalLines.filter(l => l.account_id === selectedDrillDownAccount.id).length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-20 text-center text-muted-foreground italic">
+                          გატარებები ვერ მოიძებნა
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Footer Summary */}
+              <div className="bg-muted/30 px-6 py-4 border-t border-border/50 grid grid-cols-3 gap-6">
+                <div>
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">ჯამური დებეტი</p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    ₾ {journalLines.filter(l => l.account_id === selectedDrillDownAccount.id).reduce((s, l) => s + (parseFloat(l.debit) || 0), 0).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">ჯამური კრედიტი</p>
+                  <p className="text-lg font-bold text-red-500">
+                    ₾ {journalLines.filter(l => l.account_id === selectedDrillDownAccount.id).reduce((s, l) => s + (parseFloat(l.credit) || 0), 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">ბალანსი</p>
+                  <p className="text-xl font-black text-primary">
+                    ₾ {(() => {
+                      const d = journalLines.filter(l => l.account_id === selectedDrillDownAccount.id).reduce((s, l) => s + (parseFloat(l.debit) || 0), 0);
+                      const c = journalLines.filter(l => l.account_id === selectedDrillDownAccount.id).reduce((s, l) => s + (parseFloat(l.credit) || 0), 0);
+                      return (selectedDrillDownAccount.normal_balance === "DEBIT" ? d - c : c - d).toLocaleString();
+                    })()}
+                  </p>
                 </div>
               </div>
             </motion.div>
