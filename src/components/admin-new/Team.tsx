@@ -32,6 +32,21 @@ const roleLabels: Record<string, { label: string; color: string }> = {
   guest: { label: "სტუმარი", color: "text-gray-500 bg-gray-500/10" }
 }
 
+const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
+  <div className={cn("rounded-2xl p-6 text-white bg-gradient-to-br shadow-lg", color)}>
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-white/80 uppercase tracking-widest">{title}</p>
+        <p className="mt-2 text-3xl font-bold">{value}</p>
+        {subValue && <p className="mt-1 text-xs font-medium text-white/70">{subValue}</p>}
+      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+        <Icon className="h-7 w-7 text-white" />
+      </div>
+    </div>
+  </div>
+);
+
 export function Team() {
   const { isAdmin, user } = useAuth()
   const [members, setMembers] = useState<Profile[]>([])
@@ -42,6 +57,9 @@ export function Team() {
   // Invite form
   const [inviteForm, setInviteForm] = useState({ email: "", role: "consultant" })
   const [showInviteForm, setShowInviteForm] = useState(false)
+
+  const pendingInvites = invitations.filter(i => i.status === 'pending' && new Date(i.expires_at) > new Date()).length
+  const activeAdmins = members.filter(m => m.role === 'admin').length
 
   useEffect(() => {
     fetchTeamData()
@@ -100,6 +118,36 @@ export function Team() {
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <KpiCard 
+          icon={Users} 
+          title="სულ წევრები" 
+          value={members.length} 
+          subValue="აქტიური პერსონალი" 
+          color="from-sky-500 to-blue-600" 
+        />
+        <KpiCard 
+          icon={Shield} 
+          title="ადმინისტრატორი" 
+          value={activeAdmins} 
+          subValue="სრული წვდომით" 
+          color="from-rose-500 to-red-600" 
+        />
+        <KpiCard 
+          icon={Mail} 
+          title="მოწვევები" 
+          value={invitations.length} 
+          subValue="ჯამური რაოდენობა" 
+          color="from-violet-500 to-purple-600" 
+        />
+        <KpiCard 
+          icon={Clock} 
+          title="მოლოდინში" 
+          value={pendingInvites} 
+          subValue="გასააქტიურებელი" 
+          color="from-amber-400 to-orange-500" 
+        />
+      </div>
       {/* Team Members */}
       <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
         <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">

@@ -6,6 +6,7 @@ import {
 } from "lucide-react"
 import { cn, isProductOnSale } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { createWaybillForOrder } from "@/src/services/rsge/rsge.service"
 import type { Product } from "@/src/types/product"
 
 interface POSModuleProps {
@@ -33,6 +34,11 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
+
+  // Waybill state for POS
+  const [isGeneratingWaybill, setIsGeneratingWaybill] = useState(false)
+  const [waybillResult, setWaybillResult] = useState<{ success: boolean; message: string } | null>(null)
 
   // Customer form
   const [customer, setCustomer] = useState({
@@ -110,6 +116,7 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
         .single()
 
       if (orderError) throw orderError
+      setCreatedOrderId(orderData.id)
 
       // 2. Create order items
       const items = cart.map((c) => {
@@ -126,6 +133,29 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
 
       const { error: itemsError } = await supabase.from("order_items").insert(items)
       if (itemsError) throw itemsError
+
+      // 2.5 Sync stock_levels via API
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          for (const c of cart) {
+            const costParam = c.product.price ? Number(c.product.price) : 0
+            await fetch("/api/accounting/inventory/adjustment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+              body: JSON.stringify({
+                product_id: c.product.id,
+                quantity: c.quantity,
+                type: "SALE_OUT",
+                unit_cost: costParam,
+                notes: `POS გაყიდვა - შეკვეთა #${orderData.id}`
+              })
+            })
+          }
+        }
+      } catch (stockErr) {
+        console.error("Stock sync error:", stockErr)
+      }
 
       // 3. If cash, trigger accounting
       if (customer.paymentMethod === "cash") {
@@ -147,16 +177,41 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
 
       await onRefresh()
 
-      // Auto close after 3 seconds
-      setTimeout(() => {
-        setCheckoutSuccess(false)
-        setIsCheckoutOpen(false)
-      }, 3000)
+      // Don't auto-close if the user might want a waybill
+      // setTimeout(() => {
+      //   setCheckoutSuccess(false)
+      //   setIsCheckoutOpen(false)
+      // }, 3000)
     } catch (err: any) {
       alert("შეცდომა: " + err.message)
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handlePOSWaybill = async () => {
+    if (!createdOrderId) return
+    setIsGeneratingWaybill(true)
+    setWaybillResult(null)
+    try {
+      const res = await createWaybillForOrder(createdOrderId, {
+        startAddress: "თბილისი, შერმადინის 7", // Default showroom
+        endAddress: customer.address || "თბილისი",
+        transport: { transportType: 'HAND' }
+      })
+      setWaybillResult({ success: res.success, message: res.message })
+    } catch (err: any) {
+      setWaybillResult({ success: false, message: err.message })
+    } finally {
+      setIsGeneratingWaybill(false)
+    }
+  }
+
+  const handleCloseSuccess = () => {
+    setCheckoutSuccess(false)
+    setCreatedOrderId(null)
+    setWaybillResult(null)
+    setIsCheckoutOpen(false)
   }
 
   return (
@@ -321,7 +376,32 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
                     <CheckCircle className="h-16 w-16 text-emerald-500 mb-4" />
                   </motion.div>
                   <h3 className="text-xl font-bold text-foreground">გაყიდვა წარმატებით!</h3>
-                  <p className="text-sm text-muted-foreground mt-2">შეკვეთა შეიქმნა</p>
+                  <p className="text-sm text-muted-foreground mt-2">შეკვეთა #{createdOrderId?.slice(0, 8)}</p>
+
+                  <div className="mt-8 w-full space-y-3">
+                    {!waybillResult?.success ? (
+                      <button
+                        onClick={handlePOSWaybill}
+                        disabled={isGeneratingWaybill}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 border border-primary/20 py-3 text-sm font-bold text-primary hover:bg-primary/20 transition-all"
+                      >
+                        {isGeneratingWaybill ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+                        RS.ge ზედნადების გაწერა
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-500 text-xs font-bold justify-center">
+                        <CheckCircle className="h-4 w-4" />
+                        ზედნადები გაწერილია: {waybillResult.message}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleCloseSuccess}
+                      className="w-full rounded-xl border border-border py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    >
+                      დახურვა
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>

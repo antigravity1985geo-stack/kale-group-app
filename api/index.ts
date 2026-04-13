@@ -1069,6 +1069,130 @@ app.get("/api/accounting/invoices", requireAccountingRead, async (req: any, res)
   }
 });
 
+app.post("/api/accounting/invoices/:id/post", requireAccounting, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch the invoice and its items
+    const { data: invoice, error: invError } = await supabaseAdmin
+      .from("invoices")
+      .select("*, invoice_items(*)")
+      .eq("id", id)
+      .single();
+
+    if (invError || !invoice) throw new Error("ინვოისი ვერ მოიძებნა");
+    if (invoice.journal_entry_id) throw new Error("ინვოისი უკვე გატარებულია ჟურნალში");
+
+    // 2. Determine Fiscal Period
+    const { data: period } = await supabaseAdmin
+      .from("fiscal_periods")
+      .select("id")
+      .eq("status", "OPEN")
+      .order("period_year", { ascending: false })
+      .order("period_month", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!period) throw new Error("აქტიური საანგარიშო პერიოდი ვერ მოიძებნა");
+
+    // 3. Get Account IDs
+    const codes = ["1100", "1200", "3200", "6100", "7100", "1300"];
+    const { data: accountsRaw } = await supabaseAdmin.from("accounts").select("id, code").in("code", codes);
+    const accMap = (accountsRaw || []).reduce((acc: any, curr: any) => ({ ...acc, [curr.code]: curr.id }), {});
+
+    // Ensure we have the basics
+    if (!accMap["6100"]) throw new Error("შემოსავლის ანგარიში (6100) ვერ მოიძებნა");
+
+    // 4. Determine Debit Account (Asset)
+    // If CASH -> 1100, else 1200 (Accounts Receivable)
+    const debitAccount = invoice.payment_method === "CASH" ? accMap["1100"] : accMap["1200"];
+    if (!debitAccount) throw new Error("აქტივის ანგარიში ვერ მოიძებნა");
+
+    // 5. Build Journal Lines
+    const lines = [];
+    
+    // Line 1: Debit Asset (Total Amount)
+    lines.push({
+      account_id: debitAccount,
+      debit: invoice.total_amount,
+      credit: 0,
+      description: `გაყიდვა: ${invoice.invoice_number} | ${invoice.customer_name}`
+    });
+
+    // Line 2: Credit Revenue (Subtotal)
+    lines.push({
+      account_id: accMap["6100"],
+      debit: 0,
+      credit: invoice.subtotal,
+      description: `შემოსავალი რეალიზაციიდან: ${invoice.invoice_number}`
+    });
+
+    // Line 3: Credit VAT (if applicable)
+    if (invoice.vat_amount > 0 && accMap["3200"]) {
+      lines.push({
+        account_id: accMap["3200"],
+        debit: 0,
+        credit: invoice.vat_amount,
+        description: `გადასახდელი დღგ (18%): ${invoice.invoice_number}`
+      });
+    }
+
+    // Line 4 & 5: COGS & Inventory (Optional, only if cost information exists)
+    const totalCost = invoice.invoice_items?.reduce((sum: number, item: any) => sum + (Number(item.cost_price || 0) * Number(item.quantity)), 0);
+    if (totalCost > 0 && accMap["7100"] && accMap["1300"]) {
+      lines.push({
+        account_id: accMap["7100"],
+        debit: totalCost,
+        credit: 0,
+        description: `რეალიზებული საქონლის თვითღირებულება: ${invoice.invoice_number}`
+      });
+      lines.push({
+        account_id: accMap["1300"],
+        debit: 0,
+        credit: totalCost,
+        description: `მარაგების ჩამოწერა: ${invoice.invoice_number}`
+      });
+    }
+
+    // 6. Create Journal Entry
+    const { data: journalEntry, error: jeError } = await supabaseAdmin
+      .from("journal_entries")
+      .insert({
+        entry_date: invoice.invoice_date,
+        description: `რეალიზაციის ინვოისი #${invoice.invoice_number}`,
+        reference_type: "INVOICE",
+        reference_id: invoice.id,
+        fiscal_period_id: period.id,
+        status: "POSTED",
+        created_by: req.user?.id || null
+      })
+      .select()
+      .single();
+
+    if (jeError) throw jeError;
+
+    // 7. Insert Journal Lines
+    const { error: lineError } = await supabaseAdmin
+      .from("journal_lines")
+      .insert(lines.map(l => ({ ...l, journal_entry_id: journalEntry.id })));
+
+    if (lineError) throw lineError;
+
+    // 8. Link back to invoice
+    const { error: updateError } = await supabaseAdmin
+      .from("invoices")
+      .update({ journal_entry_id: journalEntry.id })
+      .eq("id", id);
+
+    if (updateError) throw updateError;
+
+    res.json({ success: true, message: "ინვოისი წარმატებით გატარდა ჟურნალში", journal_entry_id: journalEntry.id });
+  } catch (err: any) {
+    console.error("[Invoice Post Error]:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/api/accounting/inventory/levels", requireAccountingRead, async (_req: any, res) => {
   try {
     const { data, error } = await supabaseAdmin

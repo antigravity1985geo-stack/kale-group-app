@@ -8,7 +8,17 @@ import {
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
-import { activateOrderWaybill, closeOrderWaybill } from "@/src/services/rsge/rsge.service"
+import Invoices from "./accounting/Invoices"
+import Inventory from "./accounting/Inventory"
+import Vat from "./accounting/Vat"
+import Hr from "./accounting/Hr"
+import Returns from "./accounting/Returns"
+import Waybills from "./accounting/Waybills"
+import FixedAssets from "./accounting/FixedAssets"
+import Taxes from "./accounting/Taxes"
+
+// ... (existing code remains, just adding imports at the top)
+
 
 // ── Sub-tab config ──
 const accountingTabs = [
@@ -628,281 +638,28 @@ export function Accounting() {
       )}
 
       {/* ═══════════════════ INVOICES ═══════════════════ */}
-      {activeTab === "invoices" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">ინვოისები</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <SummaryCard title="გადახდილი" value={`₾ ${paidInvoices.reduce((s, i) => s + parseFloat(i.total_amount), 0).toLocaleString()}`} count={paidInvoices.length} color="from-emerald-500 to-emerald-600" />
-            <SummaryCard title="მოლოდინში" value={`₾ ${pendingInvoices.reduce((s, i) => s + parseFloat(i.total_amount), 0).toLocaleString()}`} count={pendingInvoices.length} color="from-amber-500 to-amber-600" />
-            <SummaryCard title="ვადაგასული" value={`₾ ${overdueInvoices.reduce((s, i) => s + parseFloat(i.total_amount), 0).toLocaleString()}`} count={overdueInvoices.length} color="from-red-500 to-red-600" />
-          </div>
-
-          {invoices.length === 0 ? (
-            <EmptyState icon={FileText} text="ინვოისები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["ინვოისი #", "კლიენტი", "თარიღი", "ვადა", "თანხა", "სტატუსი"]}
-              rows={invoices.map(inv => [
-                <span className="font-mono text-primary text-xs">{inv.invoice_number}</span>,
-                inv.customer_name,
-                new Date(inv.invoice_date).toLocaleDateString("ka-GE"),
-                inv.due_date ? new Date(inv.due_date).toLocaleDateString("ka-GE") : "—",
-                <span className="font-bold">₾ {parseFloat(inv.total_amount).toLocaleString()}</span>,
-                <PaymentStatusBadge status={inv.payment_status} />,
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "invoices" && <Invoices />}
 
       {/* ═══════════════════ INVENTORY ═══════════════════ */}
-      {activeTab === "inventory" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">მარაგის აღრიცხვა</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <KpiMini icon={Package} value={stockLevels.length} label="პროდუქტი მარაგში" color="from-blue-500 to-blue-600" />
-            <KpiMini icon={DollarSign} value={`₾ ${inventoryValue.toLocaleString()}`} label="სულ ღირებულება" color="from-emerald-500 to-emerald-600" />
-            <KpiMini icon={AlertTriangle} value={stockLevels.filter(s => parseFloat(s.quantity_available) <= parseFloat(s.reorder_point)).length} label="დაბალი მარაგი" color="from-red-500 to-red-600" />
-          </div>
-
-          {stockLevels.length === 0 ? (
-            <EmptyState icon={Package} text="მარაგის მონაცემები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["პროდუქტი", "კატეგორია", "მარაგზე", "რეზერვი", "ხელმისაწვდომი", "ღირებულება"]}
-              rows={stockLevels.map(sl => [
-                <div className="flex items-center gap-3 min-w-[250px]">
-                  <div className="h-12 w-12 overflow-hidden rounded-lg border border-border/50 bg-muted shrink-0">
-                    <img src={sl.products?.images?.[0] || "https://via.placeholder.com/48"} alt={sl.products?.name} className="h-full w-full object-cover" />
-                  </div>
-                  <span className="font-medium text-foreground">{sl.products?.name || "—"}</span>
-                </div>,
-                sl.products?.category || "—",
-                <span className="font-medium">{parseFloat(sl.quantity_on_hand)}</span>,
-                parseFloat(sl.quantity_reserved),
-                <span className={cn("font-bold", parseFloat(sl.quantity_available) <= parseFloat(sl.reorder_point) ? "text-red-500" : "text-foreground")}>
-                  {parseFloat(sl.quantity_available)}
-                </span>,
-                `₾ ${parseFloat(sl.total_cost_value).toLocaleString()}`,
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "inventory" && <Inventory />}
 
       {/* ═══════════════════ VAT ═══════════════════ */}
-      {activeTab === "vat" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">დღგ მართვა</h3>
-
-          <div className={cn("rounded-xl p-4 text-sm",
-            isVatRegistered
-              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-              : "bg-muted text-muted-foreground"
-          )}>
-            {isVatRegistered ? "✅ კომპანია რეგისტრირებულია დღგ-ს გადამხდელად (18%)" : "ℹ️ დღგ გამორთულია — გაყიდვები დღგ-ის გარეშე"}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
-              <p className="text-sm text-white/80">მიღებული დღგ (გაყიდვები)</p>
-              <p className="mt-2 text-3xl font-bold">₾ {outputVat.toLocaleString()}</p>
-            </div>
-            <div className="rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 p-6 text-white">
-              <p className="text-sm text-white/80">გადახდილი დღგ (შესყიდვები)</p>
-              <p className="mt-2 text-3xl font-bold">₾ {inputVat.toLocaleString()}</p>
-            </div>
-            <div className="rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 p-6 text-white">
-              <p className="text-sm text-white/80">გადასახდელი</p>
-              <p className="mt-2 text-3xl font-bold">₾ {(outputVat - inputVat).toLocaleString()}</p>
-            </div>
-          </div>
-
-          {vatDeclarations.length > 0 && (
-            <DataTable
-              headers={["პერიოდი", "გამოსავალი დღგ", "შესავალი დღგ", "გადასახდელი", "სტატუსი"]}
-              rows={vatDeclarations.map(vd => [
-                vd.fiscal_periods?.name || "—",
-                `₾ ${parseFloat(vd.output_vat).toLocaleString()}`,
-                `₾ ${parseFloat(vd.input_vat).toLocaleString()}`,
-                <span className="font-bold">₾ {parseFloat(vd.net_vat_payable).toLocaleString()}</span>,
-                <StatusBadge status={vd.status} />,
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "vat" && <Vat />}
 
       {/* ═══════════════════ HR / PAYROLL ═══════════════════ */}
-      {activeTab === "hr" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">HR / ხელფასები</h3>
-          <div className="grid gap-4 sm:grid-cols-4">
-            <KpiMini icon={Users} value={employees.length} label="თანამშრომელი" color="from-indigo-500 to-indigo-600" />
-            <KpiMini icon={Banknote} value={`₾ ${employees.reduce((s, e) => s + (parseFloat(e.gross_salary) || 0), 0).toLocaleString()}`} label="სულ ხელფასი (month)" color="from-emerald-500 to-emerald-600" />
-            <KpiMini icon={CreditCard} value={payrollRuns.length} label="Payroll runs" color="from-blue-500 to-blue-600" />
-            <KpiMini icon={Calendar} value={employees.filter(e => e.status === "ACTIVE").length} label="აქტიური" color="from-violet-500 to-violet-600" />
-          </div>
-
-          {employees.length === 0 ? (
-            <EmptyState icon={Users} text="თანამშრომელები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["კოდი", "სახელი", "პოზიცია", "დეპარტამენტი", "ხელფასი", "სტატუსი"]}
-              rows={employees.map(emp => [
-                <span className="font-mono text-xs text-primary">{emp.employee_code}</span>,
-                emp.full_name,
-                emp.position,
-                emp.department || "—",
-                <span className="font-bold">₾ {parseFloat(emp.gross_salary).toLocaleString()}</span>,
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium",
-                  emp.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
-                )}>
-                  {emp.status === "ACTIVE" ? "აქტიური" : "არააქტიური"}
-                </span>,
-              ])}
-            />
-          )}
-
-          {payrollRuns.length > 0 && (
-            <>
-              <h4 className="text-sm font-semibold text-foreground mt-6">ხელფასის გაშვებები</h4>
-              <DataTable
-                headers={["კოდი", "პერიოდი", "ბრუტო", "გადასახადი", "ნეტო", "სტატუსი"]}
-                rows={payrollRuns.map(pr => [
-                  <span className="font-mono text-xs text-primary">{pr.run_code}</span>,
-                  `${pr.period_month}/${pr.period_year}`,
-                  `₾ ${parseFloat(pr.total_gross).toLocaleString()}`,
-                  `₾ ${parseFloat(pr.total_tax).toLocaleString()}`,
-                  <span className="font-bold">₾ {parseFloat(pr.total_net).toLocaleString()}</span>,
-                  <StatusBadge status={pr.status} />,
-                ])}
-              />
-            </>
-          )}
-        </motion.div>
-      )}
+      {activeTab === "hr" && <Hr />}
 
       {/* ═══════════════════ RETURNS ═══════════════════ */}
-      {activeTab === "returns" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">დაბრუნებები</h3>
-          {productReturns.length === 0 ? (
-            <EmptyState icon={RotateCcw} text="დაბრუნებები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["კლიენტი", "პროდუქტი", "რაოდენობა", "მიზეზი", "მდგომარეობა", "სტატუსი"]}
-              rows={productReturns.map(ret => [
-                `${ret.orders?.customer_first_name || ""} ${ret.orders?.customer_last_name || ""}`,
-                <div className="flex items-center gap-3 min-w-[200px]">
-                  <div className="h-12 w-12 overflow-hidden rounded-lg border border-border/50 bg-muted shrink-0">
-                    <img src={ret.products?.images?.[0] || "https://via.placeholder.com/48"} alt={ret.products?.name} className="h-full w-full object-cover" />
-                  </div>
-                  <span className="font-medium text-foreground">{ret.products?.name || "—"}</span>
-                </div>,
-                ret.quantity,
-                ret.return_reason,
-                ret.condition,
-                <StatusBadge status={ret.status} />,
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "returns" && <Returns />}
 
       {/* ═══════════════════ WAYBILLS ═══════════════════ */}
-      {activeTab === "waybills" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">RS.ge ზედნადებები</h3>
-          {waybills.length === 0 ? (
-            <EmptyState icon={Truck} text="ზედნადებები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["RS.ge ID", "კლიენტი", "მძღოლი", "მანქანა", "მისამართი", "სტატუსი", "მოქმედება"]}
-              rows={waybills.map(wb => [
-                <span className="font-mono text-xs text-primary">{wb.rs_waybill_id || "—"}</span>,
-                `${wb.orders?.customer_first_name || ""} ${wb.orders?.customer_last_name || ""}`,
-                wb.driver_name || "—",
-                wb.car_number || "—",
-                wb.end_address || wb.orders?.customer_address || "—",
-                <StatusBadge status={wb.status} />,
-                <div className="flex justify-end gap-2 text-right">
-                  {(wb.status === 'created' || wb.status === 'DRAFT') && (
-                    <button
-                      onClick={() => handleActivateWaybill(wb.id)}
-                      className="text-xs bg-emerald-500/10 text-emerald-600 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-500/20 transition"
-                    >
-                      გააქტიურება
-                    </button>
-                  )}
-                  {(wb.status === 'activated' || wb.status === 'ACTIVE') && (
-                    <button
-                      onClick={() => handleCloseWaybill(wb.id)}
-                      className="text-xs bg-amber-500/10 text-amber-600 px-3 py-1.5 rounded-lg font-bold hover:bg-amber-500/20 transition"
-                    >
-                      დახურვა
-                    </button>
-                  )}
-                  {(wb.status === 'closed' || wb.status === 'CLOSED' || wb.status === 'CANCELLED') && (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </div>,
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "waybills" && <Waybills />}
 
       {/* ═══════════════════ FIXED ASSETS ═══════════════════ */}
-      {activeTab === "fixed-assets" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">ძირითადი აქტივები</h3>
-          {fixedAssets.length === 0 ? (
-            <EmptyState icon={Landmark} text="ძირითადი აქტივები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["დასახელება", "შეძენის თარიღი", "შეძენის ფასი", "ცვეთა", "ნარჩენი ღირ.", "სტატუსი"]}
-              rows={fixedAssets.map(fa => {
-                const netValue = parseFloat(fa.purchase_price) - parseFloat(fa.accumulated_depreciation)
-                return [
-                  fa.name,
-                  new Date(fa.purchase_date).toLocaleDateString("ka-GE"),
-                  `₾ ${parseFloat(fa.purchase_price).toLocaleString()}`,
-                  `₾ ${parseFloat(fa.accumulated_depreciation).toLocaleString()}`,
-                  <span className="font-bold">₾ {netValue.toLocaleString()}</span>,
-                  <StatusBadge status={fa.status} />,
-                ]
-              })}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "fixed-assets" && <FixedAssets />}
 
       {/* ═══════════════════ TAXES ═══════════════════ */}
-      {activeTab === "taxes" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">გადასახადების რეესტრი</h3>
-          {vatTransactions.length === 0 ? (
-            <EmptyState icon={Receipt} text="გადასახადების ჩანაწერები არ მოიძებნა" />
-          ) : (
-            <DataTable
-              headers={["თარიღი", "ტიპი", "დასაბეგრი", "განაკვეთი", "დღგ თანხა", "საცნობარო"]}
-              rows={vatTransactions.map(vt => [
-                new Date(vt.transaction_date).toLocaleDateString("ka-GE"),
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium",
-                  vt.vat_type === "OUTPUT" ? "bg-emerald-500/10 text-emerald-600" : "bg-blue-500/10 text-blue-600"
-                )}>
-                  {vt.vat_type === "OUTPUT" ? "გამოსავალი" : "შესავალი"}
-                </span>,
-                `₾ ${parseFloat(vt.taxable_amount).toLocaleString()}`,
-                `${parseFloat(vt.vat_rate)}%`,
-                <span className="font-bold">₾ {parseFloat(vt.vat_amount).toLocaleString()}</span>,
-                vt.reference_type || "—",
-              ])}
-            />
-          )}
-        </motion.div>
-      )}
+      {activeTab === "taxes" && <Taxes />}
 
       {/* ═══════════════════ REPORTS ═══════════════════ */}
       {activeTab === "reports" && (

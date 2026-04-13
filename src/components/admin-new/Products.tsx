@@ -4,6 +4,21 @@ import { Pencil, Trash2, Eye, Package, X, Plus, Loader2, ImageIcon, Percent } fr
 import { cn, isProductOnSale } from "@/src/lib/utils"
 import type { Product, Category } from "@/src/types/product"
 
+const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
+  <div className={cn("rounded-2xl p-6 text-white bg-gradient-to-br shadow-lg", color)}>
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-white/80 uppercase tracking-widest">{title}</p>
+        <p className="mt-2 text-3xl font-bold">{value}</p>
+        {subValue && <p className="mt-1 text-xs font-medium text-white/70">{subValue}</p>}
+      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+        <Icon className="h-7 w-7 text-white" />
+      </div>
+    </div>
+  </div>
+);
+
 interface ProductsProps {
   products: Product[]
   categories: Category[]
@@ -122,8 +137,41 @@ export function Products({
     }
   }
 
+  const outOfStock = products.filter(p => !p.in_stock).length;
+  const avgPrice = products.length > 0 ? products.reduce((s, p) => s + Number(p.price), 0) / products.length : 0;
+
   return (
-    <>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <KpiCard 
+          icon={Package} 
+          title="სულ პროდუქცია" 
+          value={products.length} 
+          subValue="კატალოგში" 
+          color="from-sky-500 to-blue-600" 
+        />
+        <KpiCard 
+          icon={X} 
+          title="ამოწურული" 
+          value={outOfStock} 
+          subValue="მარაგის გარეშე" 
+          color="from-rose-500 to-red-600" 
+        />
+        <KpiCard 
+          icon={ImageIcon} 
+          title="კატეგორიები" 
+          value={categories.length} 
+          subValue="აქტიური ჯგუფები" 
+          color="from-violet-500 to-purple-600" 
+        />
+        <KpiCard 
+          icon={Percent} 
+          title="საშუალო ფასი" 
+          value={`₾ ${Math.round(avgPrice).toLocaleString()}`} 
+          subValue="ერთეულის ღირებულება" 
+          color="from-amber-400 to-orange-500" 
+        />
+      </div>
       {/* Products Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -464,6 +512,6 @@ export function Products({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   )
 }

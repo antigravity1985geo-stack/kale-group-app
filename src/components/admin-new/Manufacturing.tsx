@@ -10,8 +10,24 @@ import * as XLSX from "xlsx"
 import { cn } from "@/src/lib/utils"
 import { useAuth } from "@/src/context/AuthContext"
 import OffcutInventory from "./OffcutInventory"
+import Procurement from "./manufacturing/Procurement"
 
 type ModuleTab = "recipes" | "raw-materials" | "suppliers" | "purchases" | "offcuts"
+
+const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
+  <div className={cn("rounded-2xl p-6 text-white bg-gradient-to-br shadow-lg", color)}>
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-white/80 uppercase tracking-widest">{title}</p>
+        <p className="mt-2 text-3xl font-bold">{value}</p>
+        {subValue && <p className="mt-1 text-xs font-medium text-white/70">{subValue}</p>}
+      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+        <Icon className="h-7 w-7 text-white" />
+      </div>
+    </div>
+  </div>
+);
 
 export function Manufacturing() {
   const { user } = useAuth()
@@ -576,12 +592,45 @@ export function Manufacturing() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      {/* Overview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <KpiCard 
+          icon={Factory} 
+          title="რეცეპტები" 
+          value={recipes.length} 
+          subValue="აქტიური მოდელები" 
+          color="from-sky-500 to-blue-600" 
+        />
+        <KpiCard 
+          icon={Package} 
+          title="ნედლეული" 
+          value={rawMaterials.length} 
+          subValue="მარაგის სახეობა" 
+          color="from-teal-500 to-emerald-600" 
+        />
+        <KpiCard 
+          icon={Truck} 
+          title="მომწოდებლები" 
+          value={suppliers.length} 
+          subValue="აქტიური პარტნიორები" 
+          color="from-indigo-500 to-violet-600" 
+        />
+        <KpiCard 
+          icon={AlertTriangle} 
+          title="დაბალი მარაგი" 
+          value={rawMaterials.filter(m => Number(m.quantity) < Number(m.reorder_point)).length} 
+          subValue="საჭიროებს შევსებას" 
+          color="from-rose-500 to-red-600" 
+        />
+      </div>
+
       {/* Navigation Tabs */}
       <motion.div className="flex gap-2 p-1.5 bg-card border border-border/50 rounded-xl w-fit shadow-sm">
         {[
           { id: "recipes", label: "ავეჯის რეცეპტები", icon: <Factory size={16} /> },
           { id: "raw-materials", label: "ნედლეულის ორმაგი აღრიცხვა", icon: <ArrowRightLeft size={16} /> },
           { id: "suppliers", label: "მომწოდებლები", icon: <Truck size={16} /> },
+          { id: "purchases", label: "შესყიდვები (PO/GRN)", icon: <Package size={16} /> },
           { id: "offcuts", label: "ნარჩენები", icon: <List size={16} /> },
         ].map(t => (
            <button
@@ -603,6 +652,7 @@ export function Manufacturing() {
          {activeTab === "recipes" && renderRecipesTab()}
          {activeTab === "raw-materials" && renderRawMaterialsTab()}
          {activeTab === "suppliers" && renderSuppliersTab()}
+         {activeTab === "purchases" && <Procurement />}
          {activeTab === "offcuts" && <OffcutInventory />}
       </motion.div>
 

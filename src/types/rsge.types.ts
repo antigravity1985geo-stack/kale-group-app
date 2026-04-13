@@ -119,9 +119,12 @@ export type WaybillType =
   | 'IMPORT';           // იმპორტი
 
 export interface WaybillTransportInfo {
-  transportNumber: string;  // სატრანსპორტო საშუალების ნომერი
+  transportType?: string;   // სატრანსპორტო საშუალების ტიპი
+  transportNumber?: string; // (Legacy) 
+  carNumber?: string;       // სატრანსპორტო საშუალების ნომერი
   driverName?: string;      // მძღოლის სახელი
-  driverIdNumber?: string;  // მძღოლის პ/ნ
+  driverIdNumber?: string;  // (Legacy)
+  driverTin?: string;       // მძღოლის პ/ნ
 }
 
 export interface WaybillItem {

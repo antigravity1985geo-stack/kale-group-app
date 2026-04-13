@@ -17,6 +17,7 @@ interface HeaderProps {
   onLogout?: () => void
   userName?: string
   userRole?: string
+  unreadMessagesCount?: number
 }
 
 export function Header({
@@ -34,6 +35,7 @@ export function Header({
   onLogout,
   userName,
   userRole,
+  unreadMessagesCount,
 }: HeaderProps) {
   return (
     <motion.header
@@ -123,9 +125,11 @@ export function Header({
             className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-              3
-            </span>
+            {(unreadMessagesCount ?? 0) > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                {unreadMessagesCount! > 9 ? "9+" : unreadMessagesCount}
+              </span>
+            )}
           </motion.button>
 
           {/* Theme Toggle */}

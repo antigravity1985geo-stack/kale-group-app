@@ -276,10 +276,11 @@ export async function createWaybillForOrder(
       name: profile?.company_name ?? profile?.full_name ?? 'Unknown',
     },
     ...extras,
+    transport: extras.transport || { transportType: 'HAND' },
     items: order.order_items.map((item: any, idx: number) => ({
       lineNumber:   idx + 1,
       productCode:  item.products?.sku ?? '',
-      description:  item.products?.name ?? '',
+      description:  item.products?.name ?? item.product_name ?? 'Unknown Product',
       unit:         'ც',
       quantity:     item.quantity,
       unitPrice:    parseFloat((item.price_at_purchase / 1.18).toFixed(2)),

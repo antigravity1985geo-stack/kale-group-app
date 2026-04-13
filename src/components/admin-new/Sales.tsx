@@ -10,6 +10,21 @@ interface SalesProps {
   onEdit: (product: Product) => void
 }
 
+const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
+  <div className={cn("rounded-2xl p-6 text-white bg-gradient-to-br shadow-lg", color)}>
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-white/80 uppercase tracking-widest">{title}</p>
+        <p className="mt-2 text-3xl font-bold">{value}</p>
+        {subValue && <p className="mt-1 text-xs font-medium text-white/70">{subValue}</p>}
+      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+        <Icon className="h-7 w-7 text-white" />
+      </div>
+    </div>
+  </div>
+);
+
 export function Sales({ products, onStopSale, onEdit }: SalesProps) {
   const saleProducts = useMemo(() => {
     return products.filter((p) => p.is_on_sale)
@@ -31,32 +46,35 @@ export function Sales({ products, onStopSale, onEdit }: SalesProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "აქტიური აქციები", value: activeSales.length, icon: TagIcon, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-          { label: "ვადაგასული", value: expiredSales.length, icon: AlertTriangle, color: "text-yellow-500", bg: "bg-yellow-500/10" },
-          { label: "სულ აქციაზე", value: saleProducts.length, icon: Percent, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { label: "სულ ფასდაკლება", value: `₾ ${totalDiscount.toLocaleString()}`, icon: TrendingDown, color: "text-red-500", bg: "bg-red-500/10" },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border border-border/50 bg-card p-5"
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", stat.bg)}>
-                <stat.icon className={cn("h-5 w-5", stat.color)} />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="text-xl font-bold text-foreground">{stat.value}</p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+        <KpiCard 
+          icon={CheckCircle} 
+          title="აქტიური აქციები" 
+          value={activeSales.length} 
+          subValue="ამჟამად მოქმედი" 
+          color="from-emerald-500 to-teal-600" 
+        />
+        <KpiCard 
+          icon={AlertTriangle} 
+          title="ვადაგასული" 
+          value={expiredSales.length} 
+          subValue="მოითხოვს ყურადღებას" 
+          color="from-rose-500 to-red-600" 
+        />
+        <KpiCard 
+          icon={Percent} 
+          title="სულ აქციაზე" 
+          value={saleProducts.length} 
+          subValue="ჯამური რაოდენობა" 
+          color="from-blue-500 to-indigo-600" 
+        />
+        <KpiCard 
+          icon={TrendingDown} 
+          title="სულ ფასდაკლება" 
+          value={`₾ ${totalDiscount.toLocaleString()}`} 
+          subValue="დაზოგილი თანხა" 
+          color="from-amber-400 to-orange-500" 
+        />
       </div>
 
       {/* Active Sales */}

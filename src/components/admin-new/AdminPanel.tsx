@@ -45,6 +45,7 @@ export function AdminPanel() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [orders, setOrders] = useState<any[]>([])
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   // Auth form
@@ -94,14 +95,16 @@ export function AdminPanel() {
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [prodRes, catRes, orderRes] = await Promise.all([
+      const [prodRes, catRes, orderRes, msgRes] = await Promise.all([
         supabase.from("products").select("*").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("created_at", { ascending: true }),
         supabase.from("orders").select("*").order("created_at", { ascending: false }),
+        supabase.from("contact_messages").select("id", { count: "exact" }).eq("read", false),
       ])
       if (prodRes.data) setProducts(prodRes.data)
       if (catRes.data) setCategories(catRes.data)
       if (orderRes.data) setOrders(orderRes.data)
+      if (msgRes.count !== null) setUnreadMessagesCount(msgRes.count)
     } catch (err) {
       console.error("Error fetching data:", err)
     } finally {
@@ -530,6 +533,7 @@ export function AdminPanel() {
           onLogout={handleLogout}
           userName={(profile as any)?.full_name || user?.email || ""}
           userRole={isAdmin ? "ადმინი" : isAccountant ? "ბუღალტერი" : "კონსულტანტი"}
+          unreadMessagesCount={unreadMessagesCount}
         />
 
         <div className="p-6">

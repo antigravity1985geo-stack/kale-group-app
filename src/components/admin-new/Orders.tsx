@@ -2,10 +2,12 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Eye, Trash2, ShoppingCart, Clock, CheckCircle, Truck, XCircle,
-  BarChart3, X, ChevronRight, CreditCard, Banknote, DollarSign, Loader2, Package
+  BarChart3, X, ChevronRight, CreditCard, Banknote, DollarSign, Loader2, Package,
+  Send, FileText, MapPin, Truck as TruckIcon, User as UserIcon
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { createWaybillForOrder } from "@/src/services/rsge/rsge.service"
 import OffcutLogger from "./OffcutLogger"
 
 interface OrdersProps {
@@ -57,6 +59,18 @@ export function Orders({
   const [pendingDeliveryOrderId, setPendingDeliveryOrderId] = useState<string | null>(null)
   const [showOffcutLogger, setShowOffcutLogger] = useState(false)
   const [offcutOrderId, setOffcutOrderId] = useState<string | null>(null)
+
+  // RS.ge Waybill Generation State
+  const [isGeneratingWaybill, setIsGeneratingWaybill] = useState(false)
+  const [waybillOptions, setWaybillOptions] = useState({
+    startAddress: "თბილისი, შერმადინის 7", // Default showroom
+    endAddress: "",
+    transportType: "HAND" as "HAND" | "TRANSPORT" | "COURIER",
+    driverName: "",
+    driverId: "",
+    carNumber: "",
+  })
+  const [waybillResult, setWaybillResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const filteredOrders = orders.filter((o) => {
     const q = searchQuery.toLowerCase()
@@ -130,6 +144,38 @@ export function Orders({
     setPendingDeliveryOrderId(null)
   }
 
+  const handleGenerateWaybill = async () => {
+    if (!selectedOrder) return
+    setIsGeneratingWaybill(true)
+    setWaybillResult(null)
+    try {
+      const res = await createWaybillForOrder(selectedOrder.id, {
+        startAddress: waybillOptions.startAddress,
+        endAddress: waybillOptions.endAddress || selectedOrder.customer_address || "თბილისი",
+        transport: {
+          transportType: waybillOptions.transportType,
+          driverName: waybillOptions.driverName,
+          driverTin: waybillOptions.driverId,
+          carNumber: waybillOptions.carNumber,
+        }
+      })
+      setWaybillResult({ success: res.success, message: res.message })
+      if (res.success) {
+        await onRefresh()
+        // Update local status
+        setSelectedOrder({
+          ...selectedOrder,
+          rsge_waybill_id: res.rsgeId,
+          rsge_waybill_status: 'DRAFT'
+        })
+      }
+    } catch (err: any) {
+      setWaybillResult({ success: false, message: err.message })
+    } finally {
+      setIsGeneratingWaybill(false)
+    }
+  }
+
   return (
     <>
       {/* Orders Table */}
@@ -148,6 +194,7 @@ export function Orders({
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ქალაქი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">თანხა</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">სტატუსი</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ზედნადები</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">თარიღი</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">მოქმედება</th>
               </tr>
@@ -180,6 +227,16 @@ export function Orders({
                         <sc.icon className="h-3 w-3" />
                         {sc.label}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {order.rsge_waybill_id ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
+                          <FileText className="h-3 w-3" />
+                          {order.rsge_waybill_id}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       {new Date(order.created_at).toLocaleDateString("ka-GE")}
@@ -357,6 +414,123 @@ export function Orders({
                     </div>
                   </div>
                 )}
+
+                {/* RS.ge Waybill Actions */}
+                <div className="border-t border-border/50 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Send className="h-4 w-4 text-primary" />
+                      RS.ge ზედნადები
+                    </h4>
+                    {selectedOrder.rsge_waybill_id && (
+                      <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full uppercase">
+                        გარენერირებულია: {selectedOrder.rsge_waybill_id}
+                      </span>
+                    )}
+                  </div>
+
+                  {!selectedOrder.rsge_waybill_id ? (
+                    <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">გამოსვლის მისამართი</label>
+                          <select
+                            value={waybillOptions.startAddress}
+                            onChange={(e) => setWaybillOptions({ ...waybillOptions, startAddress: e.target.value })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
+                          >
+                            <option value="თბილისი, შერმადინის 7">შოურუმი (შერმადინის 7)</option>
+                            <option value="ლილო, საწყობი 12">საწყობი (ლილო)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">დანიშნულების მისამართი</label>
+                          <input
+                            type="text"
+                            placeholder={selectedOrder.customer_address || "მისამართი..."}
+                            value={waybillOptions.endAddress}
+                            onChange={(e) => setWaybillOptions({ ...waybillOptions, endAddress: e.target.value })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: "HAND", label: "ხელით", icon: UserIcon },
+                          { id: "TRANSPORT", label: "ტრანსპორტი", icon: TruckIcon },
+                          { id: "COURIER", label: "კურიერი", icon: TruckIcon },
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => setWaybillOptions({ ...waybillOptions, transportType: t.id as any })}
+                            className={cn(
+                              "flex flex-col items-center gap-1 rounded-lg border py-2 text-[10px] font-bold transition-all",
+                              waybillOptions.transportType === t.id
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:bg-muted"
+                            )}
+                          >
+                            <t.icon className="h-3.5 w-3.5" />
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {waybillOptions.transportType !== "HAND" && (
+                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/20">
+                          <input
+                            type="text"
+                            placeholder="მძღოლი"
+                            value={waybillOptions.driverName}
+                            onChange={(e) => setWaybillOptions({ ...waybillOptions, driverName: e.target.value })}
+                            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
+                          />
+                          <input
+                            type="text"
+                            placeholder="მძღოლის პ/ნ"
+                            value={waybillOptions.driverId}
+                            onChange={(e) => setWaybillOptions({ ...waybillOptions, driverId: e.target.value })}
+                            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
+                          />
+                          <input
+                            type="text"
+                            placeholder="მანქანა #"
+                            value={waybillOptions.carNumber}
+                            onChange={(e) => setWaybillOptions({ ...waybillOptions, carNumber: e.target.value })}
+                            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
+                          />
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleGenerateWaybill}
+                        disabled={isGeneratingWaybill}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
+                      >
+                        {isGeneratingWaybill ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        ზედნადების გენერირება
+                      </button>
+
+                      {waybillResult && (
+                        <div className={cn(
+                          "rounded-lg p-3 text-xs font-medium",
+                          waybillResult.success ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                        )}>
+                          {waybillResult.message}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+                      <CheckCircle className="h-6 w-6 text-emerald-500" />
+                      <div>
+                        <p className="text-sm font-bold text-emerald-500">ზედნადები რეგისტრირებულია</p>
+                        <p className="text-xs text-emerald-500/70">ID: {selectedOrder.rsge_waybill_id}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
