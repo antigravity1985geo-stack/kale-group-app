@@ -117,22 +117,28 @@ export function Accounting() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background p-6">
       {/* ── HEADER ── */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">ფინანსური მართვა</h1>
-          <p className="text-sm text-muted-foreground">Kale Group ERP · საბუღალტრო და საგადასახადო მოდული</p>
+      <div className="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <span className="text-primary/50">ბუღალტერია</span>
+              <span className="text-muted-foreground/30 font-light">/</span>
+              <span>ფინანსური მართვა</span>
+            </h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Kale Group ERP · საბუღალტრო მოდული</p>
+          </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/30 rounded-2xl border border-border/50">
           {accountingTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all border shadow-sm",
+                "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all",
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground border-primary shadow-primary/20 scale-105"
-                  : "bg-card text-muted-foreground border-border/50 hover:bg-muted/50"
+                  ? "bg-background text-primary shadow-sm border border-border/50"
+                  : "text-muted-foreground hover:bg-background/50"
               )}
             >
               {tab.icon}
@@ -153,16 +159,62 @@ export function Accounting() {
         <AnimatePresence mode="wait">
           {/* ═══════════════════ DASHBOARD ═══════════════════ */}
           {activeTab === "dashboard" && (
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-[#0a0a0b] to-[#121214] p-6 shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={40} className="text-emerald-500" /></div>
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">მთლიანი შემოსავალი</h4>
-                <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">₾ 142,500</span>
-                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">+12%</span>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Income */}
+              <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-[#0a1510] to-[#040806] p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={48} className="text-emerald-500" /></div>
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 border border-emerald-500/20">
+                  <TrendingUp size={20} />
                 </div>
+                <h4 className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest">მთლიანი შემოსავალი</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-foreground">₾ 142,500</span>
+                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+12%</span>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/40 to-transparent" />
               </div>
-              {/* ... more cards as needed ... */}
+
+              {/* Expense */}
+              <div className="relative overflow-hidden rounded-3xl border border-rose-500/20 bg-gradient-to-br from-[#1a0b0d] to-[#080405] p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><RotateCcw size={48} className="text-rose-500" /></div>
+                <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4 border border-rose-500/20">
+                  <Banknote size={20} />
+                </div>
+                <h4 className="text-[10px] font-bold text-rose-500/60 uppercase tracking-widest">მთლიანი ხარჯი</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-foreground">₾ 89,200</span>
+                  <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">+4%</span>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500/40 to-transparent" />
+              </div>
+
+              {/* Profit */}
+              <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0b101a] to-[#040508] p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><DollarSign size={48} className="text-blue-500" /></div>
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-4 border border-blue-500/20">
+                  <DollarSign size={20} />
+                </div>
+                <h4 className="text-[10px] font-bold text-blue-500/60 uppercase tracking-widest">წმინდა მოგება</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-foreground">₾ 53,300</span>
+                  <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">+18%</span>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500/40 to-transparent" />
+              </div>
+
+              {/* VAT */}
+              <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-[#1a130b] to-[#080604] p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Percent size={48} className="text-amber-500" /></div>
+                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 border border-amber-500/20">
+                  <Receipt size={20} />
+                </div>
+                <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest">დღგ-ს ვალდებულება</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-foreground">₾ 12,450</span>
+                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">დღგ</span>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/40 to-transparent" />
+              </div>
             </motion.div>
           )}
 
