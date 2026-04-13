@@ -601,58 +601,95 @@ export function Accounting() {
           {journalEntries.length === 0 ? (
             <EmptyState icon={BookOpen} text="ჟურნალის ჩანაწერები არ მოიძებნა" />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {journalEntries.map((entry) => {
                 const lines = journalLines.filter(l => l.journal_entry_id === entry.id)
                 const entryOrder = entry.reference_type === 'SALES_ORDER' ? orders.find(o => o.id === entry.reference_id) : null;
                 const productImages = entryOrder?.order_items?.map((item: any) => item.products?.images?.[0]).filter(Boolean) || [];
                 
+                // Determine transaction icon based on type
+                const getEntryIcon = () => {
+                  if (entry.reference_type === 'SALES_ORDER') return <ShoppingCart className="h-4 w-4" />;
+                  if (entry.reference_type === 'BANK_STATEMENT') return <Building2 className="h-4 w-4" />;
+                  if (entry.reference_type === 'PAYROLL') return <Users className="h-4 w-4" />;
+                  if (entry.reference_type === 'INVOICE') return <FileText className="h-4 w-4" />;
+                  return <BookOpen className="h-4 w-4" />;
+                };
+
+                const statusColor = entry.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500';
+
                 return (
-                  <div key={entry.id} className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-                    <div className="flex items-center justify-between px-6 py-3 bg-muted/30">
+                  <motion.div 
+                    key={entry.id} 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm transition-all hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 group"
+                  >
+                    {/* Status vertical strip */}
+                    <div className={cn("absolute left-0 top-0 bottom-0 w-1", statusColor)} />
+
+                    {/* Card Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 border-b border-border/30 bg-muted/20">
                       <div className="flex items-center gap-4">
-                        <span className="text-xs font-mono text-primary min-w-[120px]">{entry.entry_number || entry.id.slice(0, 8)}</span>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">გატარების ნომერი</span>
+                          <span className="text-xs font-mono text-primary font-bold">{entry.entry_number || entry.id.slice(0, 8)}</span>
+                        </div>
+
+                        <div className="h-8 w-[1px] bg-border/50 mx-2 hidden sm:block" />
+
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                            {getEntryIcon()}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-foreground leading-tight">{entry.description}</span>
+                            <span className="text-[10px] text-muted-foreground">{entry.reference_type}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 self-end sm:self-center">
                         {productImages.length > 0 && (
-                          <div className="flex -space-x-2">
+                          <div className="flex -space-x-2 mr-2">
                             {productImages.slice(0, 3).map((img, idx) => (
-                              <img key={idx} src={img || "https://via.placeholder.com/40"} alt="Product" className="h-10 w-10 shrink-0 rounded-md object-cover border-2 border-background bg-muted" />
+                              <img key={idx} src={img || "https://via.placeholder.com/40"} alt="Product" className="h-8 w-8 shrink-0 rounded-lg object-cover border-2 border-background bg-muted shadow-sm" />
                             ))}
                             {productImages.length > 3 && (
-                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-2 border-background bg-muted text-xs font-medium text-muted-foreground">
+                               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 border-background bg-muted text-[10px] font-bold text-muted-foreground">
                                  +{productImages.length - 3}
                                </div>
                             )}
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">{entry.description}</span>
-                          {entryOrder && (
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setSelectedJournalOrder(entryOrder) }} 
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors ml-1"
-                              title="დეტალების ნახვა"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          )}
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">თარიღი</span>
+                          <span className="text-xs font-medium text-foreground">{new Date(entry.entry_date).toLocaleDateString("ka-GE")}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">{new Date(entry.entry_date).toLocaleDateString("ka-GE")}</span>
                         <StatusBadge status={entry.status} />
+                        {entryOrder && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedJournalOrder(entryOrder) }} 
+                            className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all border border-blue-500/20 shadow-sm"
+                            title="დეტალების ნახვა"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    {lines.length > 0 && (
+
+                    {/* Card Content (Line Items) */}
+                    <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-t border-border/50">
-                            <th className="px-6 py-2 text-left text-xs text-muted-foreground">ანგარიში</th>
-                            <th className="px-6 py-2 text-left text-xs text-muted-foreground">აღწერა</th>
-                            <th className="px-6 py-2 text-right text-xs text-muted-foreground">დებეტი</th>
-                            <th className="px-6 py-2 text-right text-xs text-muted-foreground">კრედიტი</th>
+                          <tr className="bg-muted/5">
+                            <th className="px-6 py-2 text-left text-[10px] uppercase tracking-wider text-muted-foreground font-bold">ანგარიში</th>
+                            <th className="px-6 py-2 text-left text-[10px] uppercase tracking-wider text-muted-foreground font-bold">დასახელება / აღწერა</th>
+                            <th className="px-6 py-2 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-bold">დებეტი</th>
+                            <th className="px-6 py-2 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-bold">კრედიტი</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border/30">
                           {lines.map((line) => (
                             <tr key={line.id} className="hover:bg-muted/20">
                               <td className="px-6 py-2 text-sm">
