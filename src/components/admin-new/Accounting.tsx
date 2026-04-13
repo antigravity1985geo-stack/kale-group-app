@@ -40,6 +40,11 @@ export function Accounting() {
   const [selectedJournalOrder, setSelectedJournalOrder] = useState<any>(null)
   const [selectedDrillDownAccount, setSelectedDrillDownAccount] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // ── Pagination State ──
+  const [journalPage, setJournalPage] = useState(0)
+  const [hasMoreJournal, setHasMoreJournal] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   // ── Bank Importer State ──
   const [showBankImporter, setShowBankImporter] = useState(false)
@@ -98,19 +103,56 @@ export function Accounting() {
   const fetchInitialData = async () => {
     setIsLoading(true)
     try {
-      const { data: ent } = await supabase.from('journal_entries').select('*').order('entry_date', { ascending: false })
-      const { data: lns } = await supabase.from('journal_lines').select('*, accounts(code, name_ka)').order('id')
+      const from = 0;
+      const to = 49;
+
+      const { data: ent } = await supabase.from('journal_entries').select('*').order('entry_date', { ascending: false }).range(from, to)
+      
+      const entryIds = ent?.map(e => e.id) || [];
+      const { data: lns } = entryIds.length > 0 
+        ? await supabase.from('journal_lines').select('*, accounts(code, name_ka)').in('journal_entry_id', entryIds).order('id')
+        : { data: [] };
+
       const { data: acc } = await supabase.from('accounts').select('*').order('code')
-      const { data: ord } = await supabase.from('orders').select('*, order_items(*, products(*, images))')
-      const { data: inv } = await supabase.from('invoices').select('*').filter('status', 'eq', 'pending')
+      const { data: ord } = await supabase.from('orders').select('*, order_items(*, products(*, images))').order('created_at', { ascending: false }).range(from, to)
+      const { data: inv } = await supabase.from('invoices').select('*').filter('status', 'eq', 'pending').range(0, 99)
 
       setJournalEntries(ent || [])
       setJournalLines(lns || [])
       setAccounts(acc || [])
       setOrders(ord || [])
       setInvoices(inv || [])
+      
+      setJournalPage(0)
+      setHasMoreJournal((ent?.length || 0) === 50)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadMoreJournalEntries = async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = journalPage + 1;
+      const from = nextPage * 50;
+      const to = from + 49;
+
+      const { data: ent } = await supabase.from('journal_entries').select('*').order('entry_date', { ascending: false }).range(from, to);
+      
+      const entryIds = ent?.map(e => e.id) || [];
+      let newLines: any[] = [];
+      if (entryIds.length > 0) {
+        const { data: lns } = await supabase.from('journal_lines').select('*, accounts(code, name_ka)').in('journal_entry_id', entryIds).order('id');
+        newLines = lns || [];
+      }
+
+      setJournalEntries(prev => [...prev, ...(ent || [])]);
+      setJournalLines(prev => [...prev, ...newLines]);
+      setJournalPage(nextPage);
+      setHasMoreJournal((ent?.length || 0) === 50);
+    } finally {
+      setIsLoadingMore(false);
     }
   }
 
@@ -494,6 +536,19 @@ export function Accounting() {
                       </motion.div>
                     )
                   })}
+                  
+                  {hasMoreJournal && (
+                    <div className="flex justify-center pt-4 pb-8">
+                      <button 
+                        onClick={loadMoreJournalEntries} 
+                        disabled={isLoadingMore}
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-muted/50 hover:bg-muted text-sm font-bold text-foreground transition-all disabled:opacity-50 border border-border"
+                      >
+                        {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        {isLoadingMore ? "იტვირთება..." : "მეტის ჩატვირთვა"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

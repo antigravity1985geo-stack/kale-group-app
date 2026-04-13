@@ -72,6 +72,10 @@ export function Orders({
   })
   const [waybillResult, setWaybillResult] = useState<{ success: boolean; message: string } | null>(null)
 
+  // ── Pagination State ──
+  const PAGE_SIZE = 25;
+  const [currentPage, setCurrentPage] = useState(0);
+
   const filteredOrders = orders.filter((o) => {
     const q = searchQuery.toLowerCase()
     return (
@@ -81,6 +85,14 @@ export function Orders({
       (o.id || "").toLowerCase().includes(q)
     )
   })
+
+  const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE);
+  const paginatedOrders = filteredOrders.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery]);
 
   const handleViewOrder = async (order: any) => {
     setSelectedOrder(order)
@@ -200,7 +212,7 @@ export function Orders({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {filteredOrders.map((order, index) => {
+              {paginatedOrders.map((order, index) => {
                 const sc = statusConfig[order.status] || statusConfig.pending
                 return (
                   <motion.tr
@@ -274,6 +286,31 @@ export function Orders({
           <div className="flex flex-col items-center justify-center py-20">
             <ShoppingCart className="h-12 w-12 text-muted-foreground/30" />
             <p className="mt-4 text-lg font-medium text-muted-foreground">შეკვეთა ვერ მოიძებნა</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-border/50 px-6 py-4 bg-muted/20">
+            <p className="text-xs text-muted-foreground font-medium">
+              ნაჩვენებია <strong>{currentPage * PAGE_SIZE + 1}-{Math.min((currentPage + 1) * PAGE_SIZE, filteredOrders.length)}</strong> / <strong>{filteredOrders.length}</strong>
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+                className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted disabled:opacity-50"
+              >
+                წინა
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+                className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted disabled:opacity-50"
+              >
+                შემდეგი
+              </button>
+            </div>
           </div>
         )}
       </motion.div>

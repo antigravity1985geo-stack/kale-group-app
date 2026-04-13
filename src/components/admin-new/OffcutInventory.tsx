@@ -264,6 +264,14 @@ export default function OffcutInventory({ onSelectOffcut }: OffcutInventoryProps
   // BUG FIX #13: confirm dialog state replaces the unused 'stats' state
   const [confirmDispose, setConfirmDispose] = useState(null) // { offcut, reason }
 
+  // ── Pagination State ──
+  const PAGE_SIZE = 25;
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filterMat, filterStatus, filterGrain, sortBy, searchCode]);
+
   // BUG FIX #16: useCallback prevents stale-closure issues with useEffect
   const fetchOffcuts = useCallback(async () => {
     setLoading(true)
@@ -508,7 +516,7 @@ export default function OffcutInventory({ onSelectOffcut }: OffcutInventoryProps
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <AnimatePresence>
-              {sorted.map(o => (
+              {sorted.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE).map(o => (
                 <OffcutCard
                   key={o.id}
                   offcut={o}
@@ -518,6 +526,49 @@ export default function OffcutInventory({ onSelectOffcut }: OffcutInventoryProps
                 />
               ))}
             </AnimatePresence>
+
+            {/* Pagination Controls */}
+            {sorted.length > PAGE_SIZE && (
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 20px', background: G.glass, border: `1px solid ${G.glassBorder}`,
+                borderRadius: 14, marginTop: 10
+              }}>
+                <div style={{ fontSize: 13, color: G.textMuted }}>
+                  ნაჩვენებია <strong>{currentPage * PAGE_SIZE + 1}-{Math.min((currentPage + 1) * PAGE_SIZE, sorted.length)}</strong> / <strong>{sorted.length}</strong>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                    style={{
+                      padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      background: currentPage === 0 ? 'transparent' : '#f8fafc',
+                      border: `1px solid ${currentPage === 0 ? 'transparent' : G.glassBorder}`,
+                      color: currentPage === 0 ? G.textMuted : G.text,
+                      cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+                      opacity: currentPage === 0 ? 0.5 : 1
+                    }}
+                  >
+                    წინა
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(sorted.length / PAGE_SIZE) - 1, p + 1))}
+                    disabled={currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1}
+                    style={{
+                      padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      background: currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1 ? 'transparent' : '#f8fafc',
+                      border: `1px solid ${currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1 ? 'transparent' : G.glassBorder}`,
+                      color: currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1 ? G.textMuted : G.text,
+                      cursor: currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1 ? 'not-allowed' : 'pointer',
+                      opacity: currentPage >= Math.ceil(sorted.length / PAGE_SIZE) - 1 ? 0.5 : 1
+                    }}
+                  >
+                    შემდეგი
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

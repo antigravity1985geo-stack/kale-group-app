@@ -62,7 +62,7 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (location.pathname === '/admin') return null;
+  if (location.pathname.startsWith('/admin')) return null;
 
   const navLinks = [
     { name: t('nav.home'), href: '/' },
