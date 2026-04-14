@@ -92,11 +92,21 @@ export default function Waybills() {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       
       // 1. Fetch Outgoing Waybills
-      const res = await fetch('/api/rs-ge/waybills', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.waybills) setWaybills(data.waybills);
+      let data: any = { waybills: [] };
+      try {
+        const res = await fetch('/api/rs-ge/waybills', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+           const json = await res.json();
+           if (json.waybills) {
+             data = json;
+             setWaybills(json.waybills);
+           }
+        }
+      } catch (e) {
+        console.warn('API /api/rs-ge/waybills skipped or failed');
+      }
 
       // 2. Fetch Orders without Waybills
       const { data: ords } = await supabase
@@ -106,8 +116,9 @@ export default function Waybills() {
         .order('created_at', { ascending: false })
         .limit(50);
         
-      if (ords && data.waybills) {
-        const waybillOrderIds = data.waybills.map((w: any) => w.order_id);
+      if (ords) {
+        const waybillList = data?.waybills || [];
+        const waybillOrderIds = waybillList.map((w: any) => w.order_id);
         const pendingOrders = ords.filter(o => !waybillOrderIds.includes(o.id));
         setOrders(pendingOrders);
       }
