@@ -2,7 +2,7 @@
 
 **KALE GROUP** არის მაღალი კლასის ონლაინ მაღაზია, რომელიც ორიენტირებულია პრემიუმ ხარისხის ავეჯის გაყიდვასა და ინდივიდუალურ შეკვეთებზე. პლატფორმა აერთიანებს დახვეწილ დიზაინს, სრულყოფილ ERP საბუღალტრო სისტემას, წარმოების მართვას (BOM, Cutting Plans, Offcut Management), თანამედროვე ტექნოლოგიებსა და მომხმარებელზე მორგებულ ფუნქციონალს.
 
-> **Last Audit:** 2026-04-15 — Senior AI Architect (Supabase MCP + GitHub + Codebase Analysis)
+> **Last Audit:** 2026-04-16 — Senior AI Architect (Supabase MCP + Codebase Analysis)
 
 ---
 
@@ -218,6 +218,7 @@
 | v3.3 | 2026-04-13 | Manufacturing modules — Offcut Logger, Cutting Plans, Waste Analytics |
 | **v4.0** | **2026-04-15** | **სრული არქიტექტურული აუდიტი — 42 ცხრილი, 59 მიგრაცია, Supabase MCP ანალიზი** |
 | v4.1 | 2026-04-15 | Barcode System, Excel Exports (Date Filtered), POS Global Scanner Integration |
+| v4.2 | 2026-04-16 | Accounting Deep Dive: RS.ge profiles fix, RBAC verify, Returns/RMA inventory fix |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 59 (2026-04-03 → 2026-04-13)
@@ -309,4 +310,4 @@
 >
 > **მეთოდოლოგია:** 4-წყაროიანი ჯვარედინი ვერიფიკაცია
 >
-> **ძირითადი დასკვნა:** პლატფორმა სოლიდურ საფუძველზეა აგებული — 42 ცხრილი ყველა RLS-ით, double-entry accounting, comprehensive audit trail. მთავარი არქიტექტურული ვალი არის `server.ts` God Object (1685 ხაზი) და 3 security bypass, რომლებიც Phase 5-ში უნდა გამოსწორდეს.
+> **ძირითადი დასკვნა:** პლატფორმა სოლიდურ საფუძველზეა აგებული — 42 ცხრილი ყველა RLS-ით, double-entry accounting, comprehensive audit trail. Accounting მოდულის სიღრმისეულმა აუდიტმა (v4.2 / 2026-04-16) დაადასტურა ავტომატური გატარებებისა და RS.ge ინტეგრაციების გამართულობა. გარდა ამისა ბაზის დონეზე გასწორდა `process_return` პროცედურა, რომელიც უკვე ითვალისწინებს საწყობის ავტომატურ აღდგენასა და თვითღირებულების (COGS) კორექციას. მთავარი არქიტექტურული ვალი არის `server.ts` God Object (1685 ხაზი) და 3 security bypass, რომლებიც Phase 5-ში უნდა გამოსწორდეს.
