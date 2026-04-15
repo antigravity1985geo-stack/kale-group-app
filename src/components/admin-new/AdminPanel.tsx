@@ -16,6 +16,7 @@ import { Team } from "@/src/components/admin-new/Team"
 import { Messages } from "@/src/components/admin-new/Messages"
 import { Settings } from "@/src/components/admin-new/Settings"
 import { Guide } from "@/src/components/admin-new/Guide"
+import { AdminAIChatbot } from "@/src/components/admin-new/AdminAIChatbot"
 
 import { supabase } from "@/src/lib/supabase"
 import { useAuth } from "@/src/context/AuthContext"
@@ -590,6 +591,8 @@ export function AdminPanel() {
           )}
         </div>
       </main>
+
+      <AdminAIChatbot />
     </div>
   )
 }

@@ -1158,6 +1158,68 @@ async function setupApp() {
     next();
   };
 
+  // ── ADMIN AI CHAT ──
+  app.post("/api/ai/admin-chat", requireAccountingRead, async (req: any, res: any) => {
+    try {
+      const { userMessage, history = [] } = req.body;
+      const role = req.userProfile?.role || 'consultant';
+
+      // Gather Context based on role
+      let dbContext = '';
+
+      if (role === 'admin' || role === 'accountant') {
+        const { data: orders } = await supabaseAdmin
+          .from('orders')
+          .select('id, total, created_at, sale_source, payment_method, status')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        
+        let extraContext = '';
+        if (role === 'admin') {
+           const { count } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
+           extraContext = `Total Users: ${count || 0}.\n`;
+        } else {
+           const { data: je } = await supabaseAdmin
+             .from('journal_entries')
+             .select('id, date, status, description, total_amount')
+             .order('date', { ascending: false })
+             .limit(10);
+           extraContext = `Last 10 Journal Entries: ${JSON.stringify(je)}.\n`;
+        }
+
+        dbContext = `
+          Recent 20 Orders: ${JSON.stringify(orders)}
+          ${extraContext}
+        `;
+      }
+
+      const SYSTEM_PROMPT = role === 'admin' 
+        ? "You are Kale Group's internal Senior AI Administrator (COO). You only answer to the admin. You analyze data, help with logistics, users, and overall business metrics. Render requested data in nice markdown tables and provide sharp, executive insights."
+        : role === 'accountant'
+        ? "You are Kale Group's Senior Financial Auditor. You help the accountant navigate recent transactions, balance sheets, and journal entries. Render requested financial data as Markdown tables and provide strict, accurate financial analysis."
+        : "You are an internal consultant assistant.";
+
+      const contents = [
+        ...history,
+        { role: "user", parts: [{ text: userMessage }] }
+      ];
+
+      const result = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: contents,
+        config: {
+          systemInstruction: `${SYSTEM_PROMPT}\n\n=== LIVE SYSTEM CONTEXT ===\n${dbContext}\n======================`
+        }
+      });
+
+      const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "პასუხი ვერ გენერირდება.";
+      res.json({ text: responseText });
+    } catch (e: any) {
+      console.error('Admin AI Error:', e);
+      res.status(500).json({ error: "სერვერის შეცდომა." });
+    }
+  });
+
   // ── B1: Dashboard KPI ──
   app.get('/api/accounting/dashboard', requireAccountingRead, async (req: any, res) => {
     try {
