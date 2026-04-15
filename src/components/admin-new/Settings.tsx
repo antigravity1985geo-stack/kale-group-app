@@ -39,7 +39,7 @@ export function Settings() {
         // Parse values
         data.forEach((s) => {
           if (s.key === "vat_registered") setVatRegistered(s.value === true || s.value === "true")
-          if (s.key === "installment_rate") setInstallmentRate(parseFloat(s.value) || 0)
+          if (s.key === "installment_surcharge_rate") setInstallmentRate(parseFloat(s.value) || 0)
           if (s.key === "company_info") setCompanyInfo(s.value || {})
         })
       }
@@ -65,17 +65,47 @@ export function Settings() {
 
   const handleSaveInstallmentRate = async () => {
     setIsSaving(true)
-    const { error } = await supabase
-      .from("company_settings")
-      .update({ value: installmentRate })
-      .eq("key", "installment_rate")
-    if (error) {
-      alert("შეცდომა: " + error.message)
-    } else {
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 2000)
+    try {
+      // First try update
+      const { data: existing } = await supabase
+        .from("company_settings")
+        .select("id")
+        .eq("key", "installment_surcharge_rate")
+        .single()
+
+      let error
+      if (existing) {
+        // Row exists — update it (store as number in jsonb)
+        const res = await supabase
+          .from("company_settings")
+          .update({ value: installmentRate })
+          .eq("key", "installment_surcharge_rate")
+        error = res.error
+      } else {
+        // Row missing — insert it
+        const res = await supabase
+          .from("company_settings")
+          .insert({
+            key: "installment_surcharge_rate",
+            value: installmentRate,
+            description: "განვადების საკომისიოს პროცენტი (%). ნაგულისხმევად 5%",
+          })
+        error = res.error
+      }
+
+      if (error) {
+        alert("შეცდომა: " + error.message)
+      } else {
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2000)
+        // Re-fetch to confirm persisted value
+        await fetchSettings()
+      }
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
+    } finally {
+      setIsSaving(false)
     }
-    setIsSaving(false)
   }
 
   if (isLoading) {
