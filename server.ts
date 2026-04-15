@@ -1175,46 +1175,167 @@ async function setupApp() {
     next();
   };
 
-  // ── ADMIN AI CHAT ──
+  // ── ADMIN AI CHAT (v2 — Full Financial Intelligence) ──
   app.post("/api/ai/admin-chat", requireAccountingRead, async (req: any, res: any) => {
     try {
       const { userMessage, history = [] } = req.body;
       const role = req.userProfile?.role || 'consultant';
 
-      // Gather Context based on role
+      // ─── Gather Rich Context based on role ───
       let dbContext = '';
 
       if (role === 'admin' || role === 'accountant') {
+        // 1. Recent Orders (FIXED: total_price, not total)
         const { data: orders } = await supabaseAdmin
           .from('orders')
-          .select('id, total, created_at, sale_source, payment_method, status')
+          .select('id, total_price, created_at, sale_source, payment_method, payment_status, status, customer_first_name, customer_last_name')
           .order('created_at', { ascending: false })
+          .limit(30);
+
+        // 2. Profit & Loss Statement
+        const { data: pnl } = await supabaseAdmin
+          .from('v_profit_loss')
+          .select('account_type, code, name_ka, amount');
+
+        // 3. Balance Sheet 
+        const { data: balanceSheet } = await supabaseAdmin
+          .from('v_balance_sheet')
+          .select('account_type, code, name_ka, balance');
+
+        // 4. Monthly Summary (Trends)
+        const { data: monthlySummary } = await supabaseAdmin
+          .from('v_monthly_summary')
+          .select('*')
+          .order('year')
+          .order('month');
+
+        // 5. Journal Entries (FIXED: entry_date, not date; removed non-existent total_amount)
+        const { data: journalEntries } = await supabaseAdmin
+          .from('journal_entries')
+          .select('id, entry_number, entry_date, status, description, currency')
+          .order('entry_date', { ascending: false })
           .limit(20);
-        
-        let extraContext = '';
-        if (role === 'admin') {
-           const { count } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
-           extraContext = `Total Users: ${count || 0}.\n`;
-        } else {
-           const { data: je } = await supabaseAdmin
-             .from('journal_entries')
-             .select('id, date, status, description, total_amount')
-             .order('date', { ascending: false })
-             .limit(10);
-           extraContext = `Last 10 Journal Entries: ${JSON.stringify(je)}.\n`;
-        }
+
+        // 6. Products with prices
+        const { data: products } = await supabaseAdmin
+          .from('products')
+          .select('name, price, cost_price, category, in_stock, is_on_sale, sale_price, discount_percentage');
+
+        // 7. Inventory Value
+        const { data: stockLevels } = await supabaseAdmin
+          .from('stock_levels')
+          .select('product_id, quantity_on_hand, total_cost_value, products(name)');
+
+        // 8. User/Profile stats
+        const { count: userCount } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
+
+        // 9. Payment breakdown
+        const { data: payments } = await supabaseAdmin
+          .from('payments')
+          .select('provider, status, amount, paid_at')
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        // 10. Aggregate calculations
+        const totalRevenue = (pnl || []).filter((r: any) => r.account_type === 'REVENUE').reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+        const totalCOGS = (pnl || []).filter((r: any) => r.account_type === 'COGS').reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+        const totalExpenses = (pnl || []).filter((r: any) => r.account_type === 'EXPENSE').reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+        const grossProfit = totalRevenue - totalCOGS;
+        const netProfit = grossProfit - totalExpenses;
+
+        const totalAssets = (balanceSheet || []).filter((r: any) => r.account_type === 'ASSET').reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+        const totalLiabilities = (balanceSheet || []).filter((r: any) => r.account_type === 'LIABILITY').reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+        const totalEquity = (balanceSheet || []).filter((r: any) => r.account_type === 'EQUITY').reduce((s: number, r: any) => s + Number(r.balance || 0), 0);
+
+        const inventoryValue = (stockLevels || []).reduce((s: number, r: any) => s + Number(r.total_cost_value || 0), 0);
+        const orderCount = (orders || []).length;
+        const paidOrders = (orders || []).filter((o: any) => o.payment_status === 'paid').length;
 
         dbContext = `
-          Recent 20 Orders: ${JSON.stringify(orders)}
-          ${extraContext}
+=== კომპანიის ფინანსური მონაცემები (LIVE) ===
+📅 თარიღი: ${new Date().toLocaleDateString('ka-GE')}
+👥 მომხმარებლების რაოდენობა: ${userCount || 0}
+
+📊 მოგება-ზარალის ანგარიშგება (P&L):
+  - მთლიანი შემოსავალი: ${totalRevenue.toFixed(2)} ₾
+  - თვითღირებულება (COGS): ${totalCOGS.toFixed(2)} ₾
+  - მთლიანი მოგება: ${grossProfit.toFixed(2)} ₾
+  - საოპერაციო ხარჯები: ${totalExpenses.toFixed(2)} ₾
+  - წმინდა მოგება: ${netProfit.toFixed(2)} ₾
+  - მოგების მარჟა: ${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%
+
+დეტალური P&L ხაზები:
+${JSON.stringify(pnl || [])}
+
+📋 ბალანსი:
+  - მთლიანი აქტივები: ${totalAssets.toFixed(2)} ₾
+  - მთლიანი ვალდებულებები: ${totalLiabilities.toFixed(2)} ₾
+  - საკუთარი კაპიტალი: ${totalEquity.toFixed(2)} ₾
+  - ბალანსი დაბალანსებულია: ${Math.abs(totalAssets - totalLiabilities - totalEquity) < 0.01 ? 'დიახ ✅' : 'არა ❌'}
+
+დეტალური ბალანსის ხაზები:
+${JSON.stringify(balanceSheet || [])}
+
+📦 ინვენტარი:
+  - ინვენტარის ჯამური ღირებულება: ${inventoryValue.toFixed(2)} ₾
+  - მარაგის დეტალები: ${JSON.stringify(stockLevels || [])}
+
+🛒 შეკვეთები (ბოლო 30):
+  - სულ: ${orderCount}
+  - გადახდილი: ${paidOrders}
+  - გადაუხდელი: ${orderCount - paidOrders}
+  - შეკვეთების სია: ${JSON.stringify(orders || [])}
+
+💳 გადახდები (ბოლო 30):
+${JSON.stringify(payments || [])}
+
+📈 თვიური ტრენდები:
+${JSON.stringify(monthlySummary || [])}
+
+📒 ბოლო 20 ჟურნალის ჩანაწერი:
+${JSON.stringify(journalEntries || [])}
+
+🛍️ პროდუქტის კატალოგი და ფასები:
+${JSON.stringify((products || []).map((p: any) => ({ 
+  name: p.name, price: p.price, cost: p.cost_price, category: p.category, 
+  inStock: p.in_stock, onSale: p.is_on_sale, salePrice: p.sale_price 
+})))}
+=== მონაცემთა დასასრული ===
         `;
       }
 
       const SYSTEM_PROMPT = role === 'admin' 
-        ? "You are Kale Group's internal Senior AI Administrator (COO). You only answer to the admin. You analyze data, help with logistics, users, and overall business metrics. Render requested data in nice markdown tables and provide sharp, executive insights."
+        ? `შენ ხარ Kale Group-ის შიდა უმაღლესი AI ადმინისტრატორი (COO / ფინანსური დირექტორი).
+
+შენი უნარები:
+- სრული ბუღალტრული აუდიტის ჩატარება
+- მოგება-ზარალის, ბალანსის და ფულადი ნაკადების ანალიზი
+- შეკვეთების, გადახდების და ინვენტარის მონიტორინგი
+- ბიზნეს რეკომენდაციების მომზადება
+- ნებისმიერი ფინანსური მონაცემის ცხრილებში პრეზენტაცია
+
+მკაცრი წესები:
+1. ყოველთვის პასუხობ ქართულად, გამართული პროფესიონალური ენით.
+2. მონაცემებს აჩვენებ Markdown ცხრილების (tables) სახით.
+3. გამოიყენე მხოლოდ ის მონაცემები, რაც LIVE SYSTEM CONTEXT-ში არის მოცემული.
+4. არასოდეს მოიგონო რიცხვები ან მონაცემები.
+5. ნებისმიერ ფინანსურ ანალიზში გამოიყენე ₾ (ლარი) სიმბოლო.
+6. როდესაც აუდიტი გთხოვენ, მოამზადე სტრუქტურირებული რეპორტი: (1) შეჯამება, (2) P&L, (3) ბალანსი, (4) შეკვეთების ანალიზი, (5) რისკები, (6) რეკომენდაციები.`
         : role === 'accountant'
-        ? "You are Kale Group's Senior Financial Auditor. You help the accountant navigate recent transactions, balance sheets, and journal entries. Render requested financial data as Markdown tables and provide strict, accurate financial analysis."
-        : "You are an internal consultant assistant.";
+        ? `შენ ხარ Kale Group-ის უფროსი ფინანსური აუდიტორი.
+
+შენი უნარები:
+- ჟურნალის ჩანაწერების ანალიზი და ვერიფიკაცია
+- მოგება-ზარალის და ბალანსის წაკითხვა
+- გადასახადების (VAT/დღგ) კონსულტაცია
+- ინვენტარის ღირებულების ანალიზი
+
+მკაცრი წესები:
+1. ყოველთვის პასუხობ ქართულად.
+2. მონაცემებს აჩვენებ Markdown ცხრილებში.
+3. გამოიყენე მხოლოდ LIVE SYSTEM CONTEXT-ის მონაცემები.
+4. იყავი მკაცრი, ზუსტი და პროფესიონალური.`
+        : "შენ ხარ შიდა კონსულტანტის ასისტენტი. პასუხობ ქართულად.";
 
       const contents = [
         ...history,
@@ -1225,7 +1346,7 @@ async function setupApp() {
         model: "gemini-2.5-flash",
         contents: contents,
         config: {
-          systemInstruction: `${SYSTEM_PROMPT}\n\n=== LIVE SYSTEM CONTEXT ===\n${dbContext}\n======================`
+          systemInstruction: `${SYSTEM_PROMPT}\n\n${dbContext}`
         }
       });
 
