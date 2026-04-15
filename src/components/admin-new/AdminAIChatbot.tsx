@@ -54,12 +54,20 @@ export function AdminAIChatbot() {
         body: JSON.stringify({ userMessage: userMsg, history })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      // Safe JSON parsing — handle Vercel/server text errors gracefully
+      let data: any;
+      const rawText = await res.text();
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(`სერვერის შეცდომა (${res.status}). სცადეთ მოგვიანებით.`);
+      }
+
+      if (!res.ok) throw new Error(data.error || `შეცდომა: ${res.status}`);
 
       setMessages(prev => [...prev, { role: 'model', text: data.text }]);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'model', text: 'შეცდომა: ' + err.message }]);
+      setMessages(prev => [...prev, { role: 'model', text: '⚠️ ' + (err.message || 'უცნობი შეცდომა. სცადეთ მოგვიანებით.') }]);
     } finally {
       setIsLoading(false);
     }

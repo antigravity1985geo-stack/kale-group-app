@@ -1185,56 +1185,42 @@ async function setupApp() {
       let dbContext = '';
 
       if (role === 'admin' || role === 'accountant') {
-        // 1. Recent Orders (FIXED: total_price, not total)
-        const { data: orders } = await supabaseAdmin
-          .from('orders')
-          .select('id, total_price, created_at, sale_source, payment_method, payment_status, status, customer_first_name, customer_last_name')
-          .order('created_at', { ascending: false })
-          .limit(30);
+        // ─── All queries in parallel to avoid Vercel timeout ───
+        const [
+          ordersRes, pnlRes, balanceSheetRes, monthlySummaryRes,
+          journalEntriesRes, productsRes, stockLevelsRes, userCountRes, paymentsRes
+        ] = await Promise.all([
+          supabaseAdmin.from('orders')
+            .select('id, total_price, created_at, sale_source, payment_method, payment_status, status, customer_first_name, customer_last_name')
+            .order('created_at', { ascending: false }).limit(30),
+          supabaseAdmin.from('v_profit_loss')
+            .select('account_type, code, name_ka, amount'),
+          supabaseAdmin.from('v_balance_sheet')
+            .select('account_type, code, name_ka, balance'),
+          supabaseAdmin.from('v_monthly_summary')
+            .select('*').order('year').order('month'),
+          supabaseAdmin.from('journal_entries')
+            .select('id, entry_number, entry_date, status, description, currency')
+            .order('entry_date', { ascending: false }).limit(20),
+          supabaseAdmin.from('products')
+            .select('name, price, cost_price, category, in_stock, is_on_sale, sale_price, discount_percentage'),
+          supabaseAdmin.from('stock_levels')
+            .select('product_id, quantity_on_hand, total_cost_value, products(name)'),
+          supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
+          supabaseAdmin.from('payments')
+            .select('provider, status, amount, paid_at')
+            .order('created_at', { ascending: false }).limit(30),
+        ]);
 
-        // 2. Profit & Loss Statement
-        const { data: pnl } = await supabaseAdmin
-          .from('v_profit_loss')
-          .select('account_type, code, name_ka, amount');
-
-        // 3. Balance Sheet 
-        const { data: balanceSheet } = await supabaseAdmin
-          .from('v_balance_sheet')
-          .select('account_type, code, name_ka, balance');
-
-        // 4. Monthly Summary (Trends)
-        const { data: monthlySummary } = await supabaseAdmin
-          .from('v_monthly_summary')
-          .select('*')
-          .order('year')
-          .order('month');
-
-        // 5. Journal Entries (FIXED: entry_date, not date; removed non-existent total_amount)
-        const { data: journalEntries } = await supabaseAdmin
-          .from('journal_entries')
-          .select('id, entry_number, entry_date, status, description, currency')
-          .order('entry_date', { ascending: false })
-          .limit(20);
-
-        // 6. Products with prices
-        const { data: products } = await supabaseAdmin
-          .from('products')
-          .select('name, price, cost_price, category, in_stock, is_on_sale, sale_price, discount_percentage');
-
-        // 7. Inventory Value
-        const { data: stockLevels } = await supabaseAdmin
-          .from('stock_levels')
-          .select('product_id, quantity_on_hand, total_cost_value, products(name)');
-
-        // 8. User/Profile stats
-        const { count: userCount } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
-
-        // 9. Payment breakdown
-        const { data: payments } = await supabaseAdmin
-          .from('payments')
-          .select('provider, status, amount, paid_at')
-          .order('created_at', { ascending: false })
-          .limit(30);
+        const orders = ordersRes.data || [];
+        const pnl = pnlRes.data || [];
+        const balanceSheet = balanceSheetRes.data || [];
+        const monthlySummary = monthlySummaryRes.data || [];
+        const journalEntries = journalEntriesRes.data || [];
+        const products = productsRes.data || [];
+        const stockLevels = stockLevelsRes.data || [];
+        const userCount = userCountRes.count || 0;
+        const payments = paymentsRes.data || [];
 
         // 10. Aggregate calculations
         const totalRevenue = (pnl || []).filter((r: any) => r.account_type === 'REVENUE').reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
