@@ -10,7 +10,7 @@
 // ============================================================
 declare var process: any;
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase.js';
 import type {
   EInvoiceCreatePayload,
   EInvoiceRecord,
@@ -33,7 +33,7 @@ import {
   rsgeGetVATReturnStatus,
   rsgeHealthCheck,
   RSGE_CONFIG,
-} from './rsge.soap.client';
+} from './rsge.soap.client.js';
 
 // ─── Supabase client (using lib/supabase.ts) ──
 
