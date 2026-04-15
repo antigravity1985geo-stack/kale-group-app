@@ -259,13 +259,13 @@ export async function createWaybillForOrder(
 ): Promise<RSGeSyncResult> {
   const { data: order, error } = await supabase
     .from('orders')
-    .select(`*, order_items(*, products(name, sku))`)
+    .select(`*, order_items(*, products(name, id))`)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     console.error("Order fetch error:", error);
-    return { type: 'waybill', action: 'CREATE', success: false, message: 'შეკვეთა ვერ მოიძებნა', timestamp: new Date().toISOString() };
+    return { type: 'waybill', action: 'CREATE', success: false, message: 'შეკვეთა ვერ მოიძებნა: ' + (error?.message || 'unknown'), timestamp: new Date().toISOString() };
   }
 
   const customerName = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Unknown';
@@ -286,7 +286,7 @@ export async function createWaybillForOrder(
     transport: extras.transport || { transportType: 'HAND' },
     items: order.order_items.map((item: any, idx: number) => ({
       lineNumber:   idx + 1,
-      productCode:  item.products?.sku ?? '',
+      productCode:  item.products?.id ?? item.product_id ?? '',
       description:  item.products?.name ?? item.product_name ?? 'Unknown Product',
       unit:         'ც',
       quantity:     item.quantity,

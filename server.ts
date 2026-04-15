@@ -1203,7 +1203,7 @@ async function setupApp() {
             .select('id, entry_number, entry_date, status, description, currency')
             .order('entry_date', { ascending: false }).limit(20),
           supabaseAdmin.from('products')
-            .select('name, price, cost_price, category, in_stock, is_on_sale, sale_price, discount_percentage'),
+            .select('name, price, category, in_stock, is_on_sale, sale_price, discount_percentage'),
           supabaseAdmin.from('stock_levels')
             .select('product_id, quantity_on_hand, total_cost_value, products(name)'),
           supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
@@ -1283,7 +1283,7 @@ ${JSON.stringify(journalEntries || [])}
 
 🛍️ პროდუქტის კატალოგი და ფასები:
 ${JSON.stringify((products || []).map((p: any) => ({ 
-  name: p.name, price: p.price, cost: p.cost_price, category: p.category, 
+  name: p.name, price: p.price, category: p.category, 
   inStock: p.in_stock, onSale: p.is_on_sale, salePrice: p.sale_price 
 })))}
 === მონაცემთა დასასრული ===
