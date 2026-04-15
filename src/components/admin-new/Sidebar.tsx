@@ -17,35 +17,42 @@ import {
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 
+type UserRole = "admin" | "consultant" | "accountant"
+
 type NavItem = {
   id: string
   label: string
   icon: React.ReactNode
   badge?: number
+  allowedRoles: UserRole[]
 }
 
 const navItems: NavItem[] = [
-  { id: "statistics", label: "სტატისტიკა", icon: <BarChart3 className="h-5 w-5" /> },
-  { id: "products", label: "პროდუქცია", icon: <Package className="h-5 w-5" /> },
-  { id: "sales", label: "აქციები", icon: <Tags className="h-5 w-5" /> },
-  { id: "categories", label: "კატეგორიები", icon: <FolderTree className="h-5 w-5" /> },
-  { id: "orders", label: "შეკვეთები", icon: <ShoppingCart className="h-5 w-5" />, badge: 3 },
-  { id: "showroom", label: "შოურუმი (POS)", icon: <Store className="h-5 w-5" /> },
-  { id: "accounting", label: "ბუღალტერია", icon: <Calculator className="h-5 w-5" /> },
-  { id: "manufacturing", label: "წარმოება და საწყობი", icon: <Factory className="h-5 w-5" /> },
-  { id: "team", label: "თანამშრომლები", icon: <Users className="h-5 w-5" /> },
-  { id: "messages", label: "შეტყობინებები", icon: <MessageSquare className="h-5 w-5" />, badge: 5 },
-  { id: "settings", label: "პარამეტრები", icon: <Settings className="h-5 w-5" /> },
-  { id: "guide", label: "სახელმძღვანელო", icon: <BookOpen className="h-5 w-5" /> },
+  { id: "statistics", label: "სტატისტიკა", icon: <BarChart3 className="h-5 w-5" />, allowedRoles: ["admin", "consultant", "accountant"] },
+  { id: "products", label: "პროდუქცია", icon: <Package className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "sales", label: "აქციები", icon: <Tags className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "categories", label: "კატეგორიები", icon: <FolderTree className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "orders", label: "შეკვეთები", icon: <ShoppingCart className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "showroom", label: "შოურუმი (POS)", icon: <Store className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "accounting", label: "ბუღალტერია", icon: <Calculator className="h-5 w-5" />, allowedRoles: ["admin", "accountant"] },
+  { id: "manufacturing", label: "წარმოება და საწყობი", icon: <Factory className="h-5 w-5" />, allowedRoles: ["admin"] },
+  { id: "team", label: "თანამშრომლები", icon: <Users className="h-5 w-5" />, allowedRoles: ["admin"] },
+  { id: "messages", label: "შეტყობინებები", icon: <MessageSquare className="h-5 w-5" />, allowedRoles: ["admin", "consultant"] },
+  { id: "settings", label: "პარამეტრები", icon: <Settings className="h-5 w-5" />, allowedRoles: ["admin"] },
+  { id: "guide", label: "სახელმძღვანელო", icon: <BookOpen className="h-5 w-5" />, allowedRoles: ["admin", "consultant", "accountant"] },
 ]
 
 interface SidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  userRole?: "admin" | "consultant" | "accountant"
+  userRole?: UserRole
+  onLogout?: () => void
 }
 
-export function Sidebar({ activeTab, onTabChange, userRole = "admin" }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, userRole = "admin", onLogout }: SidebarProps) {
+  // Filter nav items based on user role
+  const visibleItems = navItems.filter(item => item.allowedRoles.includes(userRole))
+
   const roleColors = {
     admin: "bg-sidebar-primary/20 text-sidebar-primary border-sidebar-primary/30",
     consultant: "bg-teal-500/20 text-teal-400 border-teal-500/30 dark:bg-teal-500/20 dark:text-teal-400",
@@ -94,7 +101,7 @@ export function Sidebar({ activeTab, onTabChange, userRole = "admin" }: SidebarP
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-6">
         <div className="space-y-1">
-          {navItems.map((item, index) => (
+          {visibleItems.map((item, index) => (
             <motion.button
               key={item.id}
               initial={{ x: -50, opacity: 0 }}
@@ -151,6 +158,7 @@ export function Sidebar({ activeTab, onTabChange, userRole = "admin" }: SidebarP
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onClick={onLogout}
           className="flex w-full items-center gap-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
         >
           <LogOut className="h-5 w-5" />

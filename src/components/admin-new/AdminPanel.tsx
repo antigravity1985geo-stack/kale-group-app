@@ -36,11 +36,36 @@ const tabConfig: Record<string, { title: string; subtitle?: string; showSearch?:
   guide: { title: "სახელმძღვანელო", subtitle: "ადმინ პანელის გზამკვლევი", showSearch: false },
 }
 
+// Role-based tab permissions
+const ROLE_TABS: Record<string, string[]> = {
+  admin: ["statistics", "products", "sales", "categories", "orders", "showroom", "accounting", "manufacturing", "team", "messages", "settings", "guide"],
+  accountant: ["statistics", "accounting", "guide"],
+  consultant: ["statistics", "products", "sales", "categories", "orders", "showroom", "messages", "guide"],
+}
+
+const DEFAULT_TAB: Record<string, string> = {
+  admin: "statistics",
+  accountant: "accounting",
+  consultant: "showroom",
+}
+
 export function AdminPanel() {
   const { user, profile, isAdmin, isConsultant, isAccountant, isAuthorized, isLoading: authLoading, signIn, signOut } = useAuth()
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [activeTab, setActiveTab] = useState("statistics")
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Determine user role string
+  const userRole: "admin" | "consultant" | "accountant" = isAdmin ? "admin" : isAccountant ? "accountant" : "consultant"
+  const allowedTabs = ROLE_TABS[userRole] || ROLE_TABS.consultant
+
+  // Set default tab based on role when profile loads
+  useEffect(() => {
+    if (profile?.role) {
+      const defaultTab = DEFAULT_TAB[profile.role] || "statistics"
+      setActiveTab(defaultTab)
+    }
+  }, [profile?.role])
 
   // Core data
   const [products, setProducts] = useState<Product[]>([])
@@ -325,7 +350,21 @@ export function AdminPanel() {
   const currentConfig = tabConfig[activeTab] || tabConfig.statistics
 
   // ── Render Tab Content ──
+  // Access denied component
+  const AccessDenied = () => (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-border/50 bg-card py-20">
+      <div className="text-4xl mb-4">🔒</div>
+      <p className="text-foreground font-semibold text-lg">წვდომა შეზღუდულია</p>
+      <p className="text-muted-foreground mt-2 text-sm">თქვენ არ გაქვთ ამ განყოფილების ნახვის უფლება</p>
+    </div>
+  )
+
   const renderContent = () => {
+    // Check if the current tab is allowed for this role
+    if (!allowedTabs.includes(activeTab)) {
+      return <AccessDenied />
+    }
+
     switch (activeTab) {
       case "statistics":
         return <Dashboard orders={orders} products={products} />
@@ -387,13 +426,6 @@ export function AdminPanel() {
           />
         )
       case "accounting":
-        if (!canViewAccounting) {
-          return (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-border/50 bg-card py-20">
-              <p className="text-muted-foreground">თქვენ არ გაქვთ ბუღალტერიის ნახვის უფლება</p>
-            </div>
-          )
-        }
         return <Accounting />
       case "manufacturing":
         return <Manufacturing />
@@ -515,6 +547,8 @@ export function AdminPanel() {
           setActiveTab(tab)
           setSearchQuery("")
         }}
+        userRole={userRole}
+        onLogout={handleLogout}
       />
 
       {/* Main Content */}
