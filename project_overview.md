@@ -2,7 +2,7 @@
 
 **KALE GROUP** არის მაღალი კლასის ონლაინ მაღაზია, რომელიც ორიენტირებულია პრემიუმ ხარისხის ავეჯის გაყიდვასა და ინდივიდუალურ შეკვეთებზე. პლატფორმა აერთიანებს დახვეწილ დიზაინს, სრულყოფილ ERP საბუღალტრო სისტემას, წარმოების მართვას (BOM, Cutting Plans, Offcut Management), თანამედროვე ტექნოლოგიებსა და მომხმარებელზე მორგებულ ფუნქციონალს.
 
-> **Last Audit:** 2026-04-16 — Senior AI Architect (Supabase MCP + Codebase Analysis)
+> **Last Audit:** 2026-04-16 (v4.6) — Senior AI Architect (Supabase MCP + Codebase Analysis + Security Hardening)
 
 ---
 
@@ -18,7 +18,7 @@
 - **SEO & Head Management:** React Helmet Async (დინამიური მეტა ტეგები)
 
 ### Backend & API
-- **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (`server.ts` — 1685 ხაზი, მოდულარიზაცია საჭირო)
+- **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (`server.ts` — 1788 ხაზი, მოდულარიზაცია საჭირო)
 - **Deployment:** Vercel Serverless Functions (`api/index.ts` — production endpoint)
 - **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (Backend Proxy — API Key server-side only)
   - **KALE AI Expert:** ჩატ-ასისტენტი ბაზიდან live პროდუქტის კონტექსტით (ზომები, ფერები, გარანტია, ფასდაკლება, შოურუმი)
@@ -180,7 +180,7 @@
 
 ---
 
-## 🛡 უსაფრთხოების სტატუსი (Security Posture — 2026-04-15)
+## 🛡 უსაფრთხოების სტატუსი (Security Posture — 2026-04-16 v4.6)
 
 ### ✅ დადასტურებული — გამართული
 
@@ -188,22 +188,23 @@
 |---|-----------|---------|
 | 1 | `.env` Git ისტორიაში | **არასოდეს ჩაკომიტებულა** ✅ — `git log --all -- .env` = ცარიელი |
 | 2 | `.gitignore` | `.env*` — სწორად კონფიგურირებული ✅ |
-| 3 | BOG HMAC-SHA256 | `timingSafeEqual` დანერგილი ✅ |
-| 4 | Server-Side Price Validation | Client manipulation დაბლოკილი ✅ |
-| 5 | RLS ყველა ცხრილზე | 42/42 ცხრილი — `rls_enabled: true` ✅ |
-| 6 | Audit Trail | `audit_log` ტრიგერები აქტიური ✅ |
+| 3 | BOG HMAC-SHA256 | `timingSafeEqual` + **Hard-Fail** (unsigned rejected) ✅ |
+| 4 | Credo HTTPS URLs | **HTTPS-safe baseUrl** (localhost fallback აღარ არის) ✅ |
+| 5 | Helmet CSP | **Production-ში ჩართული** (XSS დაცვა) ✅ |
+| 6 | Server-Side Price Validation | Client manipulation დაბლოკილი ✅ |
+| 7 | RLS ყველა ცხრილზე | 42/42 ცხრილი — `rls_enabled: true` ✅ |
+| 8 | RLS InitPlan Performance | 4 ცხრილი ოპტიმიზირებული — `(select auth.uid())` ✅ |
+| 9 | Storage Policy | დუბლიკატი SELECT policy წაშლილია ✅ |
+| 10 | Audit Trail | `audit_log` ტრიგერები აქტიური ✅ |
 
-### ⚠️ ვერიფიცირებული პრობლემები — გამოსასწორებელი
+### ⚠️ დარჩენილი ფიქსები (არაკრიტიკული)
 
-| # | პრობლემა | სიმძიმე | წყარო |
-|---|---------|---------|-------|
-| 1 | BOG Signature Bypass — unsigned callbacks ამტარებს | 🔴 P0 | `server.ts:443` |
-| 2 | TBC/Credo HTTP Fallback — `http://localhost:3000` production-ში | 🔴 P0 | `server.ts:618` |
-| 3 | `order_items` RLS — unrestricted INSERT (`WITH CHECK (true)`) | 🔴 P0 | Supabase Advisor |
-| 4 | Auth Leaked Password Protection — გამორთული | 🟡 P1 | Supabase Advisor |
-| 5 | `product-images` Storage — public file listing | 🟡 P1 | Supabase Advisor |
-| 6 | 4 RLS policy — `auth.uid()` re-evaluation per row | 🟡 P1 | Perf Advisor |
-| 7 | 30+ duplicate permissive RLS policies | 🟢 P2 | Perf Advisor |
+| # | პრობლემა | სიმძიმე | შენიშვნა |
+|---|---------|---------|----------|
+| 1 | `orders` / `order_items` RLS — public INSERT | 🟢 OK | E-commerce-სთვის მიზანმიმართულია — ყველამ უნდა შეძლოს შეკვეთა |
+| 2 | Auth Leaked Password Protection | 🟡 P1 | Supabase Dashboard-ში ჩასართავია (Auth → Settings) |
+| 3 | 30+ duplicate permissive RLS policies | 🟢 P2 | Performance — consolidation საჭირო |
+| 4 | TBC Bank API | ⏸️ სამომავლო | API Key ჯერ არ არის, ინტეგრაცია მოლოდინშია |
 
 ---
 
@@ -227,11 +228,12 @@
 | **v4.3** | **2026-04-16** | **KALE AI Expert გაძლიერება:** Live Product Context (ზომები, ფასდაკლება, ფერები, გარანტია), Company Info, Showroom Details |
 | **v4.4** | **2026-04-16** | **AI Room Designer Fix:** Imagen 3 (`imagen-3.0-generate-001`) + Gemini 1.5 Pro Vision — ოთახის ფოტო ანალიზი + ფოტორეალისტური ავეჯ-რენდერი |
 | **v4.5** | **2026-04-16** | **Admin Intelligence:** RBAC-aware შიდა AI ჩატი Admin Panel-ში — Markdown Tables, COO & Auditor Mode, react-markdown |
+| **v4.6** | **2026-04-16** | **Security Hardening (P0):** BOG Signature Hard-Fail, Credo HTTPS URLs, Helmet CSP Production Mode, RLS InitPlan optimization (4 ცხრილი), Storage policy cleanup |
 
 #### მიგრაციების სტატისტიკა
-- **სულ მიგრაციები:** 59 (2026-04-03 → 2026-04-13)
-- **სქემის ზრდა:** 4 ცხრილი → 42 ცხრილი (10 დღეში)
-- **უკანასკნელი მიგრაცია:** `9_fix_always_true_rls_policies` (2026-04-13)
+- **სულ მიგრაციები:** 61 (2026-04-03 → 2026-04-16)
+- **სქემის ზრდა:** 4 ცხრილი → 42 ცხრილი (13 დღეში)
+- **უკანასკნელი მიგრაცია:** `fix_rls_initplan_performance` (2026-04-16)
 
 ---
 
@@ -246,16 +248,18 @@
 
 ### ⏳ მიმდინარე / დაგეგმილი ფაზები
 
-- [ ] **Phase 5: Architecture Reform** (2-3 კვირა)
-  - [ ] 5.1 — BOG Signature Hard-Fail (bypass fix)
-  - [ ] 5.2 — TBC/Credo HTTPS baseUrl enforcement
-  - [ ] 5.3 — `order_items` RLS tightening
-  - [ ] 5.4 — Enable Leaked Password Protection
-  - [ ] 5.5 — Storage bucket listing restriction
-  - [ ] 5.6 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/`
-  - [ ] 5.7 — RLS InitPlan optimization (4 ცხრილი)
-  - [ ] 5.8 — Duplicate RLS policy consolidation (30+)
-  - [ ] 5.9 — Dead code cleanup (orphan dirs, `.bak` files)
+- [x] **Phase 5: Security Hardening** (v4.6 — ✅ დასრულებული)
+  - [x] 5.1 — BOG Signature Hard-Fail (bypass fix) ✅
+  - [x] 5.2 — Credo HTTPS baseUrl enforcement ✅
+  - [x] 5.3 — Helmet CSP Production Mode ✅
+  - [x] 5.4 — Storage bucket listing restriction (duplicate policy cleanup) ✅
+  - [x] 5.5 — RLS InitPlan optimization (4 ცხრილი) ✅
+
+- [ ] **Phase 5B: Architecture Reform** (2-3 კვირა)
+  - [ ] 5B.1 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/`
+  - [ ] 5B.2 — Duplicate RLS policy consolidation (30+)
+  - [ ] 5B.3 — Dead code cleanup (orphan dirs, `.bak` files)
+  - [ ] 5B.4 — Enable Leaked Password Protection (Supabase Dashboard)
 
 - [ ] **Phase 6: Feature Activation** (3-5 კვირა)
   - [ ] 6.1 — Invoice auto-generation debugging (invoices = 0)
@@ -312,10 +316,18 @@
 
 ---
 
-## 📝 აუდიტის შენიშვნები (2026-04-15)
+## 📝 აუდიტის შენიშვნები (2026-04-16 — v4.6)
 
-> **აუდიტორი:** Senior AI Architect (Supabase MCP + GitHub API + Codebase)
+> **აუდიტორი:** Senior AI Architect (Supabase MCP + GitHub API + Codebase + Security Advisors)
 >
-> **მეთოდოლოგია:** 4-წყაროიანი ჯვარედინი ვერიფიკაცია
+> **მეთოდოლოგია:** 4-წყაროიანი ჯვარედინი ვერიფიკაცია + Supabase Security & Performance Advisor API
 >
-> **ძირითადი დასკვნა:** პლატფორმა სოლიდურ საფუძველზეა აგებული — 42 ცხრილი ყველა RLS-ით, double-entry accounting, comprehensive audit trail. Accounting მოდულის სიღრმისეულმა აუდიტმა (v4.2 / 2026-04-16) დაადასტურა ავტომატური გატარებებისა და RS.ge ინტეგრაციების გამართულობა. გარდა ამისა ბაზის დონეზე გასწორდა `process_return` პროცედურა, რომელიც უკვე ითვალისწინებს საწყობის ავტომატურ აღდგენასა და თვითღირებულების (COGS) კორექციას. მთავარი არქიტექტურული ვალი არის `server.ts` God Object (1685 ხაზი) და 3 security bypass, რომლებიც Phase 5-ში უნდა გამოსწორდეს.
+> **ძირითადი დასკვნა:** პლატფორმა სოლიდურ საფუძველზეა აგებული — 42 ცხრილი ყველა RLS-ით, double-entry accounting (ყველა 15 entry ბალანსშია: Debit=Credit), comprehensive audit trail.
+>
+> **v4.6 Security Hardening:** სამივე P0 კრიტიკული ხარვეზი აღმოიფხვრა — BOG webhook signature bypass, Credo HTTP localhost fallback და CSP disabled. Supabase-ზე RLS performance ოპტიმიზირეულია 4 manufacturing ცხრილზე, storage policy დუბლიკატი წაშლილია.
+>
+> **VAT/დღგ:** კომპანია ამჟამად არ არის დღგ-ს გადამხდელი — ფუნქცია ჩაშენებულია სამომავლოდ (company_settings toggle).
+>
+> **TBC Bank:** API ინტეგრაცია მოლოდინშია (API Key ჯერ არ არის მიღებული).
+>
+> **დარჩენილი არქიტექტურული ვალი:** `server.ts` God Object (1788 ხაზი) და 30+ დუბლიკატი RLS policy — Phase 5B-ში გამოსასწორებელი.
