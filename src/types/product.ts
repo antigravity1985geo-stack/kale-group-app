@@ -17,6 +17,7 @@ export interface Product {
   sale_price?: number;
   sale_start_date?: string;
   sale_end_date?: string;
+  barcode?: string;
   created_at?: string;
 }
 

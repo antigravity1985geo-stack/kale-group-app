@@ -4,13 +4,14 @@ import {
   BarChart3, BookOpen, FileText, Package, Building2, Users, RotateCcw, Truck,
   Landmark, Receipt, FileBarChart, TrendingUp, DollarSign, Percent, CreditCard,
   Banknote, Calendar, Loader2, RefreshCw, AlertTriangle, CheckCircle, Clock,
-  XCircle, ChevronDown, Eye, Upload, X, FileCheck, ShoppingCart, Warehouse, Globe
+  XCircle, ChevronDown, Eye, Upload, X, FileCheck, ShoppingCart, Warehouse, Globe, Download
 } from "lucide-react"
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from "recharts"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { downloadExcel } from "@/src/lib/export"
 import Invoices from "./accounting/Invoices"
 import Inventory from "./accounting/Inventory"
 import Vat from "./accounting/Vat"
@@ -40,6 +41,10 @@ export function Accounting() {
   const [selectedJournalOrder, setSelectedJournalOrder] = useState<any>(null)
   const [selectedDrillDownAccount, setSelectedDrillDownAccount] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // ── Export States ──
+  const [exportStartDate, setExportStartDate] = useState("")
+  const [exportEndDate, setExportEndDate] = useState("")
   
   // ── Pagination State ──
   const [journalPage, setJournalPage] = useState(0)
@@ -181,6 +186,54 @@ export function Accounting() {
     setBankCsvData(processed);
   }
 
+  // ── Export Logic ──
+  const handleExportExcel = async () => {
+    let dataToExport: any[] = [];
+    const filename = `Kale_ERP_${activeTab}_export`;
+
+    // Filter wrapper based on date picker
+    const filterByDate = (itemDateString: string) => {
+      if (!exportStartDate && !exportEndDate) return true;
+      const d = new Date(itemDateString).getTime();
+      const s = exportStartDate ? new Date(exportStartDate).getTime() : 0;
+      const e = exportEndDate ? new Date(exportEndDate).getTime() : Infinity;
+      return d >= s && d <= e;
+    };
+
+    if (activeTab === "journal") {
+      dataToExport = journalEntries
+        .filter(entry => filterByDate(entry.entry_date))
+        .map(entry => ({
+          'ნომერი': entry.entry_number || entry.id.substring(0, 8),
+          'თარიღი': new Date(entry.entry_date).toLocaleDateString('ka-GE'),
+          'აღწერა': entry.description,
+          'ტიპი': entry.reference_type,
+          'სტატუსი': entry.status === 'completed' ? 'დასრულებული' : 'პროცესში'
+        }));
+    } else if (activeTab === "invoices") {
+      dataToExport = invoices
+        .filter(inv => filterByDate(inv.created_at))
+        .map(inv => ({
+          'ინვოისის N': inv.invoice_number,
+          'თარიღი': new Date(inv.created_at).toLocaleDateString('ka-GE'),
+          'თანხა': inv.total_amount,
+          'გადასახ.': inv.tax_amount,
+          'სტატუსი': inv.status
+        }));
+    } else if (activeTab === "dashboard") {
+      dataToExport = (dashboardData?.monthlySummary || []).map((m: any) => ({
+        'თვე': m.month,
+        'შემოსავალი': m.revenue,
+        'ნეტო მოგება': m.net_profit
+      }));
+    } else {
+      // Default / mock fallback for other tabs
+      dataToExport = [{ message: "მონაცემები მუშავდება ამ ტაბისთვის..." }];
+    }
+
+    downloadExcel(dataToExport, filename);
+  };
+
   // ── Components ──
   const StatusBadge = ({ status }: { status: string }) => {
     const colors = status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
@@ -236,22 +289,51 @@ export function Accounting() {
           </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/30 rounded-2xl border border-border/50">
-          {accountingTabs.map((tab) => (
+        
+        <div className="flex flex-col gap-3 items-end">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-muted/30 border border-border/50 rounded-xl px-2 py-1 gap-2">
+              <Calendar className="text-muted-foreground w-4 h-4 ml-1" />
+              <input 
+                type="date" 
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+                className="bg-transparent text-xs text-foreground outline-none" 
+              />
+              <span className="text-muted-foreground">-</span>
+              <input 
+                type="date" 
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+                className="bg-transparent text-xs text-foreground outline-none" 
+              />
+            </div>
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
-                  : "text-muted-foreground hover:bg-background/50"
-              )}
+               onClick={handleExportExcel}
+               className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all"
             >
-              {tab.icon}
-              {tab.label}
+               <Download size={14} />
+               Excel ექსპორტი
             </button>
-          ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/30 rounded-2xl border border-border/50">
+            {accountingTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
+                    : "text-muted-foreground hover:bg-background/50"
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

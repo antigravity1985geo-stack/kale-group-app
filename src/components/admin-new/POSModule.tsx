@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ShoppingCart, Plus, Minus, Trash2, Search, CreditCard, Banknote, DollarSign,
-  CheckCircle, X, Loader2, Package, User, Phone, MapPin, Hash
+  CheckCircle, X, Loader2, Package, User, Phone, MapPin, Hash, ScanBarcode
 } from "lucide-react"
 import { cn, isProductOnSale } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
@@ -50,9 +50,49 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
   const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase()
     return products.filter((p) =>
-      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+      p.name.toLowerCase().includes(q) || 
+      p.category.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
     )
   }, [products, searchQuery])
+
+  // ── Global Barcode Scanner Listener ──
+  const [scannedCode, setScannedCode] = useState("")
+  const scanTimeout = useRef<any>(null)
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is currently typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === "Enter") {
+        if (scannedCode.length > 2) {
+          const product = products.find(p => p.barcode === scannedCode || p.id.startsWith(scannedCode));
+          if (product) {
+            // Found product, automatically add to cart
+            setCart((prev) => {
+              const existing = prev.find((c) => c.product.id === product.id)
+              if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, quantity: c.quantity + 1 } : c)
+              return [...prev, { product, quantity: 1 }]
+            });
+          }
+        }
+        setScannedCode("");
+      } else if (e.key.length === 1) {
+        setScannedCode(prev => prev + e.key);
+        
+        if (scanTimeout.current) clearTimeout(scanTimeout.current);
+        scanTimeout.current = setTimeout(() => {
+          setScannedCode("");
+        }, 100); // Scanners type very fast, 100ms is a safe window
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [scannedCode, products]);
 
   const cartTotal = cart.reduce((sum, item) => {
     const price = isProductOnSale(item.product) ? (item.product.sale_price || item.product.price) : item.product.price
@@ -219,15 +259,21 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
       {/* Product Catalog */}
       <div className="lg:col-span-2 space-y-4">
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="პროდუქტის ძიება..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="პროდუქტის ძიება (სახელი, კატეგორია, ბარკოდი)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground font-medium">
+             <ScanBarcode className="h-4 w-4 text-primary" />
+             <span>ბარკოდის სკანერი აქტიურია</span>
+          </div>
         </div>
 
         {/* Product Grid */}

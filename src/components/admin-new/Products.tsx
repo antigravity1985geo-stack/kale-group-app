@@ -1,6 +1,8 @@
-import { useState } from "react"
+import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Pencil, Trash2, Eye, Package, X, Plus, Loader2, ImageIcon, Percent } from "lucide-react"
+import { Pencil, Trash2, Eye, Package, X, Plus, Loader2, ImageIcon, Percent, Printer, ScanBarcode } from "lucide-react"
+import Barcode from "react-barcode"
+import { useReactToPrint } from "react-to-print"
 import { cn, isProductOnSale } from "@/src/lib/utils"
 import type { Product, Category } from "@/src/types/product"
 
@@ -18,6 +20,21 @@ const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
     </div>
   </div>
 );
+
+// ── Printable Label Component ──
+const PrintableBarcode = React.forwardRef(({ product }: { product: Product }, ref: any) => {
+  if (!product) return null;
+  // Fallback to substring of ID if no barcode provided
+  const barcodeValue = product.barcode || product.id.substring(0, 10);
+  return (
+    <div ref={ref} className="bg-white flex flex-col items-center justify-center p-2" style={{ width: '50mm', height: '30mm', color: 'black' }}>
+      <p className="font-bold text-[10px] uppercase text-center w-full truncate leading-tight mt-1">{product.category}</p>
+      <p className="font-bold text-[12px] truncate w-full flex-1 text-center whitespace-normal leading-tight">{product.name}</p>
+      <Barcode value={barcodeValue} width={1.2} height={25} fontSize={10} background="transparent" margin={1} format="CODE128" />
+      <span className="font-black text-sm">₾ {product.price}</span>
+    </div>
+  );
+});
 
 interface ProductsProps {
   products: Product[]
@@ -57,12 +74,27 @@ export function Products({
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
+  
+  const [printingProduct, setPrintingProduct] = useState<Product | null>(null);
+  const printRef = useRef(null);
+
+  const handlePrintFn = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: 'Product_Label',
+  });
+
+  const onPrintClick = (product: Product) => {
+    setPrintingProduct(product);
+    setTimeout(() => {
+      handlePrintFn();
+    }, 100);
+  };
 
   const [formData, setFormData] = useState<Partial<Product>>({
     name: "", category: "", price: 0, images: [], colors: [],
     description: "", material: "", warranty: "", delivery: "", manufacturing: "",
     in_stock: true, is_on_sale: false, discount_percentage: 0, sale_price: 0,
-    sale_start_date: "", sale_end_date: ""
+    sale_start_date: "", sale_end_date: "", barcode: ""
   })
 
   // Reset form when modal opens
@@ -239,6 +271,16 @@ export function Products({
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <motion.button
+                         whileHover={{ scale: 1.1 }}
+                         whileTap={{ scale: 0.9 }}
+                         onClick={() => onPrintClick(product)}
+                         className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 transition-colors hover:bg-emerald-500 hover:text-white"
+                         title="ბარკოდის ბეჭდვა"
+                      >
+                         <Printer className="h-4 w-4" />
+                      </motion.button>
+
                       {canEdit && (
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -306,15 +348,30 @@ export function Products({
               {/* Modal Body */}
               <form onSubmit={handleSubmit} className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
                 {/* Name */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">დასახელება *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name || ""}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">დასახელება *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name || ""}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">ბარკოდი (SKU)</label>
+                    <div className="relative">
+                      <ScanBarcode className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="ავტო გენერაცია ან დასკანერება"
+                        value={formData.barcode || ""}
+                        onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                        className="w-full rounded-xl border border-border bg-background px-4 pl-9 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Category */}
@@ -512,6 +569,10 @@ export function Products({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div style={{ display: 'none' }}>
+        {printingProduct && <PrintableBarcode product={printingProduct} ref={printRef} />}
+      </div>
     </div>
   )
 }
