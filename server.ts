@@ -1082,36 +1082,45 @@ async function setupApp() {
         return res.status(400).json({ error: "Prompt is required." });
       }
 
-      const parts: any[] = [];
+      let finalPrompt = aiPrompt;
       
       if (uploadedRoomImage) {
-        parts.push({ inlineData: { data: uploadedRoomImage.data, mimeType: uploadedRoomImage.mimeType } });
-        parts.push({ text: `Add the following furniture to this room: ${aiPrompt}. Make it look realistic, matching the lighting and perspective of the room.` });
+        // Step 1: Use vision model to analyze the image
+        const visionResponse = await genAI.models.generateContent({
+           model: 'gemini-1.5-pro',
+           contents: [
+             {
+               role: 'user',
+               parts: [
+                 { inlineData: { data: uploadedRoomImage.data, mimeType: uploadedRoomImage.mimeType } },
+                 { text: `Describe this room in 2 short sentences focusing on style, colors, and lighting. We want to place the following furniture in a similar room: ${aiPrompt}. Respond ONLY with a concise text prompt that can be fed to a text-to-image model to generate a photorealistic interior.` }
+               ]
+             }
+           ]
+        });
+        
+        finalPrompt = visionResponse.candidates?.[0]?.content?.parts?.[0]?.text || aiPrompt;
       } else {
-        parts.push({ text: `A high quality furniture photography of: ${aiPrompt}. Photorealistic, interior design, studio lighting.` });
+        finalPrompt = `A high quality furniture photography of: ${aiPrompt}. Photorealistic, interior design, studio lighting.`;
       }
 
-      const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts }
+      // Step 2: Generate Image with Imagen 3
+      const response = await genAI.models.generateImages({
+        model: 'imagen-3.0-generate-001',
+        prompt: finalPrompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/png'
+        }
       });
 
-      let foundImage = false;
-      let generatedImage = null;
-
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          const base64EncodeString = part.inlineData.data;
-          const mimeType = part.inlineData.mimeType || 'image/png';
-          generatedImage = `data:${mimeType};base64,${base64EncodeString}`;
-          foundImage = true;
-          break;
-        }
-      }
+      const base64EncodeString = response.generatedImages?.[0]?.image?.imageBytes;
       
-      if (!foundImage || !generatedImage) {
+      if (!base64EncodeString) {
         return res.status(500).json({ error: "სურათის გენერაცია ვერ მოხერხდა. სცადეთ თავიდან." });
       }
+
+      const generatedImage = `data:image/png;base64,${base64EncodeString}`;
 
       res.json({ generatedImage });
     } catch (error) {
