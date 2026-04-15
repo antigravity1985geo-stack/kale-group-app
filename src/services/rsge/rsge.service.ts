@@ -103,8 +103,7 @@ export async function autoCreateAndSendEInvoice(
         order_items (
           *,
           products ( name, sku )
-        ),
-        profiles ( full_name, personal_number, company_name, company_tin )
+        )
       )
     `)
     .eq('id', invoiceId)
@@ -121,7 +120,10 @@ export async function autoCreateAndSendEInvoice(
   }
 
   const order = invoice.orders;
-  const profile = order.profiles;
+  
+  // EInvoice uses customer fields on the order directly
+  const customerName = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Unknown';
+  const customerTin = order.company_id || order.personal_id || '00000000000';
 
   // 2. Build payload
   const payload: EInvoiceCreatePayload = {
@@ -134,8 +136,8 @@ export async function autoCreateAndSendEInvoice(
       vatPayerStatus: true,
     },
     buyer: {
-      tin: profile?.company_tin ?? profile?.personal_number ?? '00000000000',
-      name: profile?.company_name ?? profile?.full_name ?? 'Unknown',
+      tin: customerTin,
+      name: customerName,
       vatPayerStatus: false,
     },
     items: order.order_items.map((item: any, idx: number) => {
@@ -255,15 +257,20 @@ export async function createWaybillForOrder(
   orderId: string,
   extras: Pick<WaybillCreatePayload, 'startAddress' | 'endAddress' | 'transport'>
 ): Promise<RSGeSyncResult> {
-  const { data: order } = await supabase
+  const { data: order, error } = await supabase
     .from('orders')
-    .select(`*, order_items(*, products(name, sku)), profiles(full_name, company_tin, personal_number, company_name)`)
+    .select(`*, order_items(*, products(name, sku))`)
     .eq('id', orderId)
     .single();
 
-  if (!order) return { type: 'waybill', action: 'CREATE', success: false, message: 'შეკვეთა ვერ მოიძებნა', timestamp: new Date().toISOString() };
+  if (error || !order) {
+    console.error("Order fetch error:", error);
+    return { type: 'waybill', action: 'CREATE', success: false, message: 'შეკვეთა ვერ მოიძებნა', timestamp: new Date().toISOString() };
+  }
 
-  const profile = order.profiles;
+  const customerName = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Unknown';
+  const customerTin = order.company_id || order.personal_id || '00000000000';
+
   const payload: WaybillCreatePayload = {
     waybillType: 'STANDARD',
     activationDate: new Date().toISOString().split('T')[0],
@@ -272,8 +279,8 @@ export async function createWaybillForOrder(
       name: 'KALE GROUP',
     },
     receiver: {
-      tin: profile?.company_tin ?? profile?.personal_number ?? '00000000000',
-      name: profile?.company_name ?? profile?.full_name ?? 'Unknown',
+      tin: customerTin,
+      name: customerName,
     },
     ...extras,
     transport: extras.transport || { transportType: 'HAND' },

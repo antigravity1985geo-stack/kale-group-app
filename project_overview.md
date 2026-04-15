@@ -217,6 +217,7 @@
 | v3.2 | 2026-04-13 | Accounting Dashboard — Sales Channel Analytics (Online/Showroom) |
 | v3.3 | 2026-04-13 | Manufacturing modules — Offcut Logger, Cutting Plans, Waste Analytics |
 | **v4.0** | **2026-04-15** | **სრული არქიტექტურული აუდიტი — 42 ცხრილი, 59 მიგრაცია, Supabase MCP ანალიზი** |
+| v4.1 | 2026-04-15 | Barcode System, Excel Exports (Date Filtered), POS Global Scanner Integration |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 59 (2026-04-03 → 2026-04-13)
