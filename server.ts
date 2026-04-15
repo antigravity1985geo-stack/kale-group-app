@@ -30,7 +30,20 @@ async function setupApp() {
   console.log(`[Server] Starting in ${process.env.NODE_ENV || 'development'} mode...`);
   console.log(`[Server] Directory: ${currentDirName}`);
 
-  app.use(helmet({ contentSecurityPolicy: false })); // Disabled CSP for React hot-reloading in dev
+  // CSP: disabled in development for hot-reloading, enabled in production for XSS protection
+  const isProduction = process.env.NODE_ENV === 'production';
+  app.use(helmet({
+    contentSecurityPolicy: isProduction ? {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.googleapis.com"],
+        connectSrc: ["'self'", "https://*.supabase.co", "https://generativelanguage.googleapis.com", "https://api.bog.ge", "https://api.tbcbank.ge", "https://api.credobank.ge"],
+      },
+    } : false,
+  }));
   const allowedOrigins = [
     'https://kale-group.ge',
     'https://www.kale-group.ge',
@@ -440,9 +453,9 @@ async function setupApp() {
     }
     const signature = req.headers['callback-signature'] || req.headers['x-bog-signature'];
     if (!signature) {
-      console.warn('[BOG Callback] No signature header from IP:', getClientIp(req), '— relying on DB lookup for verification');
-      // Allow through but log — defense-in-depth via verifyPaymentExists in handler
-      return true;
+      // HARD-FAIL: reject unsigned callbacks — prevents forged webhook attacks
+      console.error('[BOG Callback] REJECTED: No signature header from IP:', getClientIp(req));
+      return false;
     }
     try {
       const payload = JSON.stringify(req.body);
@@ -693,6 +706,10 @@ async function setupApp() {
         return res.status(503).json({ error: 'Credo განვადება დროებით მიუწვდომელია' });
       }
 
+      // Ensure HTTPS and non-localhost for Credo Validation (same pattern as BOG)
+      const isDevEnv = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+      const credoBaseUrl = isDevEnv ? 'https://kalegroup.vercel.app' : (process.env.APP_URL || 'https://kale-group.ge').replace(/^http:/, 'https:');
+
       const response = await fetch('https://api.credobank.ge/v1/installments/initiate', {
         method: 'POST',
         headers: {
@@ -708,9 +725,9 @@ async function setupApp() {
             quantity: i.quantity,
             price: i.price_at_purchase || i.price,
           })) || [],
-          callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/pay/credo/callback`,
-          success_url: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
-          fail_url: `${process.env.APP_URL || 'http://localhost:3000'}/checkout?error=payment_failed`,
+          callback_url: `${credoBaseUrl}/api/pay/credo/callback`,
+          success_url: `${credoBaseUrl}/payment/success?orderId=${orderId}`,
+          fail_url: `${credoBaseUrl}/checkout?error=payment_failed`,
         }),
       });
 
