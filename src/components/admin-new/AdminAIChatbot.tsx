@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Command, Loader2, Minimize2, Maximize2, ShieldAlert } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAuth } from '../../../context/AuthContext';
-import { supabase } from '../../../lib/supabase';
+import { useAuth } from '@/src/context/AuthContext';
+import { supabase } from '@/src/lib/supabase';
 
 export function AdminAIChatbot() {
   const { isAuthorized, user } = useAuth();

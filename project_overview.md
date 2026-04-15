@@ -21,6 +21,9 @@
 - **Server:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (`server.ts` — 1685 ხაზი, მოდულარიზაცია საჭირო)
 - **Deployment:** Vercel Serverless Functions (`api/index.ts` — production endpoint)
 - **AI Integration:** [Google Gemini AI API](https://ai.google.dev/) (Backend Proxy — API Key server-side only)
+  - **KALE AI Expert:** ჩატ-ასისტენტი ბაზიდან live პროდუქტის კონტექსტით (ზომები, ფერები, გარანტია, ფასდაკლება, შოურუმი)
+  - **AI Room Designer:** Imagen 3 (`imagen-3.0-generate-001`) + Gemini 1.5 Pro Vision — ორი-ეტაპიანი ოთახის სტილის ანალიზი + ფოტორეალისტური რენდერი
+  - **Admin Intelligence:** Gemini-ზე დაფუძნებული, RBAC-სენსიტიური შიდა ასისტენტი — COO Mode (Admin), CFO Auditor Mode (Accountant)
 - **Payment Gateways:** BOG (Bank of Georgia), TBC (tpay), Credo Bank — Webhook ინტეგრაცია + HMAC-SHA256 ვერიფიკაცია
 - **Auto Accounting Engine:** `processSuccessfulOrder()` — Webhook → Invoice → Journal Entry → COGS → VAT → Inventory
 - **Estonian Tax Engine:** 15%-იანი მოგების გადასახადი დივიდენდების გაცემისას (`Net / 0.85 * 0.15`)
@@ -132,7 +135,9 @@
 - **პრემიუმ კატალოგი:** პროდუქციის ფილტრაცია კატეგორიის, მასალისა და ფერის მიხედვით
 - **ჭკვიანი კალათა (Smart Cart):** Persistent (Local Storage) — ავტომატური ფასდაკლების კალკულაცია
 - **მულტილინგვალური სისტემა:** მყისიერი თარგმნა 3 ენაზე (ქართული, English, Русский)
-- **AI ჩეთ-ასისტენტი:** Gemini-ზე დაფუძნებული ინტერიერ-დიზაინ კონსულტანტი
+- **AI ჩეთ-ასისტენტი (KALE AI Expert):** Gemini 2.5 Flash — Live Inventory Context. იცის პროდუქტის ზომები, ფასდაკლებები, ფერები, გარანტია, შოურუმის ადგილმდებარეობა, განვადების პირობები
+- **AI Room Designer:** ოთახის ფოტოს ატვირთვა → Gemini Vision ანალიზი → Imagen 3 ფოტორეალისტური ავეჯ-რენდერი
+- **Admin Intelligence:** ადმინ-პანელის RBAC AI ასისტენტი — Markdown ცხრილების დახატვა + Live DB სტატისტიკა
 - **Server-Side Price Validation:** Client-side ფასის manipulation-ის პრევენცია
 
 ### 2. Automated Accounting Pipeline
@@ -219,6 +224,9 @@
 | **v4.0** | **2026-04-15** | **სრული არქიტექტურული აუდიტი — 42 ცხრილი, 59 მიგრაცია, Supabase MCP ანალიზი** |
 | v4.1 | 2026-04-15 | Barcode System, Excel Exports (Date Filtered), POS Global Scanner Integration |
 | v4.2 | 2026-04-16 | Accounting Deep Dive: RS.ge profiles fix, RBAC verify, Returns/RMA inventory fix |
+| **v4.3** | **2026-04-16** | **KALE AI Expert გაძლიერება:** Live Product Context (ზომები, ფასდაკლება, ფერები, გარანტია), Company Info, Showroom Details |
+| **v4.4** | **2026-04-16** | **AI Room Designer Fix:** Imagen 3 (`imagen-3.0-generate-001`) + Gemini 1.5 Pro Vision — ოთახის ფოტო ანალიზი + ფოტორეალისტური ავეჯ-რენდერი |
+| **v4.5** | **2026-04-16** | **Admin Intelligence:** RBAC-aware შიდა AI ჩატი Admin Panel-ში — Markdown Tables, COO & Auditor Mode, react-markdown |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 59 (2026-04-03 → 2026-04-13)
@@ -259,7 +267,7 @@
 - [ ] **Phase 7: Full Autonomy** (1-2 თვე)
   - [ ] 7.1 — Multi-Currency (NBG API live rates)
   - [ ] 7.2 — E2E Tests (Playwright)
-  - [ ] 7.3 — AI Accounting Assistant (anomaly detection)
+  - [x] 7.3 — AI Admin Assistant (Admin Intelligence — RBAC ✅ დასრულდა v4.5)
   - [ ] 7.4 — Real-time Notifications (Supabase Realtime)
   - [ ] 7.5 — Rate Limiting (Upstash Redis)
 
