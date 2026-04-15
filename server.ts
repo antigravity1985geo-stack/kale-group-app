@@ -1003,24 +1003,39 @@ async function setupApp() {
       }
 
       // 1. Fetch real-time products for context
-      const { data: products } = await supabase.from('products').select('name, price, category, material, in_stock');
+      const { data: products } = await supabase.from('products').select('name, price, category, material, in_stock, description, dimensions, warranty, delivery, colors, discount_percentage, sale_price, is_on_sale');
       
       const productContext = products && products.length > 0 
-        ? `CURRENT INVENTORY:\n${products.map((p: any) => `- ${p.name} (${p.category}): ${p.price} GEL, Material: ${p.material}, Stock: ${p.in_stock ? 'Yes' : 'No'}`).join('\n')}`
+        ? `CURRENT INVENTORY:\n${products.map((p: any) => {
+            const saleInfo = p.is_on_sale ? `(SALE: ${p.sale_price} GEL / -${p.discount_percentage}%)` : '';
+            const dimensions = p.dimensions ? `Dimensions: ${p.dimensions}` : '';
+            const colors = p.colors && p.colors.length > 0 ? `Colors: ${p.colors.join(', ')}` : '';
+            return `- ${p.name} (${p.category}): ${p.price} GEL ${saleInfo}. Material: ${p.material || 'N/A'}. Stock: ${p.in_stock ? 'Yes' : 'No'}. Warranty: ${p.warranty || 'N/A'}, Delivery: ${p.delivery || 'N/A'}. ${dimensions} | ${colors} | Desc: ${p.description || ''}`;
+          }).join('\n')}`
         : 'Inventory data is currently unavailable.';
 
-      const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი. 
+      // 2. Company & Showroom Info 
+      const COMPANY_INFO = `
+=== კორპორატიული ინფორმაცია და შოურუმი ===
+კომპანია: Kale Group (Premium Furniture)
+მისამართი: თბილისი, წერეთლის 118 (შოურუმი)
+ტელეფონი: +995 555 12 34 56
+ელ. ფოსტა: info@kalegroup.ge
+მომსახურება: ჩვენ გთავაზობთ ავეჯის ონლაინ შეძენას, განვადებას (TBC, BOG, Credo) წამყვან ბანკებთან, უფასო მიწოდებას დედაქალაქის მასშტაბით და ინდივიდუალურ შეკვეთებს.
+`;
+
+      const SYSTEM_PROMPT = `შენ ხარ Kale Group-ის (kalegroup.ge) ექსპერტი AI ასისტენტი, პრესტიჟული და მაღალპროფესიონალური კონსულტანტი და ინტერიერის დიზაინერი.
 
 შენი მახასიათებლები:
-- ტონი: პრესტიჟული, პროფესიონალური, მეგობრული და კრეატიული.
+- ტონი: პრესტიჟული, პროფესიონალური, მეგობრული ეტიკეტით და დამაჯერებელი.
 - ენა: მუდმივად პასუხობ ქართულად (გამართული და დახვეწილი ქართულით), თუმცა გესმის ინგლისური და რუსულიც.
-- მიზანი: მომხმარებელს დაეხმარო ავეჯის შერჩევაში kalegroup.ge-ს არსებული ინვენტარის მიხედვით.
+- მიზანი: მომხმარებელს დაეხმარო ავეჯის იდეალურ შერჩევაში kalegroup.ge-ს წესების და არსებული ინვენტარის მიხედვით.
 
 მკაცრი წესები:
-1. გამოიყენე მხოლოდ ის პროდუქტები და ფასები, რაც ქვევით მოცემულია "LIVE INVENTORY" სექციაში. 
-2. არასოდეს მოიგონო ფასები, პროდუქტები ან ფასდაკლებები. თუ რამე არ გვაქვს ბაზაში (ან მოთხოვნა ბუნდოვანია), შესთავაზე მსგავსი პროდუქტები ბაზიდან ან შესთავაზე მომხმარებელს ჩვენი საიტის კატალოგის დათვალიერება.
-3. წაახალისე მომხმარებელი, რომ შეიძინოს პროდუქცია პირდაპირ kalegroup.ge-ს პლატფორმაზე. მიაწოდე ზუსტი ინფორმაცია ავეჯის მასალაზე და ხარისხზე.
-4. იყავი მოკლე, კონკრეტული და დახვეწილი. ნუ დაწერ ზედმეტად გრძელ ესეებს.`;
+1. გამოიყენე მხოლოდ ის პროდუქტები, ფასები (ფასდაკლებები), ზომები და ფერები რაც ქვევით მოცემულია "LIVE INVENTORY" სექციაში. 
+2. არასოდეს მოიგონო ფასები ან პროდუქტები. თუ მომხმარებლის მიერ მოთხოვნილი ავეჯი მარაგში არ გვაქვს, შესთავაზე მსგავსი პროდუქტები ან ინდივიდუალური შეკვეთის შესაძლებლობა.
+3. წაახალისე მომხმარებელი, რომ გვეწვიონ შოურუმში (გამოიყენე შოურუმის მისამართი). ასევე აუხსენი გარანტიის და მიწოდების დეტალები. 
+4. იყავი მოკლე, კონკრეტული და დახვეწილი. ნუ დაწერ ზედმეტად გრძელ ესეებს თუ არ გთხოვეს დეტალური დიზაინ-კონსულტაცია.`;
 
       const contents = [
         ...history,
@@ -1034,7 +1049,7 @@ async function setupApp() {
         model: "gemini-2.5-flash",
         contents: contents,
         config: {
-          systemInstruction: `${SYSTEM_PROMPT}\n\n=== LIVE INVENTORY ===\n${productContext}\n======================`
+          systemInstruction: `${SYSTEM_PROMPT}\n\n${COMPANY_INFO}\n\n=== LIVE INVENTORY ===\n${productContext}\n======================`
         }
       });
 
