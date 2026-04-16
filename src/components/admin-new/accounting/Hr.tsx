@@ -16,7 +16,11 @@ import {
   TrendingDown,
   RefreshCw,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  Edit,
+  Trash2,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
@@ -58,6 +62,8 @@ export default function Hr() {
   const [expandedRun, setExpandedRun] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [empForm, setEmpForm] = useState({ 
     full_name: '', 
@@ -67,7 +73,8 @@ export default function Hr() {
     gross_salary: '', 
     hire_date: new Date().toISOString().split('T')[0], 
     email: '', 
-    phone: '' 
+    phone: '',
+    photo_url: ''
   });
 
   const [runForm, setRunForm] = useState({ 
@@ -120,24 +127,81 @@ export default function Hr() {
     e.preventDefault();
     try {
       const token = await getToken();
-      const res = await fetch('/api/accounting/employees', {
-        method: 'POST',
+      const url = editId ? `/api/accounting/employees/${editId}` : '/api/accounting/employees';
+      const method = editId ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...empForm, gross_salary: Number(empForm.gross_salary) }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       
-      showToast(`${json.employee.full_name} წარმატებით დაემატა`, 'ok');
+      showToast(`${json.employee.full_name} წარმატებით ${editId ? 'განახლდა' : 'დაემატა'}`, 'ok');
       setShowAddEmp(false);
+      setEditId(null);
       setEmpForm({ 
         full_name: '', personal_id: '', position: '', department: 'ADMIN', 
         gross_salary: '', hire_date: new Date().toISOString().split('T')[0], 
-        email: '', phone: '' 
+        email: '', phone: '', photo_url: ''
       });
       fetchData();
     } catch (err: any) {
       showToast(err.message, 'err');
+    }
+  };
+
+  const handleEditEmployee = (emp: any) => {
+    setEditId(emp.id);
+    setEmpForm({
+      full_name: emp.full_name,
+      personal_id: emp.personal_id || '',
+      position: emp.position,
+      department: emp.department || 'ADMIN',
+      gross_salary: emp.gross_salary,
+      hire_date: emp.hire_date,
+      email: emp.email || '',
+      phone: emp.phone || '',
+      photo_url: emp.photo_url || ''
+    });
+    setShowAddEmp(true);
+  };
+
+  const handleDeleteEmployee = async (id: string, name: string) => {
+    if (!confirm(`ნამდვილად გსურთ ${name}-ს მონაცემების შლა?`)) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/accounting/employees/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+         const json = await res.json();
+         throw new Error(json.error || 'წაშლა ვერ მოხერხდა');
+      }
+      showToast(`${name} წაიშალა წარმატებით`, 'ok');
+      fetchData();
+    } catch (err: any) {
+      showToast(err.message, 'err');
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    setUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `employees/${Date.now()}_${Math.random()}.${fileExt}`;
+      const { data, error } = await supabase.storage.from("product-images").upload(fileName, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+      setEmpForm(f => ({ ...f, photo_url: urlData.publicUrl }));
+    } catch (err: any) {
+      showToast("ფოტოს ატვირთვა ვერ მოხერხდა", 'err');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -199,7 +263,15 @@ export default function Hr() {
         <div className="flex items-center gap-2">
           {activeTab === 'employees' ? (
             <button 
-              onClick={() => setShowAddEmp(true)}
+              onClick={() => {
+                setEditId(null);
+                setEmpForm({ 
+                  full_name: '', personal_id: '', position: '', department: 'ADMIN', 
+                  gross_salary: '', hire_date: new Date().toISOString().split('T')[0], 
+                  email: '', phone: '', photo_url: '' 
+                });
+                setShowAddEmp(true);
+              }}
               className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
             >
               <Plus className="h-4 w-4" /> თანამშრომლის დამატება
@@ -304,23 +376,31 @@ export default function Hr() {
                       "absolute top-0 right-0 w-1 h-full",
                       emp.status === 'ACTIVE' ? "bg-emerald-500" : "bg-muted"
                     )} />
-                    <div className="flex items-center gap-4 mb-4">
-                      <img 
-                        src={emp.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name)}&background=random&color=fff&size=128&font-size=0.33&bold=true`}
-                        alt={emp.full_name}
-                        className="h-14 w-14 rounded-2xl object-cover shadow-md border-2 border-white/10 group-hover:scale-110 transition-transform duration-300" 
-                      />
+                    <div className="flex items-center gap-4 mb-4 relative">
+                      <div className="relative group/avatar">
+                        <img 
+                          src={emp.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name)}&background=random&color=fff&size=128&font-size=0.33&bold=true`}
+                          alt={emp.full_name}
+                          className="h-14 w-14 rounded-2xl object-cover shadow-md border-2 border-white/10 group-hover:scale-105 transition-transform duration-300" 
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-foreground truncate group-hover:text-primary transition-colors">{emp.full_name}</h4>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Briefcase className="h-3 w-3" /> {emp.position}
                         </p>
                       </div>
-                      <div className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-black tracking-tighter border",
-                        emp.status === 'ACTIVE' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-muted text-muted-foreground"
-                      )}>
-                        {emp.status === 'ACTIVE' ? 'ACTIVE' : 'LEFT'}
+                      <div className="flex flex-col items-end gap-2 text-[10px]">
+                        <div className={cn(
+                          "rounded-full px-2 py-0.5 font-black tracking-tighter border",
+                          emp.status === 'ACTIVE' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-muted text-muted-foreground"
+                        )}>
+                          {emp.status === 'ACTIVE' ? 'ACTIVE' : 'LEFT'}
+                        </div>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button onClick={(e) => { e.stopPropagation(); handleEditEmployee(emp); }} className="text-primary hover:scale-110 transition-transform"><Edit className="h-4 w-4" /></button>
+                           <button onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id, emp.full_name); }} className="text-rose-500 hover:scale-110 transition-transform"><Trash2 className="h-4 w-4" /></button>
+                        </div>
                       </div>
                     </div>
 
@@ -459,8 +539,8 @@ export default function Hr() {
             >
               <div className="px-8 py-6 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-foreground">ახალი თანამშრომელი</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">შეავსეთ ძირითადი მონაცემები ბაზაში დასამატებლად</p>
+                  <h3 className="text-xl font-bold text-foreground">{editId ? 'თანამშრომლის რედაქტირება' : 'ახალი თანამშრომელი'}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{editId ? 'შეცვალეთ თანამშრომლის მონაცემები' : 'შეავსეთ ძირითადი მონაცემები ბაზაში დასამატებლად'}</p>
                 </div>
                 <button onClick={() => setShowAddEmp(false)} className="p-2 rounded-xl hover:bg-muted transition-colors">
                    <X className="h-5 w-5 text-muted-foreground" />
@@ -468,6 +548,29 @@ export default function Hr() {
               </div>
 
               <form onSubmit={handleAddEmployee} className="p-8 space-y-6">
+                 
+                 <div className="flex items-center gap-4 border border-border/50 bg-muted/10 p-4 rounded-xl">
+                    <label className="cursor-pointer relative group block shrink-0">
+                       <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} className="hidden" />
+                       <div className="h-16 w-16 rounded-2xl bg-muted overflow-hidden flex items-center justify-center border-2 border-border/50 group-hover:border-primary/50 transition-colors">
+                          {empForm.photo_url ? (
+                             <img src={empForm.photo_url} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                             <Camera className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                          )}
+                          {uploadingPhoto && (
+                            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            </div>
+                          )}
+                       </div>
+                    </label>
+                    <div className="text-xs text-muted-foreground">
+                        <p className="font-bold text-foreground">პროფილის სურათი</p>
+                        <p>დააკლიკეთ ფოტოს ასატვირთად</p>
+                    </div>
+                 </div>
+
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {[
                       { key: 'full_name', label: 'სახელი და გვარი *', type: 'text', req: true },
@@ -511,9 +614,10 @@ export default function Hr() {
                     </button>
                     <button 
                       type="submit"
-                      className="px-8 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+                      disabled={uploadingPhoto}
+                      className="px-8 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-50"
                     >
-                      დამატება
+                      {editId ? 'შენახვა' : 'დამატება'}
                     </button>
                  </div>
               </form>

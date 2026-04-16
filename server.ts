@@ -1888,6 +1888,28 @@ ${JSON.stringify((products || []).map((p: any) => ({
     }
   });
 
+  app.put('/api/accounting/employees/:id', requireAccounting, async (req: any, res) => {
+    try {
+      if (req.userProfile?.role !== 'admin') return res.status(403).json({ error: 'მხოლოდ ადმინი არედაქტირებს თანამშრომლებს' });
+      const { data, error } = await supabaseAdmin.from('employees').update(req.body).eq('id', req.params.id).select().single();
+      if (error) throw error;
+      res.json({ success: true, employee: data });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/accounting/employees/:id', requireAccounting, async (req: any, res) => {
+    try {
+      if (req.userProfile?.role !== 'admin') return res.status(403).json({ error: 'მხოლოდ ადმინი შლის თანამშრომლებს' });
+      const { error } = await supabaseAdmin.from('employees').delete().eq('id', req.params.id);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get('/api/accounting/payroll/runs', requireAccounting, async (req: any, res) => {
     try {
       const { data, error } = await supabaseAdmin
