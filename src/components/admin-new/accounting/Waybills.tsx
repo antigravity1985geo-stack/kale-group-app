@@ -85,6 +85,11 @@ export default function Waybills() {
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [isDrafting, setIsDrafting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  
+  // Pagination Limits
+  const [waybillsLimit, setWaybillsLimit] = useState(50);
+  const [ordersLimit, setOrdersLimit] = useState(50);
+  const [totalWaybills, setTotalWaybills] = useState(0);
 
   // Safe fetch: never crashes on HTML error responses
   const safeFetch = async (url: string, options?: RequestInit) => {
@@ -104,34 +109,32 @@ export default function Waybills() {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       
       // 1. Fetch Outgoing Waybills
-      let data: any = { waybills: [] };
+      let data: any = { waybills: [], total: 0 };
       try {
-        const res = await fetch('/api/rs-ge/waybills', {
+        data = await safeFetch(`/api/rs-ge/waybills?limit=${waybillsLimit}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-           const json = await res.json();
-           if (json.waybills) {
-             data = json;
-             setWaybills(json.waybills);
-           }
+        if (data.waybills) {
+          setWaybills(data.waybills);
+          setTotalWaybills(data.total || data.waybills.length);
         }
       } catch (e) {
         console.warn('API /api/rs-ge/waybills skipped or failed');
       }
 
-      // 2. Fetch Orders without Waybills
+      // 2. Fetch Orders without SENT waybills
       const { data: ords } = await supabase
         .from('orders')
         .select('id, customer_first_name, customer_last_name, total_price, customer_address, customer_city, created_at')
         .in('status', ['confirmed', 'shipped', 'delivered', 'completed'])
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(ordersLimit);
         
       if (ords) {
         const waybillList = data?.waybills || [];
-        const waybillOrderIds = waybillList.map((w: any) => w.order_id);
-        const pendingOrders = ords.filter(o => !waybillOrderIds.includes(o.id));
+        // Only hide orders that are already fully registered (SENT)
+        const sentWaybillOrderIds = waybillList.filter((w: any) => w.status === 'SENT').map((w: any) => w.order_id);
+        const pendingOrders = ords.filter(o => !sentWaybillOrderIds.includes(o.id));
         setOrders(pendingOrders);
       }
 
@@ -147,7 +150,7 @@ export default function Waybills() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [waybillsLimit, ordersLimit]);
 
   useEffect(() => {
     fetchData();
@@ -335,7 +338,9 @@ export default function Waybills() {
                     <p className="text-sm text-muted-foreground italic">ყველა შეკვეთას აქვს ზედნადები</p>
                   </div>
                 ) : (
-                  orders.map(o => (
+                  orders.map(o => {
+                    const hasDraft = waybills.some(w => w.status === 'DRAFT' && w.order_id === o.id);
+                    return (
                     <Card key={o.id} className="p-4 group hover:border-primary/30 transition-all">
                       <div className="flex items-center justify-between">
                          <div className="min-w-0 flex-1">
@@ -350,18 +355,36 @@ export default function Waybills() {
                          </div>
                          <div className="text-right ml-4">
                             <p className="text-lg font-black text-foreground font-mono mb-2">₾ {Number(o.total_price).toLocaleString()}</p>
-                            <button 
-                              onClick={() => createDraft(o)}
-                              disabled={isDrafting === o.id}
-                              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/10 hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2 justify-center"
-                            >
-                              {isDrafting === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                              დრაფტი
-                            </button>
+                            {hasDraft ? (
+                              <button 
+                                disabled
+                                className="w-full py-2 px-4 bg-emerald-500/10 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-none border border-emerald-500/20 opacity-80 cursor-default flex items-center gap-2 justify-center"
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                                დრაფტი მზადაა
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => createDraft(o)}
+                                disabled={isDrafting === o.id}
+                                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/10 hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2 justify-center"
+                              >
+                                {isDrafting === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                                დრაფტი
+                              </button>
+                            )}
                          </div>
                       </div>
                     </Card>
-                  ))
+                  )})
+                )}
+                {orders.length >= ordersLimit && (
+                  <button 
+                    onClick={() => setOrdersLimit(l => l + 50)} 
+                    className="w-full py-3 bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-bold rounded-xl transition-all"
+                  >
+                    მეტის ჩატვირთვა
+                  </button>
                 )}
               </div>
             </div>
@@ -447,6 +470,14 @@ export default function Waybills() {
                       </div>
                     </Card>
                   ))
+                )}
+                {waybills.length < totalWaybills && (
+                  <button 
+                    onClick={() => setWaybillsLimit(l => l + 50)} 
+                    className="w-full py-3 bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-bold rounded-xl transition-all"
+                  >
+                    მეტის ჩატვირთვა ({totalWaybills - waybills.length} დარჩენილი)
+                  </button>
                 )}
               </div>
             </div>

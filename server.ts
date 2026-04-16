@@ -1645,7 +1645,11 @@ ${JSON.stringify((products || []).map((p: any) => ({
   // GET /api/rs-ge/waybills — List all outgoing waybills with order data
   app.get('/api/rs-ge/waybills', requireAccountingRead, async (req: any, res) => {
     try {
-      const { data, error } = await supabaseAdmin
+      const page = Math.max(0, Number(req.query.page) || 0);
+      const limit = Math.min(Number(req.query.limit) || 50, 100);
+      const offset = page * limit;
+
+      const { data, count, error } = await supabaseAdmin
         .from('rs_waybills')
         .select(`
           *,
@@ -1654,12 +1658,12 @@ ${JSON.stringify((products || []).map((p: any) => ({
             customer_last_name,
             total_price
           )
-        `)
+        `, { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(100);
+        .range(offset, offset + limit - 1);
 
       if (error) throw error;
-      res.json({ waybills: data || [] });
+      res.json({ waybills: data || [], total: count || 0 });
     } catch (err: any) {
       console.error('[RS.ge] GET waybills error:', err);
       res.status(500).json({ error: err.message || 'ზედნადებების მიღება ვერ მოხერხდა' });
