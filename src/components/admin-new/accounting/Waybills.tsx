@@ -86,6 +86,18 @@ export default function Waybills() {
   const [isDrafting, setIsDrafting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
 
+  // Safe fetch: never crashes on HTML error responses
+  const safeFetch = async (url: string, options?: RequestInit) => {
+    const res = await fetch(url, options);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Endpoint ${url} returned non-JSON response (${res.status}). Check server logs.`);
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+    return data;
+  };
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -150,7 +162,7 @@ export default function Waybills() {
     setIsDrafting(order.id);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch('/api/rs-ge/waybill/draft', {
+      await safeFetch('/api/rs-ge/waybill/draft', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,13 +173,10 @@ export default function Waybills() {
           end_address: `${order.customer_city || ''}, ${order.customer_address || ''}`.trim(),
         })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
       showToast('დრაფტი წარმატებით შეიქმნა', 'ok');
       fetchData();
     } catch (err: any) {
-      showToast(err.message, 'err');
+      showToast(err.message || 'დრაფტის შექმნა ვერ მოხერხდა', 'err');
     } finally {
       setIsDrafting(null);
     }
@@ -177,7 +186,7 @@ export default function Waybills() {
     setIsSyncing(id);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch('/api/rs-ge/waybill/send', {
+      const data = await safeFetch('/api/rs-ge/waybill/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,13 +194,10 @@ export default function Waybills() {
         },
         body: JSON.stringify({ waybill_id: id })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
-      showToast(`RS.ge ზედნადები დარეგისტრირდა: ${data.waybill.rs_waybill_id}`, 'ok');
+      showToast(`RS.ge ზედნადები დარეგისტრირდა: ${data.waybill?.rs_waybill_id || id}`, 'ok');
       fetchData();
     } catch (err: any) {
-      showToast(err.message, 'err');
+      showToast(err.message || 'გაგზავნა ვერ მოხერხდა', 'err');
     } finally {
       setIsSyncing(null);
     }
@@ -200,7 +206,7 @@ export default function Waybills() {
   const acceptIncoming = async (id: string) => {
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch('/api/rs-ge/waybill/incoming/accept', {
+      await safeFetch('/api/rs-ge/waybill/incoming/accept', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,13 +214,10 @@ export default function Waybills() {
         },
         body: JSON.stringify({ id })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
       showToast('მიღება წარმატებით დადასტურდა', 'ok');
       fetchData();
     } catch (err: any) {
-      showToast(err.message, 'err');
+      showToast(err.message || 'მიღება ვერ მოხერხდა', 'err');
     }
   };
 

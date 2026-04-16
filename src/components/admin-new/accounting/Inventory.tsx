@@ -78,22 +78,32 @@ export default function Inventory() {
 
   const getToken = async () => (await supabase.auth.getSession()).data.session?.access_token || '';
 
+  // Safe fetch: never crashes on HTML error responses (e.g. Vercel 404)
+  const safeFetch = async (url: string, options?: RequestInit) => {
+    const res = await fetch(url, options);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Endpoint ${url} returned non-JSON (${res.status}). Check server.`);
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+    return data;
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const token = await getToken();
       
       if (activeTab === 'levels') {
-        const res = await fetch('/api/accounting/inventory/levels', { 
-          headers: { Authorization: `Bearer ${token}` } 
+        const json = await safeFetch('/api/accounting/inventory/levels', {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        const json = await res.json();
         setLevels(json.levels || []);
       } else if (activeTab === 'transactions') {
-        const res = await fetch('/api/accounting/inventory/transactions?limit=100', { 
-          headers: { Authorization: `Bearer ${token}` } 
+        const json = await safeFetch('/api/accounting/inventory/transactions?limit=100', {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        const json = await res.json();
         setTransactions(json.transactions || []);
       } else {
         const { data } = await supabase.from('products').select('id, name').order('name');
@@ -121,18 +131,15 @@ export default function Inventory() {
 
     try {
       const token = await getToken();
-      const res = await fetch('/api/accounting/inventory/adjustment', {
+      await safeFetch('/api/accounting/inventory/adjustment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ 
-          ...adjForm, 
-          quantity: Number(adjForm.quantity), 
-          unit_cost: adjForm.unit_cost ? Number(adjForm.unit_cost) : null 
+        body: JSON.stringify({
+          ...adjForm,
+          quantity: Number(adjForm.quantity),
+          unit_cost: adjForm.unit_cost ? Number(adjForm.unit_cost) : null
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      
       showToast('კორექტირება წარმატებით განხორციელდა', 'ok');
       setAdjForm({ product_id: '', quantity: '', type: 'ADJUSTMENT_IN', unit_cost: '', notes: '' });
       setActiveTab('levels');
