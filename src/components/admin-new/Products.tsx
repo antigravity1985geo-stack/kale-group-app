@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Pencil, Trash2, Eye, Package, X, Plus, Loader2, ImageIcon, Percent, Printer, ScanBarcode } from "lucide-react"
+import { Pencil, Trash2, Eye, Package, X, Plus, Loader2, ImageIcon, Percent, Printer, ScanBarcode, Globe } from "lucide-react"
 import Barcode from "react-barcode"
 import { useReactToPrint } from "react-to-print"
 import { cn, isProductOnSale } from "@/src/lib/utils"
-import type { Product, Category } from "@/src/types/product"
+import type { Product, Category, ProductTranslations } from "@/src/types/product"
 
 const KpiCard = ({ icon: Icon, title, value, subValue, color }: any) => (
   <div className={cn("rounded-2xl p-6 text-white bg-gradient-to-br shadow-lg", color)}>
@@ -74,6 +74,7 @@ export function Products({
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [translationLang, setTranslationLang] = useState<'en' | 'ru'>('en')
   
   const [printingProduct, setPrintingProduct] = useState<Product | null>(null);
   const printRef = useRef(null);
@@ -94,7 +95,7 @@ export function Products({
     name: "", category: "", price: 0, images: [], colors: [],
     description: "", material: "", warranty: "", delivery: "", manufacturing: "",
     in_stock: true, is_on_sale: false, discount_percentage: 0, sale_price: 0,
-    sale_start_date: "", sale_end_date: "", barcode: ""
+    sale_start_date: "", sale_end_date: "", barcode: "", translations: {}
   })
 
   // Reset form when modal opens
@@ -104,13 +105,14 @@ export function Products({
         ...product,
         colors: product.colors || [],
         in_stock: product.in_stock ?? true,
+        translations: product.translations || {}
       })
     } else {
       setFormData({
         name: "", category: "", price: 0, images: [], colors: [],
         description: "", material: "", warranty: "", delivery: "", manufacturing: "",
         in_stock: true, is_on_sale: false, discount_percentage: 0, sale_price: 0,
-        sale_start_date: "", sale_end_date: ""
+        sale_start_date: "", sale_end_date: "", translations: {}
       })
     }
   }
@@ -164,7 +166,7 @@ export function Products({
         name: "", category: "", price: 0, images: [], colors: [],
         description: "", material: "", warranty: "", delivery: "", manufacturing: "",
         in_stock: true, is_on_sale: false, discount_percentage: 0, sale_price: 0,
-        sale_start_date: "", sale_end_date: ""
+        sale_start_date: "", sale_end_date: "", translations: {}
       })
     }
   }
@@ -443,15 +445,80 @@ export function Products({
                   </div>
                 </div>
 
-                {/* Description */}
+                {/* Description (Georgian) */}
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">აღწერა</label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">აღწერა (ქართული)</label>
                   <textarea
                     rows={3}
                     value={formData.description || ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                   />
+                </div>
+
+                {/* Multilingual Translations */}
+                <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">თარგმანები (EN / RU)</span>
+                  </div>
+                  {/* Lang Tabs */}
+                  <div className="flex gap-2 mb-3">
+                    {(['en', 'ru'] as const).map(lang => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setTranslationLang(lang)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+                          translationLang === lang
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {lang === 'en' ? '🇬🇧 English' : '🇷🇺 Русский'}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Name translation */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">დასახელება ({translationLang.toUpperCase()})</label>
+                    <input
+                      type="text"
+                      value={(formData.translations as ProductTranslations)?.[translationLang]?.name || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        translations: {
+                          ...(formData.translations || {}),
+                          [translationLang]: {
+                            ...((formData.translations as ProductTranslations)?.[translationLang] || {}),
+                            name: e.target.value
+                          }
+                        }
+                      })}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder={translationLang === 'en' ? 'e.g. Modern Kitchen Set' : 'напр. Современный кухонный гарнитур'}
+                    />
+                  </div>
+                  {/* Description translation */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">აღწერა ({translationLang.toUpperCase()})</label>
+                    <textarea
+                      rows={2}
+                      value={(formData.translations as ProductTranslations)?.[translationLang]?.description || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        translations: {
+                          ...(formData.translations || {}),
+                          [translationLang]: {
+                            ...((formData.translations as ProductTranslations)?.[translationLang] || {}),
+                            description: e.target.value
+                          }
+                        }
+                      })}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                      placeholder={translationLang === 'en' ? 'English description...' : 'Описание на русском...'}
+                    />
+                  </div>
                 </div>
 
                 {/* Material / Warranty / Delivery */}

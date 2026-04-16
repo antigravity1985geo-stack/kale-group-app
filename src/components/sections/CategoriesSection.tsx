@@ -4,9 +4,10 @@ import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategories } from '../../hooks/useSupabaseData';
 import type { Category } from '../../types/product';
+import { getCategoryName } from '../../utils/i18n';
 
 // Reusable 3D Coverflow Component
-const CoverflowCarousel = ({ categories, onSelect, t }: { categories: Category[], onSelect: (name: string) => void, t: any }) => {
+const CoverflowCarousel = ({ categories, onSelect, t, lang }: { categories: Category[], onSelect: (name: string) => void, t: any, lang: string }) => {
   const [activeIndex, setActiveIndex] = useState(2 % categories.length || 0); // Start somewhere in middle
   const [isHovered, setIsHovered] = useState(false);
 
@@ -136,7 +137,7 @@ const CoverflowCarousel = ({ categories, onSelect, t }: { categories: Category[]
                     layoutId={`category-title-${cat.name}`}
                     className={`font-serif text-white mb-2 transition-all duration-300 ${isActive ? 'text-2xl md:text-3xl' : 'text-xl'}`}
                   >
-                    {cat.name}
+                    {getCategoryName(cat, lang)}
                   </motion.h3>
                   
                   {isActive && (
@@ -165,7 +166,8 @@ interface CategoriesSectionProps {
 }
 
 export default function CategoriesSection({ onCategorySelected }: CategoriesSectionProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const { categories, loading } = useCategories();
 
   return (
@@ -194,7 +196,8 @@ export default function CategoriesSection({ onCategorySelected }: CategoriesSect
           <CoverflowCarousel 
             categories={categories} 
             onSelect={onCategorySelected} 
-            t={t} 
+            t={t}
+            lang={lang}
           />
         )}
       </div>

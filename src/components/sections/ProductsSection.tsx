@@ -10,6 +10,7 @@ import type { Product } from '../../types/product';
 import { useTranslation } from 'react-i18next';
 import ProtectedImage from '../ui/ProtectedImage';
 import { isProductOnActiveSale } from '../../utils/promotions';
+import { getProductName, getCategoryName } from '../../utils/i18n';
 
 export const Countdown = ({ endDate }: { endDate: string }) => {
   const [timeLeft, setTimeLeft] = React.useState('');
@@ -46,7 +47,8 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { products, loading } = useProducts(activeCategory);
   const { categories } = useCategories();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language; // 'ka' | 'en' | 'ru'
   
   // State for controls
   const [sortBy, setSortBy] = React.useState<'default' | 'price-asc' | 'price-desc'>('default');
@@ -66,9 +68,14 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
     setCurrentPage(1);
   }, [activeCategory, sortBy, itemsPerPage, priceRange, onlyOnSale, onlyInStock, selectedMaterial, selectedColor]);
 
-  const filterCategories = [t('products.all'), ...categories.map(c => c.name)];
+  // filterCategories: internal names (Georgian, used for DB filtering)
+  // filterCategoriesDisplay: localized labels for UI
+  const filterCategoryItems = categories; // full category objects
   const materials = [t('products.all'), ...Array.from(new Set(products.map(p => p.material).filter(Boolean))) as string[]];
   const colors = [t('products.all'), ...Array.from(new Set(products.flatMap(p => p.colors || []).filter(Boolean))) as string[]];
+
+  // Whether the current activeCategory means "show all"
+  const isAllCategory = ['ყველა', 'All', 'Все'].includes(activeCategory);
 
   // Derived filtered products
   const filteredProducts = React.useMemo(() => {
@@ -141,17 +148,30 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
           <h2 className="text-4xl md:text-5xl font-serif text-brand-900 mb-10">{t('products.title')} <span className="italic text-brand-400 font-light">{t('products.titleHighlight')}</span></h2>
           
           <div className="flex flex-wrap justify-center gap-3">
-            {filterCategories.map(c => (
-              <button 
-                key={c} 
-                onClick={() => setActiveCategory(c)} 
+            {/* "All" button */}
+            <button
+              key="all"
+              onClick={() => setActiveCategory('ყველა')}
+              className={`px-6 py-2.5 md:px-8 md:py-3 rounded-full text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all ${
+                isAllCategory
+                  ? 'bg-brand-900 text-white shadow-xl scale-105'
+                  : 'bg-brand-50 text-brand-400 hover:bg-brand-100'
+              }`}
+            >
+              {t('products.all')}
+            </button>
+            {/* Category buttons — internal key is Georgian name, display is localized */}
+            {filterCategoryItems.map(cat => (
+              <button
+                key={cat.name}
+                onClick={() => setActiveCategory(cat.name)}
                 className={`px-6 py-2.5 md:px-8 md:py-3 rounded-full text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all ${
-                  activeCategory === c 
-                    ? 'bg-brand-900 text-white shadow-xl scale-105' 
+                  activeCategory === cat.name
+                    ? 'bg-brand-900 text-white shadow-xl scale-105'
                     : 'bg-brand-50 text-brand-400 hover:bg-brand-100'
                 }`}
               >
-                {c}
+                {getCategoryName(cat, lang)}
               </button>
             ))}
           </div>
@@ -268,7 +288,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                 <ListFilter size={48} className="text-brand-100 mb-4" />
                 <p className="text-brand-400 text-lg font-serif">{t('product.notFound')}</p>
                 <button 
-                  onClick={() => { setOnlyOnSale(false); setOnlyInStock(false); setPriceRange([0, 10000]); setSortBy('default'); setActiveCategory(t('products.all')); }}
+                  onClick={() => { setOnlyOnSale(false); setOnlyInStock(false); setPriceRange([0, 10000]); setSortBy('default'); setActiveCategory('ყველა'); }}
                   className="mt-4 text-xs font-bold text-gold-500 border-b border-gold-500 uppercase tracking-widest"
                 >
                   {t('products.all')}
@@ -345,7 +365,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                               className="text-sm md:text-xl font-serif text-brand-900 truncate hover:text-gold-500 transition-colors cursor-pointer"
                               onClick={() => navigate(`/product/${product.id}`)}
                             >
-                              {product.name}
+                              {getProductName(product, lang)}
                             </h3>
                             <div className="flex items-center gap-2 mt-1 md:mt-2 overflow-hidden">
                               <p className="text-[8px] md:text-[10px] font-bold tracking-widest text-brand-400 uppercase truncate">{product.category}</p>

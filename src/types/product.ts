@@ -1,3 +1,15 @@
+export interface ProductTranslations {
+  en?: { name?: string; description?: string };
+  ru?: { name?: string; description?: string };
+  [key: string]: { name?: string; description?: string } | undefined;
+}
+
+export interface CategoryTranslations {
+  en?: string;
+  ru?: string;
+  [key: string]: string | undefined;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -19,6 +31,7 @@ export interface Product {
   sale_end_date?: string;
   barcode?: string;
   created_at?: string;
+  translations?: ProductTranslations;
 }
 
 export interface Category {
@@ -26,6 +39,7 @@ export interface Category {
   name: string;
   image: string;
   created_at?: string;
+  translations?: CategoryTranslations;
 }
 
 export interface CartItem {

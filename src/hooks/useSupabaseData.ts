@@ -49,7 +49,8 @@ const PRODUCT_FIELDS = [
   'warranty', 'delivery', 'manufacturing',
   'created_at',
   'is_on_sale', 'discount_percentage', 'sale_price',
-  'sale_start_date', 'sale_end_date'
+  'sale_start_date', 'sale_end_date',
+  'translations'
 ].join(', ');
 
 // ─────────────────────────────────────────────
@@ -62,7 +63,7 @@ export function useProducts(activeCategory?: string) {
         .from('products')
         .select(PRODUCT_FIELDS)
         .order('created_at', { ascending: false });
-      if (activeCategory && activeCategory !== 'ყველა') {
+      if (activeCategory && !['ყველა', 'All', 'Все'].includes(activeCategory)) {
         query = query.eq('category', activeCategory);
       }
       return query;
@@ -83,7 +84,7 @@ export function useProducts(activeCategory?: string) {
 // ─────────────────────────────────────────────
 // 🗂️ useCategories
 // ─────────────────────────────────────────────
-const CATEGORY_FIELDS = ['id', 'name', 'image', 'created_at'].join(', ');
+const CATEGORY_FIELDS = ['id', 'name', 'image', 'created_at', 'translations'].join(', ');
 
 export function useCategories() {
   const { data, loading, error, refetch } = useSupabaseQuery<Category[]>(

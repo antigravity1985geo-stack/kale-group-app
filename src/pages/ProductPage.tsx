@@ -10,11 +10,13 @@ import { useTranslation } from 'react-i18next';
 import { Countdown } from '../components/sections/ProductsSection';
 import ProtectedImage from '../components/ui/ProtectedImage';
 import { isProductOnActiveSale } from '../utils/promotions';
+import { getProductName, getProductDescription } from '../utils/i18n';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const { product, loading, error } = useProduct(id);
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -58,8 +60,8 @@ export default function ProductPage() {
   return (
     <>
       <Helmet>
-        <title>{product.name} | Kale Group</title>
-        <meta name="description" content={product.description || `${product.name} - ${t('hero.badge')}`} />
+        <title>{getProductName(product, lang)} | Kale Group</title>
+        <meta name="description" content={getProductDescription(product, lang) || `${product.name} - ${t('hero.badge')}`} />
       </Helmet>
       
       <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex flex-col">
@@ -139,7 +141,7 @@ export default function ProductPage() {
           {/* Details Section */}
           <div className="w-full lg:w-1/2 flex flex-col">
             <p className="text-xs tracking-[0.4em] uppercase font-bold mb-4" style={{color:'#c9a227'}}>{product.category}</p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-900 mb-6 leading-tight">{product.name}</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-900 mb-6 leading-tight">{getProductName(product, lang)}</h1>
             
             <div className="mb-8">
               {isProductOnActiveSale(product) && product.sale_price ? (
@@ -153,7 +155,7 @@ export default function ProductPage() {
             </div>
             
             <p className="text-brand-600 leading-relaxed text-lg mb-10">
-              {product.description || t('product.notFoundDesc')}
+              {getProductDescription(product, lang) || t('product.notFoundDesc')}
             </p>
 
             {/* Product Specifications with Glassmorphism & Animations */}
@@ -258,7 +260,7 @@ export default function ProductPage() {
                     ) : null}
                   </div>
                   <div>
-                    <h3 className="text-lg font-serif text-brand-900 group-hover:text-gold-500 transition-colors truncate">{relProduct.name}</h3>
+                    <h3 className="text-lg font-serif text-brand-900 group-hover:text-gold-500 transition-colors truncate">{getProductName(relProduct, lang)}</h3>
                     <p className="text-[10px] font-bold tracking-widest text-brand-400 uppercase mt-1 mb-2 truncate">{relProduct.category}</p>
                     <div className="flex items-center justify-between">
                       {isProductOnActiveSale(relProduct) && relProduct.sale_price ? (

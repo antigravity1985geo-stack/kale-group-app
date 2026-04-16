@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Pencil, Trash2, FolderOpen, X, Loader2, Plus, Package } from "lucide-react"
-import type { Product, Category } from "@/src/types/product"
+import { Pencil, Trash2, FolderOpen, X, Loader2, Plus, Package, Globe } from "lucide-react"
+import type { Product, Category, CategoryTranslations } from "@/src/types/product"
 
 interface CategoriesProps {
   categories: Category[]
@@ -30,13 +30,14 @@ export function Categories({
   setIsModalOpen,
   editingCategory,
 }: CategoriesProps) {
-  const [formData, setFormData] = useState<Partial<Category>>({ name: "", image: "" })
+  const [formData, setFormData] = useState<Partial<Category>>({ name: "", image: "", translations: {} })
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [translationLang, setTranslationLang] = useState<'en' | 'ru'>('en')
 
   // Sync form when editingCategory changes
   if (isModalOpen && editingCategory && formData.name === "" && editingCategory.name !== "") {
-    setFormData({ name: editingCategory.name, image: editingCategory.image })
+    setFormData({ name: editingCategory.name, image: editingCategory.image, translations: editingCategory.translations || {} })
   }
 
   const getProductCount = (categoryName: string) => {
@@ -61,7 +62,7 @@ export function Categories({
     const success = await onSave(formData, !!editingCategory, editingCategory?.id, oldName)
     setIsSaving(false)
     if (success) {
-      setFormData({ name: "", image: "" })
+      setFormData({ name: "", image: "", translations: {} })
     }
   }
 
@@ -157,9 +158,9 @@ export function Categories({
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                {/* Name */}
+                {/* Georgian Name (main/internal key) */}
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">კატეგორიის სახელი *</label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">კატეგორიის სახელი (ქართული) *</label>
                   <input
                     type="text"
                     required
@@ -167,6 +168,41 @@ export function Categories({
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="მაგ: სამზარეულოს ავეჯი"
+                  />
+                </div>
+
+                {/* Translations Section */}
+                <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">თარგმანები</span>
+                  </div>
+                  {/* Lang Tabs */}
+                  <div className="flex gap-2 mb-3">
+                    {(['en', 'ru'] as const).map(lang => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setTranslationLang(lang)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+                          translationLang === lang
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {lang === 'en' ? '🇬🇧 English' : '🇷🇺 Русский'}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={(formData.translations as CategoryTranslations)?.[translationLang] || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      translations: { ...(formData.translations || {}), [translationLang]: e.target.value }
+                    })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder={translationLang === 'en' ? 'e.g. Kitchen Furniture' : 'напр. Кухонная мебель'}
                   />
                 </div>
 
@@ -200,7 +236,7 @@ export function Categories({
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => { setIsModalOpen(false); setFormData({ name: "", image: "" }) }}
+                    onClick={() => { setIsModalOpen(false); setFormData({ name: "", image: "", translations: {} }) }}
                     className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                   >
                     გაუქმება
