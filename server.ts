@@ -401,7 +401,7 @@ async function setupApp() {
               basket: [{ quantity: 1, unit_price: amount, product_id: orderId }],
             },
             redirect_urls: {
-              fail: `${safeRedirectUrl}?status=failed`,
+              fail: `${safeRedirectUrl}/payment/success?orderId=${orderId}&status=failed`,
               success: `${safeRedirectUrl}/payment/success?orderId=${orderId}`,
             },
           }),

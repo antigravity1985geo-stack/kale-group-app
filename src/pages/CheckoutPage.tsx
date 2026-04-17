@@ -130,15 +130,19 @@ export default function CheckoutPage() {
       if (payResponse) {
         const payData = await payResponse.json();
         if (!payResponse.ok) throw new Error(payData.error);
-        clearCart();
+        
         if (payData.redirectUrl) {
+          clearCart();
           window.location.href = payData.redirectUrl;
           return;
         }
+        
+        // Bank returned success but no redirect URL — this is abnormal
+        throw new Error('ბანკიდან გადამისამართების ლინკი ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
       }
 
-      clearCart();
-      navigate(`/payment/success?orderId=${data.orderId}`);
+      // Only reach here if payResponse was null (e.g. unsupported bank combination)
+      throw new Error('გადახდის მეთოდი ვერ დამუშავდა. გთხოვთ აირჩიოთ სხვა მეთოდი.');
       
     } catch (error) {
       console.error(error);
