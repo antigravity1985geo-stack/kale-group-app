@@ -574,6 +574,7 @@ CREATE TABLE employees (
   bank_account     TEXT,
   email            TEXT,
   phone            TEXT,
+  photo_url        TEXT,
   notes            TEXT,
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );

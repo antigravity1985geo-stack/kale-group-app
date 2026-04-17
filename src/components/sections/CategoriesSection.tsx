@@ -173,12 +173,8 @@ export default function CategoriesSection({ onCategorySelected }: CategoriesSect
   return (
     <section 
       className="py-24 relative overflow-hidden bg-brand-950 bg-fixed bg-cover bg-center"
-      style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1618220179428-22790b461013?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")' }}
+      style={{ backgroundImage: 'url("/category-bg.jpg")' }}
     >
-      {/* Dark Luxury Overlay for Depth */}
-      <div className="absolute inset-0 bg-brand-950/85 pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-gold-500/10 blur-[150px] pointer-events-none" />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
           <p className="text-xs tracking-[0.3em] uppercase font-bold mb-4 text-gold-500 shadow-sm border-gold-500/20 px-5 py-2 border rounded-full inline-block backdrop-blur-md bg-brand-900/40">

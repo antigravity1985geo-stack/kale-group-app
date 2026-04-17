@@ -205,6 +205,7 @@ export function Orders({
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ტელეფონი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ქალაქი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">თანხა</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">გადახდა</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">სტატუსი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ზედნადები</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">თარიღი</th>
@@ -233,6 +234,31 @@ export function Orders({
                     <td className="px-6 py-4 text-sm text-muted-foreground">{order.customer_city}</td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-foreground">₾ {parseFloat(order.total_price).toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col items-start gap-1.5">
+                        {order.payment_status === 'paid' ? (
+                          <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            გადახდილია
+                          </span>
+                        ) : ['bog', 'card_bog', 'tbc', 'card_tbc', 'credo'].includes(order.payment_method?.toLowerCase() || '') ? (
+                          <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/20">
+                            გადაუხდელია
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            ადგილზე
+                          </span>
+                        )}
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {order.payment_method === 'card_bog' || order.payment_method === 'bog' ? 'BOG ბარათი' :
+                           order.payment_method === 'card_tbc' || order.payment_method === 'tbc' ? 'TBC ბარათი' :
+                           order.payment_method === 'credo' ? 'Credo განვადება' :
+                           order.payment_method === 'transfer' ? 'გადარიცხვა' :
+                           order.payment_method === 'cash' ? 'ნაღდი ფული' :
+                           order.payment_method || '—'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", sc.color, sc.bgColor)}>
@@ -375,19 +401,44 @@ export function Orders({
                 </div>
 
                 {/* Payment & Status Info */}
-                <div className="grid grid-cols-3 gap-4 rounded-xl bg-muted/50 p-4 text-sm">
+                <div className="grid grid-cols-4 gap-4 rounded-xl bg-muted/50 p-4 text-sm">
                   <div>
                     <span className="text-xs text-muted-foreground block">სულ თანხა</span>
                     <p className="text-xl font-bold text-foreground">₾ {parseFloat(selectedOrder.total_price).toLocaleString()}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground block">გადახდა</span>
-                    <p className="font-medium text-foreground">{selectedOrder.payment_method || "—"}</p>
-                    <p className="text-xs text-muted-foreground">{selectedOrder.payment_type || ""}</p>
+                    <span className="text-xs text-muted-foreground block">გადახდის სტატუსი</span>
+                    {selectedOrder.payment_status === 'paid' ? (
+                      <p className="inline-flex items-center mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        გადახდილია
+                      </p>
+                    ) : ['bog', 'card_bog', 'tbc', 'card_tbc', 'credo'].includes(selectedOrder.payment_method?.toLowerCase() || '') ? (
+                      <p className="inline-flex items-center mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/20">
+                        გადაუხდელია
+                      </p>
+                    ) : (
+                      <p className="inline-flex items-center mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        ადგილზე გადახდა
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground block">წყარო</span>
-                    <p className="font-medium text-foreground">{selectedOrder.sale_source === "showroom" ? "შოურუმი" : "ვებგვერდი"}</p>
+                    <span className="text-xs text-muted-foreground block">ფინ. წყარო</span>
+                    <p className="font-medium text-foreground mt-0.5">
+                      {selectedOrder.payment_method === 'card_bog' || selectedOrder.payment_method === 'bog' ? 'Bank of Georgia' :
+                       selectedOrder.payment_method === 'card_tbc' || selectedOrder.payment_method === 'tbc' ? 'TBC Bank' :
+                       selectedOrder.payment_method === 'credo' ? 'Credo Bank' :
+                       selectedOrder.payment_method === 'transfer' ? 'გადარიცხვა' :
+                       selectedOrder.payment_method === 'cash' ? 'ნაღდი ფული' :
+                       selectedOrder.payment_method || "—"}
+                    </p>
+                    {selectedOrder.payment_type && (
+                       <p className="text-xs text-muted-foreground">{selectedOrder.payment_type}</p>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground block">გაყიდვის არხი</span>
+                    <p className="font-medium text-foreground mt-0.5">{selectedOrder.sale_source === "showroom" ? "შოურუმი" : "ვებგვერდი"}</p>
                   </div>
                 </div>
 
