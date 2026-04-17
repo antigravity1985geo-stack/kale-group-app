@@ -99,10 +99,10 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
               <a
                 key={link.name}
                 href={link.href}
-                className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-900/70 hover:text-brand-900 transition-all relative group"
+                className="text-xs font-bold tracking-[0.2em] uppercase text-brand-900/80 hover:text-gold-500 transition-all duration-300 relative group"
               >
                 {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand-900 transition-all group-hover:w-full" />
+                <span className="absolute -bottom-1.5 left-0 w-0 h-[2px] bg-gold-500 transition-all duration-300 group-hover:w-full drop-shadow-sm" />
               </a>
             ))}
 
@@ -144,7 +144,7 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
               {/* Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-brand-900 hover:text-brand-600 transition-colors"
+                className="p-2 text-brand-900 hover:text-gold-500 transition-colors"
                 title={`${t('search.title', 'ძიება')} (Ctrl+K)`}
               >
                 <Search size={22} />
@@ -164,7 +164,7 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
 
               <button 
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-brand-900 hover:text-brand-600 transition-colors"
+                className="relative p-2 text-brand-900 hover:text-gold-500 transition-colors"
               >
                 <ShoppingBag size={24} />
                 {totalItems > 0 && (
@@ -243,7 +243,7 @@ export default function Header({ onOpenWishlist }: { onOpenWishlist: () => void 
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-4xl font-serif font-medium text-brand-900 border-b border-brand-100 pb-2"
+                  className="text-4xl font-serif font-medium text-brand-900 border-b border-brand-100 pb-2 hover:text-gold-500 transition-colors duration-300"
                 >
                   {link.name}
                 </a>

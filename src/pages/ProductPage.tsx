@@ -3,14 +3,14 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, ShoppingBag, ArrowLeft, Heart, Loader2 } from 'lucide-react';
-import { useProduct, useProducts } from '../hooks/useSupabaseData';
+import { useProduct, useProducts, useCategories } from '../hooks/useSupabaseData';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useTranslation } from 'react-i18next';
 import { Countdown } from '../components/sections/ProductsSection';
 import ProtectedImage from '../components/ui/ProtectedImage';
 import { isProductOnActiveSale } from '../utils/promotions';
-import { getProductName, getProductDescription } from '../utils/i18n';
+import { getProductName, getProductDescription, getLocalizedCategoryName } from '../utils/i18n';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,10 +20,11 @@ export default function ProductPage() {
   const { product, loading, error } = useProduct(id);
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { categories } = useCategories();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { products: categoryProducts, loading: relatedLoading } = useProducts(product?.category || '');
   
-  // Filter related products (exclude current, get up to 4). If not enough, we could fall back, but just filtering is fine.
+  // Filter related products (exclude current, get up to 4).
   const relatedProducts = categoryProducts.filter(p => p.id !== product?.id).slice(0, 4);
 
 
@@ -140,7 +141,7 @@ export default function ProductPage() {
 
           {/* Details Section */}
           <div className="w-full lg:w-1/2 flex flex-col">
-            <p className="text-xs tracking-[0.4em] uppercase font-bold mb-4" style={{color:'#c9a227'}}>{product.category}</p>
+            <p className="text-xs tracking-[0.4em] uppercase font-bold mb-4" style={{color:'#c9a227'}}>{getLocalizedCategoryName(product.category, categories, lang)}</p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-brand-900 mb-6 leading-tight">{getProductName(product, lang)}</h1>
             
             <div className="mb-8">
@@ -168,7 +169,7 @@ export default function ProductPage() {
               {/* Dimensions */}
               {product.dimensions && (
                 <div className="bg-brand-50/50 p-5 rounded-2xl border border-brand-100 flex items-center justify-between group hover:bg-brand-50 transition-colors">
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">ზომა</span>
+                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">{t('products.size')}</span>
                   <span className="text-sm font-semibold text-brand-900">{product.dimensions}</span>
                 </div>
               )}
@@ -184,7 +185,7 @@ export default function ProductPage() {
               {/* Colors */}
               {product.colors && product.colors.length > 0 && (
                 <div className="bg-brand-50/50 p-5 rounded-2xl border border-brand-100 flex items-center justify-between sm:col-span-2 group hover:bg-brand-50 transition-colors">
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">ხელმისაწვდომი ფერები</span>
+                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">{t('products.availableColors')}</span>
                   <div className="flex flex-wrap gap-2 justify-end">
                     {product.colors.map((c, i) => (
                       <span key={i} className="px-3 py-1 bg-white text-brand-900 shadow-sm border border-brand-100 text-[11px] font-bold rounded-lg uppercase tracking-wider">{c}</span>
@@ -196,11 +197,11 @@ export default function ProductPage() {
               {/* Common specs */}
               <div className="bg-brand-50/50 p-5 rounded-2xl border border-brand-100 flex items-center justify-between group hover:bg-brand-50 transition-colors">
                 <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">{t('product.warranty')}</span>
-                <span className="text-sm font-semibold text-brand-900">{product.warranty || '5 წელი'}</span>
+                <span className="text-sm font-semibold text-brand-900">{product.warranty || t('product.warrantyDefault', '5 years')}</span>
               </div>
               <div className="bg-brand-50/50 p-5 rounded-2xl border border-brand-100 flex items-center justify-between group hover:bg-brand-50 transition-colors">
                 <span className="text-[11px] font-bold tracking-[0.2em] text-brand-400 uppercase">{t('product.delivery')}</span>
-                <span className="text-sm font-semibold text-brand-900">{product.delivery || '7 დღე'}</span>
+                <span className="text-sm font-semibold text-brand-900">{product.delivery || t('product.deliveryDefault', '7 days')}</span>
               </div>
             </motion.div>
 
@@ -233,8 +234,8 @@ export default function ProductPage() {
         <div className="bg-brand-50/30 py-24 border-t border-brand-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <p className="text-xs tracking-[0.4em] uppercase font-bold mb-3" style={{color:'#c9a227'}}>აღმოაჩინეთ</p>
-              <h2 className="text-3xl md:text-4xl font-serif text-brand-900">მსგავსი პროდუქცია</h2>
+              <p className="text-xs tracking-[0.4em] uppercase font-bold mb-3" style={{color:'#c9a227'}}>{t('products.discover')}</p>
+              <h2 className="text-3xl md:text-4xl font-serif text-brand-900">{t('products.similar')}</h2>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
@@ -261,7 +262,7 @@ export default function ProductPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-serif text-brand-900 group-hover:text-gold-500 transition-colors truncate">{getProductName(relProduct, lang)}</h3>
-                    <p className="text-[10px] font-bold tracking-widest text-brand-400 uppercase mt-1 mb-2 truncate">{relProduct.category}</p>
+                    <p className="text-[10px] font-bold tracking-widest text-brand-400 uppercase mt-1 mb-2 truncate">{getLocalizedCategoryName(relProduct.category, categories, lang)}</p>
                     <div className="flex items-center justify-between">
                       {isProductOnActiveSale(relProduct) && relProduct.sale_price ? (
                         <div className="flex items-center gap-2">

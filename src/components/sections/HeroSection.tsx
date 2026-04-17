@@ -23,12 +23,12 @@ export default function HeroSection() {
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/90">{t('hero.badge')}</span>
         </motion.div>
 
-        <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.2 }} className="text-3xl sm:text-4xl md:text-7xl lg:text-8xl font-serif text-white mb-6 leading-[1.1] md:leading-none">
-          {t('hero.title')} <br />
-          <span className="italic font-light text-shimmer">{t('hero.titleSpan')}</span>
+        <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.2 }} className="text-4xl md:text-6xl lg:text-7xl font-serif text-white mb-8 leading-[1.3] drop-shadow-2xl tracking-wide">
+          <span className="drop-shadow-md">{t('hero.title')}</span>
+          <span className="block mt-2 md:mt-4 italic font-light text-shimmer opacity-90">{t('hero.titleSpan')}</span>
         </motion.h1>
 
-        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-lg text-white/75 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
+        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-base md:text-lg text-white/80 mb-12 max-w-2xl mx-auto font-light leading-loose tracking-wide drop-shadow-md">
           {t('hero.subtitle')}
         </motion.p>
 
@@ -36,7 +36,7 @@ export default function HeroSection() {
           <a href="#products" className="inline-flex items-center px-10 py-4 bg-white text-brand-900 text-xs font-bold tracking-[0.2em] uppercase hover:bg-brand-50 transition-all shadow-xl hover:-translate-y-1">
             {t('hero.btnProducts')} <ArrowRight className="ml-2 w-4 h-4" />
           </a>
-          <a href="#contact" className="inline-flex items-center px-10 py-4 glass text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-white/20 transition-all border border-white/30">
+          <a href="#contact" className="inline-flex items-center px-10 py-4 glass text-gold-400 text-xs font-bold tracking-[0.2em] uppercase hover:bg-gold-500/10 hover:text-gold-300 transition-all border border-gold-400/50 shadow-[0_0_15px_rgba(201,162,39,0.15)]">
             {t('hero.btnConsult')} <MessageCircle className="ml-2 w-4 h-4" />
           </a>
         </motion.div>

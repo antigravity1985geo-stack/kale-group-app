@@ -229,8 +229,8 @@ export const generateOrderReceipt = async (order: any, items: any[]) => {
     // Delivery
     setFont(9, GREY.r, GREY.g, GREY.b);
     doc.text('მიტანა:', W - MARGIN - 44, y);
-    setFont(9, 34, 197, 94);
-    doc.text('უფასო', W - MARGIN, y, { align: 'right' });
+    setFont(9, DARK.r, DARK.g, DARK.b);
+    doc.text('ინდივიდუალური', W - MARGIN, y, { align: 'right' });
     y += 8;
 
     // Grand Total box

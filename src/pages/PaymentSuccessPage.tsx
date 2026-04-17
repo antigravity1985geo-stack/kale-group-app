@@ -4,11 +4,13 @@ import { Check, ArrowRight, Download, Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { generateOrderReceipt } from '../utils/pdfGenerator';
+import { useTranslation } from 'react-i18next';
 
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId');
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const { t } = useTranslation();
 
   const handleDownloadReceipt = async () => {
     if (!orderId) return;
@@ -32,7 +34,7 @@ export default function PaymentSuccessPage() {
       await generateOrderReceipt(order, items || []);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert('ქვითრის გენერირება ვერ მოხერხდა.');
+      alert(t('payment.receiptError'));
     } finally {
       setIsGenerating(false);
     }
@@ -51,10 +53,9 @@ export default function PaymentSuccessPage() {
         </motion.div>
         
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <h1 className="text-3xl font-serif text-brand-900 mb-4">გადახდა წარმატებულია!</h1>
+          <h1 className="text-3xl font-serif text-brand-900 mb-4">{t('payment.successTitle')}</h1>
           <p className="text-brand-500 leading-relaxed mb-10">
-            თქვენი შეკვეთა წარმატებით მიღებულია. დეტალურ ინფორმაციას მიიღებთ 
-            ელ. ფოსტაზე. ჩვენი მენეჯერი მალე დაგიკავშირდებათ.
+            {t('payment.successEmail')}
           </p>
           
           <div className="flex flex-col gap-3">
@@ -65,7 +66,7 @@ export default function PaymentSuccessPage() {
                 className="w-full py-5 bg-white border-2 border-brand-900 text-brand-900 font-bold tracking-[0.2em] uppercase rounded-xl hover:bg-brand-50 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
               >
                 {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                ქვითრის ჩამოტვირთვა
+                {t('payment.receiptDownload')}
               </button>
             )}
 
@@ -73,7 +74,7 @@ export default function PaymentSuccessPage() {
               to="/" 
               className="w-full py-5 bg-brand-900 text-white font-bold tracking-[0.2em] uppercase rounded-xl hover:bg-brand-800 transition-all shadow-lg active:scale-95 flex items-center justify-center group"
             >
-              მთავარზე დაბრუნება
+              {t('payment.btnHome')}
               <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

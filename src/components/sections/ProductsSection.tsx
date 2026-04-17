@@ -10,7 +10,7 @@ import type { Product } from '../../types/product';
 import { useTranslation } from 'react-i18next';
 import ProtectedImage from '../ui/ProtectedImage';
 import { isProductOnActiveSale } from '../../utils/promotions';
-import { getProductName, getCategoryName } from '../../utils/i18n';
+import { getProductName, getCategoryName, getLocalizedCategoryName } from '../../utils/i18n';
 
 export const Countdown = ({ endDate }: { endDate: string }) => {
   const [timeLeft, setTimeLeft] = React.useState('');
@@ -60,8 +60,9 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
   const [priceRange, setPriceRange] = React.useState<[number, number]>([0, 10000]);
   const [onlyOnSale, setOnlyOnSale] = React.useState(false);
   const [onlyInStock, setOnlyInStock] = React.useState(false);
-  const [selectedMaterial, setSelectedMaterial] = React.useState<string>(t('products.all'));
-  const [selectedColor, setSelectedColor] = React.useState<string>(t('products.all'));
+  const ALL_VALUE = '__ALL__'; // sentinel, language-independent
+  const [selectedMaterial, setSelectedMaterial] = React.useState<string>(ALL_VALUE);
+  const [selectedColor, setSelectedColor] = React.useState<string>(ALL_VALUE);
 
   // Reset page when category or filters change
   React.useEffect(() => {
@@ -71,8 +72,8 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
   // filterCategories: internal names (Georgian, used for DB filtering)
   // filterCategoriesDisplay: localized labels for UI
   const filterCategoryItems = categories; // full category objects
-  const materials = [t('products.all'), ...Array.from(new Set(products.map(p => p.material).filter(Boolean))) as string[]];
-  const colors = [t('products.all'), ...Array.from(new Set(products.flatMap(p => p.colors || []).filter(Boolean))) as string[]];
+  const materials = [ALL_VALUE, ...Array.from(new Set(products.map(p => p.material).filter(Boolean))) as string[]];
+  const colors = [ALL_VALUE, ...Array.from(new Set(products.flatMap(p => p.colors || []).filter(Boolean))) as string[]];
 
   // Whether the current activeCategory means "show all"
   const isAllCategory = ['ყველა', 'All', 'Все'].includes(activeCategory);
@@ -82,11 +83,11 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
     let result = [...products];
 
     // Filter by material
-    if (selectedMaterial !== t('products.all')) {
+    if (selectedMaterial !== ALL_VALUE) {
       result = result.filter(p => p.material === selectedMaterial);
     }
     // Filter by color
-    if (selectedColor !== t('products.all')) {
+    if (selectedColor !== ALL_VALUE) {
       result = result.filter(p => p.colors?.includes(selectedColor));
     }
     // Filter by sale status
@@ -288,7 +289,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                 <ListFilter size={48} className="text-brand-100 mb-4" />
                 <p className="text-brand-400 text-lg font-serif">{t('product.notFound')}</p>
                 <button 
-                  onClick={() => { setOnlyOnSale(false); setOnlyInStock(false); setPriceRange([0, 10000]); setSortBy('default'); setActiveCategory('ყველა'); }}
+                  onClick={() => { setOnlyOnSale(false); setOnlyInStock(false); setPriceRange([0, 10000]); setSortBy('default'); setSelectedMaterial(ALL_VALUE); setSelectedColor(ALL_VALUE); setActiveCategory('ყველა'); }}
                   className="mt-4 text-xs font-bold text-gold-500 border-b border-gold-500 uppercase tracking-widest"
                 >
                   {t('products.all')}
@@ -368,7 +369,7 @@ export default function ProductsSection({ activeCategory, setActiveCategory }: P
                               {getProductName(product, lang)}
                             </h3>
                             <div className="flex items-center gap-2 mt-1 md:mt-2 overflow-hidden">
-                              <p className="text-[8px] md:text-[10px] font-bold tracking-widest text-brand-400 uppercase truncate">{product.category}</p>
+                              <p className="text-[8px] md:text-[10px] font-bold tracking-widest text-brand-400 uppercase truncate">{getLocalizedCategoryName(product.category, filterCategoryItems, lang)}</p>
                               {product.material && (
                                 <>
                                   <span className="w-0.5 h-0.5 rounded-full bg-brand-200 flex-shrink-0" />

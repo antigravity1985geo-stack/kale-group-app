@@ -40,14 +40,14 @@ const CoverflowCarousel = ({ categories, onSelect, t, lang }: { categories: Cate
       {/* Navigation Arrows with Pulsing Light */}
       <button 
         onClick={prev}
-        className="absolute left-2 md:left-12 z-50 p-2 md:p-3 bg-brand-900/60 backdrop-blur-md border border-white/10 rounded-full text-white hover:bg-brand-900 transition-all shadow-[0_0_15px_rgba(201,162,39,0.2)] hover:shadow-[0_0_25px_rgba(201,162,39,0.6)] animate-pulse-gold hidden md:flex items-center justify-center"
+        className="absolute left-2 md:left-12 z-50 p-2 md:p-3 bg-gradient-to-br from-gold-400 to-gold-600 border border-gold-300/50 rounded-full text-brand-950 hover:scale-110 transition-all shadow-[0_0_20px_rgba(201,162,39,0.4)] hover:shadow-[0_0_30px_rgba(201,162,39,0.8)] animate-pulse-gold hidden md:flex items-center justify-center"
       >
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
       </button>
       
       <button 
         onClick={next}
-        className="absolute right-2 md:right-12 z-50 p-2 md:p-3 bg-brand-900/60 backdrop-blur-md border border-white/10 rounded-full text-white hover:bg-brand-900 transition-all shadow-[0_0_15px_rgba(201,162,39,0.2)] hover:shadow-[0_0_25px_rgba(201,162,39,0.6)] animate-pulse-gold hidden md:flex items-center justify-center"
+        className="absolute right-2 md:right-12 z-50 p-2 md:p-3 bg-gradient-to-br from-gold-400 to-gold-600 border border-gold-300/50 rounded-full text-brand-950 hover:scale-110 transition-all shadow-[0_0_20px_rgba(201,162,39,0.4)] hover:shadow-[0_0_30px_rgba(201,162,39,0.8)] animate-pulse-gold hidden md:flex items-center justify-center"
       >
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
       </button>
@@ -171,26 +171,29 @@ export default function CategoriesSection({ onCategorySelected }: CategoriesSect
   const { categories, loading } = useCategories();
 
   return (
-    <section className="py-24 bg-brand-50 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gold-500/5 blur-[120px] pointer-events-none" />
-      <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-brand-900/5 blur-[120px] pointer-events-none" />
+    <section 
+      className="py-24 relative overflow-hidden bg-brand-950 bg-fixed bg-cover bg-center"
+      style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1618220179428-22790b461013?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")' }}
+    >
+      {/* Dark Luxury Overlay for Depth */}
+      <div className="absolute inset-0 bg-brand-950/85 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-gold-500/10 blur-[150px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase font-bold mb-3" style={{color:'#c9a227'}}>
+          <p className="text-xs tracking-[0.3em] uppercase font-bold mb-4 text-gold-500 shadow-sm border-gold-500/20 px-5 py-2 border rounded-full inline-block backdrop-blur-md bg-brand-900/40">
             {t('categories.badge')}
           </p>
-          <h2 className="text-4xl md:text-5xl font-serif text-brand-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-6 drop-shadow-2xl">
             {t('categories.title')}
           </h2>
-          <div className="w-20 h-1 bg-brand-900 mx-auto rounded-full" />
+          <div className="w-32 h-1 bg-gradient-to-r from-transparent via-gold-500 to-transparent mx-auto opacity-70" />
         </motion.div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-10 h-10 animate-spin text-brand-300 mb-4" />
-            <p className="text-brand-400 text-sm tracking-widest uppercase">{t('categories.loading')}</p>
+            <Loader2 className="w-10 h-10 animate-spin text-gold-500 mb-4" />
+            <p className="text-white/70 text-sm tracking-widest uppercase">{t('categories.loading')}</p>
           </div>
         ) : (
           <CoverflowCarousel 

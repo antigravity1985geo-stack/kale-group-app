@@ -2,13 +2,17 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getEffectivePrice } from '../../utils/price';
 import { isProductOnActiveSale } from '../../utils/promotions';
+import { useTranslation } from 'react-i18next';
+
 
 export default function CartDrawer() {
   const { items, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const handleCheckout = () => {
     setIsCartOpen(false);
@@ -38,7 +42,7 @@ export default function CartDrawer() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-brand-100">
-              <h2 className="text-2xl font-serif text-brand-900">თქვენი კალათა</h2>
+              <h2 className="text-2xl font-serif text-brand-900">{t('cart.title')}</h2>
               <button 
                 onClick={() => setIsCartOpen(false)}
                 className="p-2 hover:bg-brand-50 rounded-full text-brand-500 transition-colors"
@@ -54,12 +58,12 @@ export default function CartDrawer() {
                   <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mb-2">
                     <X size={40} className="text-brand-300" />
                   </div>
-                  <p className="text-xl font-serif text-brand-900">კალათა ცარიელია</p>
+                  <p className="text-xl font-serif text-brand-900">{t('cart.empty')}</p>
                   <button 
                     onClick={() => setIsCartOpen(false)}
                     className="text-xs font-bold tracking-widest uppercase text-brand-500 hover:text-brand-900"
                   >
-                    დაბრუნდი კატალოგში
+                    {t('cart.backToCatalog')}
                   </button>
                 </div>
               ) : (
@@ -79,7 +83,11 @@ export default function CartDrawer() {
                       <div className="flex-1 flex flex-col justify-between py-1">
                         <div className="flex justify-between items-start gap-2">
                           <div>
-                            <h3 className="font-serif text-brand-900 text-lg leading-tight">{item.product.name}</h3>
+                            <h3 className="font-serif text-brand-900 text-lg leading-tight">
+                              {lang !== 'ka' && item.product.translations?.[lang]?.name
+                                ? item.product.translations[lang].name
+                                : item.product.name}
+                            </h3>
                             <p className="text-[10px] text-brand-400 font-bold uppercase tracking-widest mt-1">
                               {item.product.category}
                             </p>
@@ -132,7 +140,7 @@ export default function CartDrawer() {
             {items.length > 0 && (
               <div className="p-6 border-t border-brand-100 bg-brand-50/50">
                 <div className="flex justify-between items-center mb-6">
-                  <span className="text-brand-500 text-sm tracking-wide">ჯამი:</span>
+                  <span className="text-brand-500 text-sm tracking-wide">{t('cart.subtotal')}:</span>
                   <span className="text-2xl font-bold text-brand-900 font-serif">
                     ₾{totalPrice.toLocaleString()}
                   </span>
@@ -142,7 +150,7 @@ export default function CartDrawer() {
                   onClick={handleCheckout}
                   className="w-full py-5 bg-brand-900 text-white text-xs font-bold tracking-[0.2em] uppercase rounded-xl hover:bg-brand-800 transition-all shadow-xl shadow-brand-900/20 active:scale-95 flex items-center justify-center group"
                 >
-                  ყიდვის გაგრძელება
+                  {t('cart.proceedCheckout')}
                   <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>

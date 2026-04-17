@@ -26,7 +26,7 @@ export default function CheckoutPage() {
     phone: '',
     email: '',
     address: '',
-    city: 'თბილისი',
+    city: 'Tbilisi',
     note: ''
   });
 
@@ -55,11 +55,9 @@ export default function CheckoutPage() {
   const handleInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic formatting cleanups
     const phone = customerInfo.phone.replace(/\s+/g, '');
     const email = customerInfo.email?.trim();
 
-    // Phone validation (permissive format check)
     const phoneRegex = /^\+?[0-9]{8,15}$/;
     if (!phoneRegex.test(phone)) {
       toast.error(t('checkout.errorPhone'), {
@@ -86,37 +84,24 @@ export default function CheckoutPage() {
     setIsProcessingPayment(true);
     
     try {
-      // 1. Create Secure Order via Backend API
       const response = await fetch('/api/orders/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerInfo,
-          items,
-          paymentMethod: bank,
-          paymentType: type
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerInfo, items, paymentMethod: bank, paymentType: type })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'შეკვეთის გაფორმება ვერ მოხერხდა');
+        throw new Error(data.error || t('checkout.errorOrder'));
       }
 
-      // 2. Initialize Payment based on Bank & Type
       let payResponse;
       if (bank === 'bog' && type === 'full') {
         payResponse = await fetch('/api/pay/bog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: data.orderId,
-            amount: data.total_price,
-            redirectUrl: window.location.origin
-          })
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, redirectUrl: window.location.origin })
         });
       } else if (bank === 'bog' && type === 'installment') {
         payResponse = await fetch('/api/pay/bog/installment', {
@@ -131,7 +116,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({ 
             orderId: data.orderId, 
             amount: data.total_price,
-            methods: type === 'installment' ? [8] : [5] // 8: Installment, 5: Card
+            methods: type === 'installment' ? [8] : [5]
           })
         });
       } else if (bank === 'credo' && type === 'installment') {
@@ -145,16 +130,13 @@ export default function CheckoutPage() {
       if (payResponse) {
         const payData = await payResponse.json();
         if (!payResponse.ok) throw new Error(payData.error);
-        
         clearCart();
-        // Redirect user to the bank's checkout page Let the bank callback handle completion.
         if (payData.redirectUrl) {
           window.location.href = payData.redirectUrl;
           return;
         }
       }
 
-      // Fallback if no redirect link (or cash on delivery in future)
       clearCart();
       navigate(`/payment/success?orderId=${data.orderId}`);
       
@@ -194,17 +176,17 @@ export default function CheckoutPage() {
                   <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                     <h2 className="text-3xl font-serif text-brand-900 mb-8">{t('checkout.stepContact')}</h2>
                     <form onSubmit={handleInfoSubmit} className="space-y-6">
-                      {/* Customer Type Selection */}
+                      {/* Customer Type */}
                       <div>
-                        <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-3">მყიდველის ტიპი</label>
+                        <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-3">{t('checkout.buyerType')}</label>
                         <div className="flex gap-4">
                           <label className={`cursor-pointer flex-1 text-center py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${customerInfo.customerType === 'physical' ? 'border-brand-900 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white text-brand-400 hover:border-gray-300'}`}>
                             <input type="radio" name="customerType" value="physical" checked={customerInfo.customerType === 'physical'} onChange={handleInputChange} className="hidden" />
-                            ფიზიკური პირი
+                            {t('checkout.individual')}
                           </label>
                           <label className={`cursor-pointer flex-1 text-center py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${customerInfo.customerType === 'legal' ? 'border-brand-900 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white text-brand-400 hover:border-gray-300'}`}>
                             <input type="radio" name="customerType" value="legal" checked={customerInfo.customerType === 'legal'} onChange={handleInputChange} className="hidden" />
-                            იურიდიული პირი
+                            {t('checkout.company')}
                           </label>
                         </div>
                       </div>
@@ -220,17 +202,17 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      {/* Dynamic ID Fields based on rules */}
+                      {/* Dynamic ID Fields */}
                       <div>
                         {customerInfo.customerType === 'physical' ? (
                           <div>
-                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">პირადი ნომერი *</label>
-                            <input required type="text" name="personalId" value={customerInfo.personalId} onChange={handleInputChange} placeholder="11 ციფრიანი პირადი ნომერი" className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all" />
+                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.personalId')} *</label>
+                            <input required type="text" name="personalId" value={customerInfo.personalId} onChange={handleInputChange} placeholder={t('checkout.personalIdPlaceholder')} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all" />
                           </div>
                         ) : (
                           <div>
-                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">საიდენტიფიკაციო კოდი *</label>
-                            <input required type="text" name="companyId" value={customerInfo.companyId} onChange={handleInputChange} placeholder="კომპანიის საიდენტიფიკაციო კოდი" className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all" />
+                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.companyId')} *</label>
+                            <input required type="text" name="companyId" value={customerInfo.companyId} onChange={handleInputChange} placeholder={t('checkout.companyIdPlaceholder')} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all" />
                           </div>
                         )}
                       </div>
@@ -250,11 +232,11 @@ export default function CheckoutPage() {
                         <div>
                           <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.city')}</label>
                           <select required name="city" value={customerInfo.city} onChange={handleInputChange} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 transition-all appearance-none cursor-pointer">
-                            <option value="Tbilisi">თბილისი</option>
-                            <option value="Rustavi">რუსთავი</option>
-                            <option value="Batumi">ბათუმი</option>
-                            <option value="Kutaisi">ქუთაისი</option>
-                            <option value="Other">სხვა</option>
+                            <option value="Tbilisi">Tbilisi</option>
+                            <option value="Rustavi">Rustavi</option>
+                            <option value="Batumi">Batumi</option>
+                            <option value="Kutaisi">Kutaisi</option>
+                            <option value="Other">{t('checkout.cityOther', 'Other')}</option>
                           </select>
                         </div>
                         <div>
@@ -280,86 +262,86 @@ export default function CheckoutPage() {
 
                 {step === 2 && (
                   <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                     <h2 className="text-3xl font-serif text-brand-900 mb-8">{t('checkout.stepPayment')}</h2>
-                     
-                     <div className="space-y-8">
-                       {/* Full Payment */}
-                       <div>
-                         <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlinePayment')}</h3>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* BOG Pay */}
-                            <button 
-                              onClick={() => handlePayment('bog', 'full')} 
-                              disabled={isProcessingPayment} 
-                              className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#E8480C] hover:shadow-lg group transition-all disabled:opacity-50"
-                            >
-                              <div className="flex items-center gap-3">
-                                <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
-                                  <rect width="130" height="85" rx="6" fill="#E8480C"/>
-                                  <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">BOG</text>
-                                  <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">საქართველოს ბანკი</text>
-                                </svg>
-                                <div className="text-left">
-                                  <p className="font-bold text-brand-900 text-sm">BOG Pay</p>
-                                  <p className="text-[10px] text-brand-400">სრული გადახდა</p>
-                                </div>
-                              </div>
-                              <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#E8480C] transition-all flex-shrink-0"/>
-                            </button>
-                            
-                            {/* TBC Pay */}
-                            <button 
-                              onClick={() => handlePayment('tbc', 'full')} 
-                              disabled={isProcessingPayment} 
-                              className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#00AEEF] hover:shadow-lg group transition-all disabled:opacity-50"
-                            >
-                              <div className="flex items-center gap-3">
-                                <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
-                                  <rect width="130" height="85" rx="6" fill="#00AEEF"/>
-                                  <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">TBC</text>
-                                  <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">TBC Bank</text>
-                                </svg>
-                                <div className="text-left">
-                                  <p className="font-bold text-brand-900 text-sm">TBC Pay</p>
-                                  <p className="text-[10px] text-brand-400">სრული გადახდა</p>
-                                </div>
-                              </div>
-                              <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#00AEEF] transition-all flex-shrink-0"/>
-                            </button>
-                         </div>
-                       </div>
+                    <h2 className="text-3xl font-serif text-brand-900 mb-8">{t('checkout.stepPayment')}</h2>
+                    
+                    <div className="space-y-8">
+                      {/* Full Payment */}
+                      <div>
+                        <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlinePayment')}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* BOG Pay */}
+                          <button 
+                            onClick={() => handlePayment('bog', 'full')} 
+                            disabled={isProcessingPayment} 
+                            className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#E8480C] hover:shadow-lg group transition-all disabled:opacity-50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                                <rect width="130" height="85" rx="6" fill="#E8480C"/>
+                                <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">BOG</text>
+                                <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">Bank of Georgia</text>
+                              </svg>
+                              <div className="text-left">
+                                <p className="font-bold text-brand-900 text-sm">BOG Pay</p>
+                                <p className="text-[10px] text-brand-400">{t('checkout.fullPayment')}</p>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#E8480C] transition-all flex-shrink-0"/>
+                          </button>
+                          
+                          {/* TBC Pay */}
+                          <button 
+                            onClick={() => handlePayment('tbc', 'full')} 
+                            disabled={isProcessingPayment} 
+                            className="flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#00AEEF] hover:shadow-lg group transition-all disabled:opacity-50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                                <rect width="130" height="85" rx="6" fill="#00AEEF"/>
+                                <text x="65" y="38" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28">TBC</text>
+                                <text x="65" y="67" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">TBC Bank</text>
+                              </svg>
+                              <div className="text-left">
+                                <p className="font-bold text-brand-900 text-sm">TBC Pay</p>
+                                <p className="text-[10px] text-brand-400">{t('checkout.fullPayment')}</p>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#00AEEF] transition-all flex-shrink-0"/>
+                          </button>
+                        </div>
+                      </div>
 
-                       {/* Installment */}
-                       <div>
-                         <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlineInstallment')}</h3>
-                         {/* Credo Bank */}
-                         <button 
-                            onClick={() => handlePayment('credo', 'installment')} 
-                            disabled={isProcessingPayment} 
-                            className="w-full flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#0081C5] hover:shadow-lg group transition-all disabled:opacity-50"
-                          >
-                            <div className="flex items-center gap-3">
-                              <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
-                                <rect width="130" height="85" rx="6" fill="#0081C5"/>
-                                <text x="65" y="36" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="22">CREDO</text>
-                                <text x="65" y="63" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">Bank</text>
-                              </svg>
-                              <div className="text-left">
-                                <p className="font-bold text-brand-900 text-sm">Credo Bank განვადება</p>
-                                <p className="text-[10px] text-brand-400">განვადება — 0%</p>
-                              </div>
-                            </div>
-                            <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#0081C5] transition-all flex-shrink-0"/>
-                          </button>
-                       </div>
-                     </div>
+                      {/* Installment */}
+                      <div>
+                        <h3 className="text-sm font-bold tracking-widest text-brand-400 uppercase mb-4">{t('checkout.onlineInstallment')}</h3>
+                        {/* Credo Bank */}
+                        <button 
+                          onClick={() => handlePayment('credo', 'installment')} 
+                          disabled={isProcessingPayment} 
+                          className="w-full flex items-center justify-between p-5 bg-white border-2 border-brand-100 rounded-2xl hover:border-[#0081C5] hover:shadow-lg group transition-all disabled:opacity-50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg width="52" height="34" viewBox="0 0 130 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 rounded-lg">
+                              <rect width="130" height="85" rx="6" fill="#0081C5"/>
+                              <text x="65" y="36" textAnchor="middle" dominantBaseline="middle" fill="white" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="22">CREDO</text>
+                              <text x="65" y="63" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.85)" fontFamily="Arial, sans-serif" fontSize="11">Bank</text>
+                            </svg>
+                            <div className="text-left">
+                              <p className="font-bold text-brand-900 text-sm">Credo Bank {t('checkout.installment')}</p>
+                              <p className="text-[10px] text-brand-400">{t('checkout.installment')} — 0%</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={18} className="text-brand-300 group-hover:translate-x-1 group-hover:text-[#0081C5] transition-all flex-shrink-0"/>
+                        </button>
+                      </div>
+                    </div>
 
-                     {isProcessingPayment && (
-                       <div className="mt-10 flex flex-col items-center gap-4 text-brand-500">
-                         <RefreshCw className="animate-spin" size={32} />
-                         <span className="text-sm font-bold tracking-widest text-brand-900 uppercase">{t('checkout.redirecting')}</span>
-                       </div>
-                     )}
+                    {isProcessingPayment && (
+                      <div className="mt-10 flex flex-col items-center gap-4 text-brand-500">
+                        <RefreshCw className="animate-spin" size={32} />
+                        <span className="text-sm font-bold tracking-widest text-brand-900 uppercase">{t('checkout.redirecting')}</span>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -396,7 +378,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm text-brand-500">
                   <span>{t('product.delivery')}</span>
-                  <span className="text-green-600 font-medium">{t('checkout.deliveryFree')}</span>
+                  <span className="text-brand-700 font-medium">{t('checkout.deliveryFree')}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-brand-100 mt-3">
                   <span className="font-bold tracking-widest uppercase text-brand-900 text-sm">{t('checkout.grandTotal')}</span>
