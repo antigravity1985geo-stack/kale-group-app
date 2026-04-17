@@ -63,7 +63,7 @@ export function Orders({
   // RS.ge Waybill Generation State
   const [isGeneratingWaybill, setIsGeneratingWaybill] = useState(false)
   const [waybillOptions, setWaybillOptions] = useState({
-    startAddress: "თბილისი, შერმადინის 7", // Default showroom
+    startAddress: "თბილისი", // Default city
     endAddress: "",
     transportType: "HAND" as "HAND" | "TRANSPORT" | "COURIER",
     driverName: "",
@@ -522,14 +522,13 @@ export function Orders({
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">გამოსვლის მისამართი</label>
-                          <select
+                          <input
+                            type="text"
                             value={waybillOptions.startAddress}
                             onChange={(e) => setWaybillOptions({ ...waybillOptions, startAddress: e.target.value })}
                             className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
-                          >
-                            <option value="თბილისი, შერმადინის 7">შოურუმი (შერმადინის 7)</option>
-                            <option value="ლილო, საწყობი 12">საწყობი (ლილო)</option>
-                          </select>
+                            placeholder="ქალაქი, რეგიონი, ქუჩა..."
+                          />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">დანიშნულების მისამართი</label>

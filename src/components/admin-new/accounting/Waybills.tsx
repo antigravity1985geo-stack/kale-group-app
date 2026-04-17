@@ -85,6 +85,7 @@ export default function Waybills() {
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [isDrafting, setIsDrafting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [draftConfig, setDraftConfig] = useState<{order: any, startAddress: string, endAddress: string} | null>(null);
   
   // Pagination Limits
   const [waybillsLimit, setWaybillsLimit] = useState(50);
@@ -161,8 +162,17 @@ export default function Waybills() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const createDraft = async (order: any) => {
-    setIsDrafting(order.id);
+  const handleDraftClick = (order: any) => {
+    setDraftConfig({
+      order,
+      startAddress: "თბილისი",
+      endAddress: `${order.customer_city || ''}, ${order.customer_address || ''}`.trim().replace(/^,\s*/, '') || "თბილისი"
+    });
+  };
+
+  const confirmCreateDraft = async () => {
+    if (!draftConfig) return;
+    setIsDrafting(draftConfig.order.id);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       await safeFetch('/api/rs-ge/waybill/draft', {
@@ -172,11 +182,13 @@ export default function Waybills() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          order_id: order.id,
-          end_address: `${order.customer_city || ''}, ${order.customer_address || ''}`.trim(),
+          order_id: draftConfig.order.id,
+          start_address: draftConfig.startAddress,
+          end_address: draftConfig.endAddress,
         })
       });
       showToast('დრაფტი წარმატებით შეიქმნა', 'ok');
+      setDraftConfig(null);
       fetchData();
     } catch (err: any) {
       showToast(err.message || 'დრაფტის შექმნა ვერ მოხერხდა', 'err');
@@ -240,6 +252,61 @@ export default function Waybills() {
             {toast.type === 'ok' ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
             <span className="font-medium text-sm">{toast.msg}</span>
           </motion.div>
+        )}
+        {draftConfig && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-card border border-border/50 rounded-2xl shadow-2xl p-6"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> ზედნადების მისამართები</h3>
+                <button onClick={() => setDraftConfig(null)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">შექმნამდე გთხოვთ გადაამოწმოთ წაღების და მიტანის მისამართები.</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 block">გამოსვლის მისამართი (საიდან)</label>
+                  <input 
+                    type="text" 
+                    value={draftConfig.startAddress}
+                    onChange={(e) => setDraftConfig({...draftConfig, startAddress: e.target.value})}
+                    className="w-full bg-background border border-border/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 block">დანიშნულების მისამართი (სადაც)</label>
+                  <input 
+                    type="text" 
+                    value={draftConfig.endAddress}
+                    onChange={(e) => setDraftConfig({...draftConfig, endAddress: e.target.value})}
+                    className="w-full bg-background border border-border/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-8 flex items-center gap-3">
+                <button 
+                  onClick={() => setDraftConfig(null)}
+                  className="flex-1 py-3 bg-muted text-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-muted/80 transition-all border border-border/50"
+                >
+                  გაუქმება
+                </button>
+                <button 
+                  onClick={confirmCreateDraft}
+                  disabled={isDrafting === draftConfig.order.id}
+                  className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                >
+                  {isDrafting === draftConfig.order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "დრაფტის შექმნა"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -365,7 +432,7 @@ export default function Waybills() {
                               </button>
                             ) : (
                               <button 
-                                onClick={() => createDraft(o)}
+                                onClick={() => handleDraftClick(o)}
                                 disabled={isDrafting === o.id}
                                 className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/10 hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2 justify-center"
                               >

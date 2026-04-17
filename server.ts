@@ -1706,7 +1706,7 @@ ${JSON.stringify((products || []).map((p: any) => ({
         .insert({
           order_id,
           status: 'DRAFT',
-          start_address: start_address || 'თბილისი, ქ. კალე გრუპი',
+          start_address: start_address || 'თბილისი',
           end_address: resolvedEndAddress,
           driver_name: driver_name || null,
           car_number: car_number || null,

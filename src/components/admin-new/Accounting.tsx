@@ -208,7 +208,7 @@ export function Accounting() {
           'თარიღი': new Date(entry.entry_date).toLocaleDateString('ka-GE'),
           'აღწერა': entry.description,
           'ტიპი': entry.reference_type,
-          'სტატუსი': entry.status === 'completed' ? 'დასრულებული' : 'პროცესში'
+          'სტატუსი': ['completed', 'posted'].includes(entry.status?.toLowerCase() || '') ? 'დასრულებული/გატარებული' : 'პროცესში'
         }));
     } else if (activeTab === "invoices") {
       dataToExport = invoices
@@ -236,10 +236,21 @@ export function Accounting() {
 
   // ── Components ──
   const StatusBadge = ({ status }: { status: string }) => {
-    const colors = status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    let colors = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    let label = 'პროცესში';
+    const s = status?.toLowerCase() || '';
+
+    if (s === 'completed' || s === 'posted') {
+      colors = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+      label = s === 'posted' ? 'გატარებული' : 'დასრულებული';
+    } else if (s === 'draft') {
+      colors = 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+      label = 'მონახაზი';
+    }
+
     return (
       <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase", colors)}>
-        {status === 'completed' ? 'დასრულებული' : 'პროცესში'}
+        {label}
       </span>
     );
   };
@@ -780,18 +791,93 @@ export function Accounting() {
       )}
 
       {/* ── Order Details Modal ── */}
-      {selectedJournalOrder && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md p-4">
-          {/* Order Details UI ... same as before but inside Accounting */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card p-8 rounded-3xl border border-border shadow-2xl relative">
-            <button onClick={() => setSelectedJournalOrder(null)} className="absolute top-4 right-4"><X /></button>
-            <h2 className="text-2xl font-bold mb-4">შეკვეთის დეტალები: {selectedJournalOrder.order_number}</h2>
-            {/* Show items ... */}
-            <p>მომხმარებელი: {selectedJournalOrder.customer_name}</p>
-            <p className="text-xl font-bold mt-4">ჯამი: ₾ {selectedJournalOrder.total_amount}</p>
-          </motion.div>
-        </div>
-      )}
+      <AnimatePresence>
+        {selectedJournalOrder && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setSelectedJournalOrder(null)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card w-full max-w-3xl rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-6 border-b border-border/50 bg-muted/20 flex items-center justify-between sticky top-0 z-10 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <ShoppingCart size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">
+                      შეკვეთა #{selectedJournalOrder.id.slice(0, 8)}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">{new Date(selectedJournalOrder.created_at).toLocaleString('ka-GE')}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedJournalOrder(null)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-muted/30 p-4 rounded-2xl border border-border/30">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">მომხმარებელი</p>
+                    <p className="font-semibold text-sm text-foreground">{selectedJournalOrder.customer_first_name} {selectedJournalOrder.customer_last_name}</p>
+                    {selectedJournalOrder.customer_phone && <p className="text-xs text-muted-foreground mt-0.5">{selectedJournalOrder.customer_phone}</p>}
+                  </div>
+                  <div className="bg-muted/30 p-4 rounded-2xl border border-border/30">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">სტატუსი</p>
+                    <p className="font-semibold text-sm text-foreground capitalize">{selectedJournalOrder.status}</p>
+                  </div>
+                  <div className="bg-muted/30 p-4 rounded-2xl border border-border/30">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">გადახდა</p>
+                    <p className="font-semibold text-sm text-foreground capitalize">{selectedJournalOrder.payment_method}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{selectedJournalOrder.payment_status}</p>
+                  </div>
+                  <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
+                    <p className="text-[10px] uppercase font-bold text-emerald-600/80 mb-1">ჯამი</p>
+                    <p className="font-bold text-lg text-emerald-500">₾ {Number(selectedJournalOrder.total_price).toLocaleString('ka-GE', {minimumFractionDigits: 2})}</p>
+                  </div>
+                </div>
+
+                {selectedJournalOrder.order_items && selectedJournalOrder.order_items.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <Package size={16} className="text-primary" /> შეკვეთილი პროდუქცია
+                    </h3>
+                    <div className="rounded-2xl border border-border/50 overflow-hidden">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/40 text-[10px] uppercase font-bold text-muted-foreground">
+                          <tr>
+                            <th className="px-6 py-3">პროდუქტი</th>
+                            <th className="px-6 py-3 text-right">ფასი</th>
+                            <th className="px-6 py-3 text-right">რაოდ.</th>
+                            <th className="px-6 py-3 text-right">ჯამი</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/30">
+                          {selectedJournalOrder.order_items.map((item: any) => (
+                            <tr key={item.id} className="hover:bg-muted/10 transition-colors">
+                              <td className="px-6 py-3 font-medium text-foreground">
+                                {item.products?.name_ka || item.products?.name || "უცნობი პროდუქტი"}
+                              </td>
+                              <td className="px-6 py-3 text-right font-mono text-muted-foreground">₾ {Number(item.price_at_purchase || item.price || 0).toLocaleString('ka-GE')}</td>
+                              <td className="px-6 py-3 text-right font-medium">{item.quantity}</td>
+                              <td className="px-6 py-3 text-right font-mono font-bold text-emerald-500">
+                                ₾ {(Number(item.price_at_purchase || item.price || 0) * Number(item.quantity)).toLocaleString('ka-GE')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── Bank Importer Modal ── */}
       {showBankImporter && (

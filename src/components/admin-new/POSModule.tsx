@@ -142,7 +142,8 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
         customer_note: customer.note || null,
         personal_id: customer.personalId || null,
         total_price: cartTotal,
-        status: customer.paymentMethod === "cash" ? "delivered" : "pending",
+        status: "delivered",
+        payment_status: "paid",
         payment_method: customer.paymentMethod,
         payment_type: customer.paymentType,
         sale_source: "showroom",
@@ -197,13 +198,11 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
         console.error("Stock sync error:", stockErr)
       }
 
-      // 3. If cash, trigger accounting
-      if (customer.paymentMethod === "cash") {
-        try {
-          await supabase.rpc("process_order_sale", { p_order_id: orderData.id })
-        } catch (err) {
-          console.error("Accounting RPC error:", err)
-        }
+      // 3. Trigger accounting for all POS payment methods
+      try {
+        await supabase.rpc("process_order_sale", { p_order_id: orderData.id })
+      } catch (err) {
+        console.error("Accounting RPC error:", err)
       }
 
       // 4. Success
@@ -235,7 +234,7 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
     setWaybillResult(null)
     try {
       const res = await createWaybillForOrder(createdOrderId, {
-        startAddress: "თბილისი, შერმადინის 7", // Default showroom
+        startAddress: "თბილისი", // Default city
         endAddress: customer.address || "თბილისი",
         transport: { transportType: 'HAND' }
       })
