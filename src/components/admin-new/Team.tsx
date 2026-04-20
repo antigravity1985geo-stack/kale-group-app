@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Users, Mail, Shield, UserPlus, Clock, CheckCircle, XCircle, Loader2, Copy, AlertTriangle } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 import { useAuth } from "@/src/context/AuthContext"
 
 interface Profile {
@@ -85,12 +86,10 @@ export function Team() {
     if (!inviteForm.email) return
     setIsInviting(true)
     try {
-      const { error } = await supabase.from("invitations").insert([{
-        email: inviteForm.email,
-        role: inviteForm.role,
-        invited_by: user?.id,
-      }])
-      if (error) throw error
+      await safeFetch("/api/admin/invite", {
+        method: "POST",
+        body: JSON.stringify({ email: inviteForm.email, role: inviteForm.role }),
+      })
       setInviteForm({ email: "", role: "consultant" })
       setShowInviteForm(false)
       await fetchTeamData()
@@ -103,8 +102,12 @@ export function Team() {
 
   const handleDeleteInvitation = async (id: string) => {
     if (!confirm("ნამდვილად გსურთ მოწვევის წაშლა?")) return
-    const { error } = await supabase.from("invitations").delete().eq("id", id)
-    if (!error) setInvitations((prev) => prev.filter((i) => i.id !== id))
+    try {
+      await safeFetch(`/api/admin/invitations/${id}`, { method: "DELETE" })
+      setInvitations((prev) => prev.filter((i) => i.id !== id))
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
+    }
   }
 
   if (isLoading) {

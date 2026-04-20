@@ -89,6 +89,17 @@ router.get("/consultants", async (req: any, res) => {
   }
 });
 
+// ── Admin: Delete Invitation ──
+router.delete("/invitations/:id", async (req: any, res) => {
+  try {
+    const { error } = await supabaseAdmin.from('invitations').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "მოწვევის წაშლა ვერ მოხერხდა" });
+  }
+});
+
 // Admin: RS.GE ინვოისის ხელახლა გაგზავნა
 router.post("/rs/reinvoice/:orderId", async (req: any, res) => {
   try {
