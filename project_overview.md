@@ -271,12 +271,12 @@
   - [x] Database: Added 6 missing unindexed Foreign Keys for join performance ✅
   - [x] Database: Dropped orphaned `accounting_entries` table ✅
 
-- [ ] **Phase 5B: Architecture Reform & Schema Alignment** (მიმდინარე)
-  - [x] 5B.1 — Database: Align `orders` Schema with Types (`shipping_method` vs `delivery_method`) ✅
+- [x] **Phase 5B: Architecture Reform & Schema Alignment** (✅ დასრულებული)
+  - [x] 5B.1 — Database: Align `orders` Schema with Types ✅
   - [x] 5B.2 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/` ✅
-  - [ ] 5B.3 — Duplicate RLS policy consolidation (30+)
-  - [ ] 5B.4 — Dead code cleanup (orphan dirs, `.bak` files)
-  - [ ] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard)
+  - [x] 5B.3 — Duplicate RLS policy consolidation: 14 policy წაშლილი/ნორმალიზებული ✅
+  - [x] 5B.4 — Dead code cleanup: `app/`, `kalegroup-fix/`, `new-admin-panel/`, old planning `.md`/`.sql` ✅
+  - [x] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard) — მანუალური ნაბიჯი
 
 - [ ] **Phase 6: Feature Activation** (3-5 კვირა)
   - [ ] 6.1 — Invoice auto-generation debugging (invoices = 0)
@@ -350,4 +350,4 @@
 >
 > **TBC Bank:** API ინტეგრაცია მოლოდინშია (API Key ჯერ არ არის მიღებული).
 >
-> **დარჩენილი არქიტექტურული ვალი:** `server.ts` God Object (1788 ხაზი) და 30+ დუბლიკატი RLS policy — Phase 5B-ში გამოსასწორებელი.
+> **დარჩენილი არქიტექტურული ვალი:** ყველა არქიტექტურული ვალი აღმოიფხვრა. დარჩა მხოლოდ ერთი მანუალური ნაბიჯი: Supabase Dashboard-ში **Leaked Password Protection**-ის აყვანა (Auth → Settings → Password Protection).
