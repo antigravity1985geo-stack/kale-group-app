@@ -276,7 +276,7 @@
   - [x] 5B.2 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/` ✅
   - [x] 5B.3 — Duplicate RLS policy consolidation: 14 policy წაშლილი/ნორმალიზებული ✅
   - [x] 5B.4 — Dead code cleanup: `app/`, `kalegroup-fix/`, `new-admin-panel/`, old planning `.md`/`.sql` ✅
-  - [x] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard) — მანუალური ნაბიჯი
+  - [x] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard) — 🛑 Skipped (Requires Pro Plan)
 
 - [ ] **Phase 6: Feature Activation** (3-5 კვირა)
   - [ ] 6.1 — Invoice auto-generation debugging (invoices = 0)
@@ -350,4 +350,4 @@
 >
 > **TBC Bank:** API ინტეგრაცია მოლოდინშია (API Key ჯერ არ არის მიღებული).
 >
-> **დარჩენილი არქიტექტურული ვალი:** ყველა არქიტექტურული ვალი აღმოიფხვრა. დარჩა მხოლოდ ერთი მანუალური ნაბიჯი: Supabase Dashboard-ში **Leaked Password Protection**-ის აყვანა (Auth → Settings → Password Protection).
+> **დარჩენილი არქიტექტურული ვალი:** ყველა არქიტექტურული ვალი აღმოიფხვრა. (შენიშვნა: Leaked Password Protection გამოტოვებულია, რადგან Supabase-ის უფასო (Free) ვერსიაზე არ არის ხელმისაწვდომი).
