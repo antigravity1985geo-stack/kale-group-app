@@ -287,24 +287,28 @@ router.get('/inventory/transactions', requireAccountingRead, async (req: any, re
 router.post('/inventory/adjustment', requireAccounting, async (req: any, res) => {
   try {
     const { product_id, quantity, type, unit_cost, notes } = req.body;
-    if (!product_id || !quantity || !type) return res.status(400).json({ error: 'სავალდებულო ველები აკლია' });
+    if (!product_id || !quantity || !type) {
+      return res.status(400).json({ error: 'სავალდებულო ველები აკლია' });
+    }
 
-    const { data, error } = await supabaseAdmin
-      .from('inventory_transactions')
-      .insert({
-        product_id, quantity, transaction_type: type,
-        unit_cost, total_cost: unit_cost ? unit_cost * quantity : null,
-        reference_type: 'ADJUSTMENT', notes,
-        fiscal_period_id: await supabaseAdmin.rpc('get_current_fiscal_period').then((r: any) => r.data),
-        created_by: req.userId,
-      }).select().single();
-    if (error) throw error;
+    const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
+    if (!currPeriod) {
+      return res.status(400).json({ error: 'ფისკალური პერიოდი ვერ მოიძებნა' });
+    }
 
-    const direction = ['PURCHASE_IN','RETURN_IN','ADJUSTMENT_IN','OPENING'].includes(type) ? 1 : -1;
-    const stockResult = await supabaseAdmin.rpc('update_stock_level', { p_product_id: product_id, p_delta: quantity * direction });
-    if (stockResult.error) {
-      console.error('[Inventory Adjustment] Stock level update failed:', stockResult.error);
-      // ტრანზაქცია უკვე ჩაიწერა, მაგრამ stock_levels არ განახლდა — ლოგი საჭიროა
+    const { data, error } = await supabaseAdmin.rpc('adjust_inventory_atomic', {
+      p_product_id: product_id,
+      p_quantity: quantity,
+      p_transaction_type: type,
+      p_unit_cost: unit_cost || null,
+      p_notes: notes || null,
+      p_fiscal_period_id: currPeriod,
+      p_created_by: req.userId,
+    });
+
+    if (error) {
+      console.error('[Inventory Adjustment] RPC failed:', error);
+      return res.status(500).json({ error: 'ინვენტარის კორექტირება ვერ მოხერხდა' });
     }
 
     res.json({ success: true, transaction: data });
@@ -435,85 +439,25 @@ router.get('/payroll/runs', requireAccounting, async (req: any, res) => {
 router.post('/payroll/run', requireAccounting, async (req: any, res) => {
   try {
     const { period_month, period_year, fiscal_period_id } = req.body;
-    const { data: employees, error: empErr } = await supabaseAdmin
-      .from('employees').select('*').eq('status', 'ACTIVE');
-    if (empErr) throw empErr;
-    if (!employees || employees.length === 0) return res.status(400).json({ error: 'აქტიური თანამშრომლები ვერ მოიძებნა' });
-
-    const items = employees.map((e: any) => {
-      const gross = Number(e.gross_salary);
-      const tax = parseFloat((gross * 0.20).toFixed(2));
-      const net = parseFloat((gross - tax).toFixed(2));
-      return { employee_id: e.id, gross_salary: gross, income_tax_rate: 20, income_tax: tax, net_salary: net };
-    });
-    const totalGross = items.reduce((s: number, i: any) => s + i.gross_salary, 0);
-    const totalTax = items.reduce((s: number, i: any) => s + i.income_tax, 0);
-    const totalNet = items.reduce((s: number, i: any) => s + i.net_salary, 0);
-
-    const { data: run, error: runErr } = await supabaseAdmin
-      .from('payroll_runs')
-      .insert({
-        period_month, period_year, fiscal_period_id,
-        total_gross: totalGross, total_tax: totalTax, total_net: totalNet,
-        status: 'PROCESSED', processed_by: req.userId,
-      }).select().single();
-    if (runErr) throw runErr;
-
-    const runItems = items.map((i: any) => ({ ...i, payroll_run_id: run.id }));
-    await supabaseAdmin.from('payroll_items').insert(runItems);
-
-    const SALARY_EXPENSE_CODE = '8100'; 
-    const SALARIES_PAYABLE_CODE = '3300';
-
-    const { data: payrollAccounts } = await supabaseAdmin
-      .from('accounts').select('id, code')
-      .in('code', [SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE]);
-
-    const accSalaryExpense = payrollAccounts?.find((a: { code: string; id: string }) => a.code === SALARY_EXPENSE_CODE)?.id;
-    const accSalariesPayable = payrollAccounts?.find((a: { code: string; id: string }) => a.code === SALARIES_PAYABLE_CODE)?.id;
-
-    if (!accSalaryExpense || !accSalariesPayable) {
-      console.error('[Payroll] Accounts not found', { SALARY_EXPENSE_CODE, SALARIES_PAYABLE_CODE });
-    } else {
-      const { data: je, error: jeErr } = await supabaseAdmin
-        .from('journal_entries')
-        .insert({
-          entry_date: new Date().toISOString().split('T')[0],
-          description: `Payroll Run #${run.run_code}`,
-          reference_type: 'PAYROLL',
-          reference_id: run.id,
-          status: 'POSTED',
-          fiscal_period_id
-        })
-        .select('id')
-        .single();
-
-      if (jeErr || !je) {
-        console.error('[Payroll] JE header failed:', jeErr);
-      } else {
-        const { error: linesErr } = await supabaseAdmin
-          .from('journal_lines')
-          .insert([
-            { journal_entry_id: je.id, account_id: accSalaryExpense,   debit: totalGross, credit: 0,            description: 'Salary expense' },
-            { journal_entry_id: je.id, account_id: accSalariesPayable, debit: 0,            credit: totalGross, description: 'Salaries payable' },
-          ]);
-
-        if (linesErr) {
-          console.error('[Payroll] JE lines failed — rolling back header:', linesErr);
-          const { error: deleteErr } = await supabaseAdmin
-            .from('journal_entries').delete().eq('id', je.id);
-          if (deleteErr) {
-            console.error('[Payroll] CRITICAL: rollback failed — manual cleanup needed', {
-              journal_entry_id: je.id,
-            });
-          }
-        }
-      }
+    if (!period_month || !period_year || !fiscal_period_id) {
+      return res.status(400).json({ error: 'სავალდებულო ველები აკლია' });
     }
 
-    res.json({ success: true, run_id: run.id, run_code: run.run_code, total_gross: totalGross, total_net: totalNet });
+    const { data, error } = await supabaseAdmin.rpc('payroll_run_atomic', {
+      p_period_month: period_month,
+      p_period_year: period_year,
+      p_fiscal_period_id: fiscal_period_id,
+      p_processed_by: req.userId,
+    });
+
+    if (error) {
+      console.error('[Payroll] RPC failed:', error);
+      return res.status(500).json({ error: error.message || 'ხელფასის გაანგარიშება ვერ მოხერხდა' });
+    }
+
+    res.json({ success: true, ...data });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'ხელფასის გაანგარიშება ვერ მოხერხდა' });
+    res.status(500).json({ error: err.message });
   }
 });
 // ── B6.5: OPEX (Operational Expenses) ──
