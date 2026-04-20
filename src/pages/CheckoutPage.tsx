@@ -19,6 +19,7 @@ export default function CheckoutPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     customerType: 'physical',
+    deliveryMethod: 'delivery',
     personalId: '',
     companyId: '',
     firstName: '',
@@ -84,10 +85,22 @@ export default function CheckoutPage() {
     setIsProcessingPayment(true);
     
     try {
+      const payloadCustomerInfo = {
+        ...customerInfo,
+        address: customerInfo.deliveryMethod === 'pickup' ? 'წერეთლის 118 (შოურუმი)' : customerInfo.address,
+        city: customerInfo.deliveryMethod === 'pickup' ? 'Tbilisi' : customerInfo.city,
+      };
+
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerInfo, items, paymentMethod: bank, paymentType: type })
+        body: JSON.stringify({ 
+          customerInfo: payloadCustomerInfo, 
+          items, 
+          paymentMethod: bank, 
+          paymentType: type,
+          deliveryMethod: customerInfo.deliveryMethod 
+        })
       });
 
       const data = await response.json();
@@ -232,22 +245,38 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.city')}</label>
-                          <select required name="city" value={customerInfo.city} onChange={handleInputChange} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 transition-all appearance-none cursor-pointer">
-                            <option value="Tbilisi">Tbilisi</option>
-                            <option value="Rustavi">Rustavi</option>
-                            <option value="Batumi">Batumi</option>
-                            <option value="Kutaisi">Kutaisi</option>
-                            <option value="Other">{t('checkout.cityOther', 'Other')}</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.address')}</label>
-                          <input required type="text" name="address" value={customerInfo.address} onChange={handleInputChange} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 transition-all" />
+                      {/* Delivery Method */}
+                      <div>
+                        <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-3">{t('checkout.deliveryMethod', 'მიწოდების მეთოდი')}</label>
+                        <div className="flex gap-4">
+                          <label className={`cursor-pointer flex-1 text-center py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${customerInfo.deliveryMethod === 'delivery' ? 'border-brand-900 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white text-brand-400 hover:border-gray-300'}`}>
+                            <input type="radio" name="deliveryMethod" value="delivery" checked={customerInfo.deliveryMethod === 'delivery'} onChange={handleInputChange} className="hidden" />
+                            {t('checkout.methodDelivery', 'მისამართზე მიტანა')}
+                          </label>
+                          <label className={`cursor-pointer flex-1 text-center py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${customerInfo.deliveryMethod === 'pickup' ? 'border-brand-900 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white text-brand-400 hover:border-gray-300'}`}>
+                            <input type="radio" name="deliveryMethod" value="pickup" checked={customerInfo.deliveryMethod === 'pickup'} onChange={handleInputChange} className="hidden" />
+                            {t('checkout.methodPickup', 'ფილიალიდან გატანა')}
+                          </label>
                         </div>
                       </div>
+                      {customerInfo.deliveryMethod === 'delivery' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.city')}</label>
+                            <select required name="city" value={customerInfo.city} onChange={handleInputChange} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 transition-all appearance-none cursor-pointer">
+                              <option value="Tbilisi">Tbilisi</option>
+                              <option value="Rustavi">Rustavi</option>
+                              <option value="Batumi">Batumi</option>
+                              <option value="Kutaisi">Kutaisi</option>
+                              <option value="Other">{t('checkout.cityOther', 'Other')}</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.address')}</label>
+                            <input required type="text" name="address" value={customerInfo.address} onChange={handleInputChange} className="w-full bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-brand-900 focus:outline-none focus:border-gold-400 transition-all" />
+                          </div>
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-xs font-bold tracking-widest text-brand-400 uppercase mb-2">{t('checkout.note')}</label>

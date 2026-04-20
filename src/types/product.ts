@@ -60,6 +60,7 @@ export interface Order {
 
 export interface CustomerInfo {
   customerType: 'physical' | 'legal';
+  deliveryMethod: 'delivery' | 'pickup';
   personalId?: string;
   companyId?: string;
   firstName: string;

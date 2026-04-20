@@ -2,7 +2,7 @@
 
 **KALE GROUP** არის მაღალი კლასის ონლაინ მაღაზია, რომელიც ორიენტირებულია პრემიუმ ხარისხის ავეჯის გაყიდვასა და ინდივიდუალურ შეკვეთებზე. პლატფორმა აერთიანებს დახვეწილ დიზაინს, სრულყოფილ ERP საბუღალტრო სისტემას, წარმოების მართვას (BOM, Cutting Plans, Offcut Management), თანამედროვე ტექნოლოგიებსა და მომხმარებელზე მორგებულ ფუნქციონალს.
 
-> **Last Audit:** 2026-04-16 (v4.6) — Senior AI Architect (Supabase MCP + Codebase Analysis + Security Hardening)
+> **Last Audit & Fixes:** 2026-04-20 (v4.8) — Senior AI Architect (Backend Architecture Hardening & Database Hygiene)
 
 ---
 
@@ -229,6 +229,8 @@
 | **v4.4** | **2026-04-16** | **AI Room Designer Fix:** Imagen 3 (`imagen-3.0-generate-001`) + Gemini 1.5 Pro Vision — ოთახის ფოტო ანალიზი + ფოტორეალისტური ავეჯ-რენდერი |
 | **v4.5** | **2026-04-16** | **Admin Intelligence:** RBAC-aware შიდა AI ჩატი Admin Panel-ში — Markdown Tables, COO & Auditor Mode, react-markdown |
 | **v4.6** | **2026-04-16** | **Security Hardening (P0):** BOG Signature Hard-Fail, Credo HTTPS URLs, Helmet CSP Production Mode, RLS InitPlan optimization (4 ცხრილი), Storage policy cleanup |
+| **v4.7** | **2026-04-20** | **Critical Security Fixes (Phase 1):** Dropped exposed `offcuts_backup_18042026`, secured `search_path` for SQL functions, fixed Mass Assignment in Employee CRUD with Zod, added AI Rate Limiting and Prompt Injection prevention |
+| **v4.8** | **2026-04-20** | **Backend Stability & DB Hygiene:** Fixed `requireAdmin` regression, eliminated `supabaseAdmin` silent fallback, sanitized AI chat history, added global error handler, secured auth endpoint leaked passwords, added 6 missing FK indexes, optimized RLS with `get_auth_uid()`, and deleted orphaned `accounting_entries` table. |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 61 (2026-04-03 → 2026-04-16)
@@ -255,11 +257,26 @@
   - [x] 5.4 — Storage bucket listing restriction (duplicate policy cleanup) ✅
   - [x] 5.5 — RLS InitPlan optimization (4 ცხრილი) ✅
 
-- [ ] **Phase 5B: Architecture Reform** (2-3 კვირა)
-  - [ ] 5B.1 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/`
-  - [ ] 5B.2 — Duplicate RLS policy consolidation (30+)
-  - [ ] 5B.3 — Dead code cleanup (orphan dirs, `.bak` files)
-  - [ ] 5B.4 — Enable Leaked Password Protection (Supabase Dashboard)
+- [x] **Phase 5.1: Critical Security Fixes (P0)** (v4.7 — ✅ დასრულებული)
+  - [x] Database: Dropped exposed `offcuts_backup_18042026` table ✅
+  - [x] Database: Secured `search_path` for `process_order_transaction` & `prevent_product_hard_delete` ✅
+  - [x] API: Fixed Mass Assignment vulnerability in Employee CRUD using Zod schemas ✅
+  - [x] AI Module: Added Rate Limiting (`aiImageLimiter`) for image generation ✅
+  - [x] AI Module: Added Prompt Injection guardrails to Chat endpoint ✅
+
+- [x] **Phase 5.2: Backend Stability & Database Hygiene** (v4.8 — ✅ დასრულებული)
+  - [x] API: Fixed `requireAdmin` functional regression and added Global Error Handler ✅
+  - [x] API: Eliminated `supabaseAdmin` silent fallback & sanitized AI Chat History ✅
+  - [x] Database: Created `get_auth_uid()` STABLE function for RLS InitPlan optimization ✅
+  - [x] Database: Added 6 missing unindexed Foreign Keys for join performance ✅
+  - [x] Database: Dropped orphaned `accounting_entries` table ✅
+
+- [ ] **Phase 5B: Architecture Reform & Schema Alignment** (მიმდინარე)
+  - [x] 5B.1 — Database: Align `orders` Schema with Types (`shipping_method` vs `delivery_method`) ✅
+  - [x] 5B.2 — `server.ts` მოდულარიზაცია → `routes/`, `middleware/`, `services/` ✅
+  - [ ] 5B.3 — Duplicate RLS policy consolidation (30+)
+  - [ ] 5B.4 — Dead code cleanup (orphan dirs, `.bak` files)
+  - [ ] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard)
 
 - [ ] **Phase 6: Feature Activation** (3-5 კვირა)
   - [ ] 6.1 — Invoice auto-generation debugging (invoices = 0)
@@ -326,6 +343,9 @@
 >
 > **v4.6 Security Hardening:** სამივე P0 კრიტიკული ხარვეზი აღმოიფხვრა — BOG webhook signature bypass, Credo HTTP localhost fallback და CSP disabled. Supabase-ზე RLS performance ოპტიმიზირეულია 4 manufacturing ცხრილზე, storage policy დუბლიკატი წაშლილია.
 >
+> **v4.7 Critical Security Fixes:** აღმოიფხვრა P0 ხარვეზები — წაიშალა ღია ბექაფ ცხრილი, შეიზღუდა SQL ინექციის რისკები ფუნქციებში `search_path`-ის გაწერით, დაემატა Zod ვალიდაცია თანამშრომლების API-ში (Mass Assignment-ისგან დასაცავად), ასევე დაინერგა AI Rate Limiting და Prompt Injection-ისგან დაცვა.
+>
+> **v4.8 Backend Architecture Hardening:** გასწორდა ფუნქციური რეგრესიები (admin permissions, silent error swallows), დაემატა გლობალური error handler. ბაზის ჰიგიენის კუთხით შეიქმნა `get_auth_uid()` ფუნქცია, დაემატა აკლია Foreign Key ინდექსები და წაიშალა ობოლი `accounting_entries` ცხრილი.
 > **VAT/დღგ:** კომპანია ამჟამად არ არის დღგ-ს გადამხდელი — ფუნქცია ჩაშენებულია სამომავლოდ (company_settings toggle).
 >
 > **TBC Bank:** API ინტეგრაცია მოლოდინშია (API Key ჯერ არ არის მიღებული).

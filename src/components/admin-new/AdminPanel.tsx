@@ -1,22 +1,25 @@
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, Suspense } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
 import { motion } from "framer-motion"
 import { Loader2 } from "lucide-react"
 import { Sidebar } from "@/src/components/admin-new/Sidebar"
 import { Header } from "@/src/components/admin-new/Header"
-import { Dashboard } from "@/src/components/admin-new/Dashboard"
-import { Products } from "@/src/components/admin-new/Products"
-import { Sales } from "@/src/components/admin-new/Sales"
-import { Categories } from "@/src/components/admin-new/Categories"
-import { Orders } from "@/src/components/admin-new/Orders"
-import { POSModule } from "@/src/components/admin-new/POSModule"
-import { Accounting } from "@/src/components/admin-new/Accounting"
-import { Manufacturing } from "@/src/components/admin-new/Manufacturing"
-import { Team } from "@/src/components/admin-new/Team"
-import { Messages } from "@/src/components/admin-new/Messages"
-import { Settings } from "@/src/components/admin-new/Settings"
-import { Guide } from "@/src/components/admin-new/Guide"
-import { AdminAIChatbot } from "@/src/components/admin-new/AdminAIChatbot"
+
+// Lazy loaded components for code splitting
+const Dashboard = React.lazy(() => import("@/src/components/admin-new/Dashboard").then(m => ({ default: m.Dashboard })));
+const Products = React.lazy(() => import("@/src/components/admin-new/Products").then(m => ({ default: m.Products })));
+const Sales = React.lazy(() => import("@/src/components/admin-new/Sales").then(m => ({ default: m.Sales })));
+const Categories = React.lazy(() => import("@/src/components/admin-new/Categories").then(m => ({ default: m.Categories })));
+const Orders = React.lazy(() => import("@/src/components/admin-new/Orders").then(m => ({ default: m.Orders })));
+const POSModule = React.lazy(() => import("@/src/components/admin-new/POSModule").then(m => ({ default: m.POSModule })));
+const Accounting = React.lazy(() => import("@/src/components/admin-new/Accounting").then(m => ({ default: m.Accounting })));
+const Manufacturing = React.lazy(() => import("@/src/components/admin-new/Manufacturing").then(m => ({ default: m.Manufacturing })));
+const Team = React.lazy(() => import("@/src/components/admin-new/Team").then(m => ({ default: m.Team })));
+const Messages = React.lazy(() => import("@/src/components/admin-new/Messages").then(m => ({ default: m.Messages })));
+const Settings = React.lazy(() => import("@/src/components/admin-new/Settings").then(m => ({ default: m.Settings })));
+const Guide = React.lazy(() => import("@/src/components/admin-new/Guide").then(m => ({ default: m.Guide })));
+const AdminAIChatbot = React.lazy(() => import("@/src/components/admin-new/AdminAIChatbot").then(m => ({ default: m.AdminAIChatbot })));
 
 import { supabase } from "@/src/lib/supabase"
 import { useAuth } from "@/src/context/AuthContext"
@@ -112,32 +115,46 @@ export function AdminPanel() {
     localStorage.setItem("adminTheme", newMode ? "dark" : "light")
   }
 
-  // ── Data Fetching ──
-  useEffect(() => {
-    if (isAuthorized && !authLoading) {
-      fetchData()
-    }
-  }, [isAuthorized, authLoading])
-
-  const fetchData = useCallback(async () => {
-    setIsLoading(true)
-    try {
+  // ── Data Fetching with React Query ──
+  const { data: adminData, isLoading: queryLoading, refetch: fetchData } = useQuery({
+    queryKey: ['adminData'],
+    queryFn: async () => {
       const [prodRes, catRes, orderRes, msgRes] = await Promise.all([
         supabase.from("products").select("*").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("created_at", { ascending: true }),
         supabase.from("orders").select("*").order("created_at", { ascending: false }),
-        supabase.from("contact_messages").select("id", { count: "exact" }).eq("read", false),
+        supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("read", false),
       ])
-      if (prodRes.data) setProducts(prodRes.data)
-      if (catRes.data) setCategories(catRes.data)
-      if (orderRes.data) setOrders(orderRes.data)
-      if (msgRes.count !== null) setUnreadMessagesCount(msgRes.count)
-    } catch (err) {
-      console.error("Error fetching data:", err)
-    } finally {
-      setIsLoading(false)
+      return {
+        products: prodRes.data || [],
+        categories: catRes.data || [],
+        orders: orderRes.data || [],
+        unreadMessagesCount: msgRes.count || 0
+      }
+    },
+    enabled: isAuthorized && !authLoading,
+  })
+
+  // Wrapper for child components expecting () => Promise<void>
+  const handleRefresh = async () => {
+    await fetchData()
+  }
+
+  // Sync query data with local state to preserve existing logic
+  useEffect(() => {
+    if (adminData) {
+      setProducts(adminData.products)
+      setCategories(adminData.categories)
+      setOrders(adminData.orders)
+      setUnreadMessagesCount(adminData.unreadMessagesCount)
     }
-  }, [])
+  }, [adminData])
+
+  useEffect(() => {
+    if (queryLoading !== undefined) {
+      setIsLoading(queryLoading)
+    }
+  }, [queryLoading])
 
   // ── Auth Handlers ──
   const handleLogin = async (e: React.FormEvent) => {
@@ -375,7 +392,7 @@ export function AdminPanel() {
             products={products}
             categories={categories}
             searchQuery={searchQuery}
-            onRefresh={fetchData}
+            onRefresh={handleRefresh}
             canEdit={canEditProducts}
             canDelete={canDeleteProducts}
             canAdd={canAddProducts}
@@ -396,7 +413,7 @@ export function AdminPanel() {
           <Categories
             categories={categories}
             products={products}
-            onRefresh={fetchData}
+            onRefresh={handleRefresh}
             onAdd={handleOpenAddCategory}
             onEdit={handleOpenEditCategory}
             onDelete={handleDeleteCategory}
@@ -412,7 +429,7 @@ export function AdminPanel() {
           <Orders
             orders={orders}
             searchQuery={searchQuery}
-            onRefresh={fetchData}
+            onRefresh={handleRefresh}
             canDeleteOrders={canDeleteOrders}
             onStatusUpdate={handleStatusUpdate}
             onDeleteOrder={handleDeleteOrder}
@@ -422,7 +439,7 @@ export function AdminPanel() {
         return (
           <POSModule
             products={products}
-            onRefresh={fetchData}
+            onRefresh={handleRefresh}
             consultantId={user?.id}
           />
         )
@@ -587,12 +604,21 @@ export function AdminPanel() {
               <p className="text-muted-foreground text-sm">მონაცემები იტვირთება...</p>
             </div>
           ) : (
-            renderContent()
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                <p className="text-muted-foreground text-sm">მოდული იტვირთება...</p>
+              </div>
+            }>
+              {renderContent()}
+            </Suspense>
           )}
         </div>
       </main>
 
-      <AdminAIChatbot />
+      <Suspense fallback={null}>
+        <AdminAIChatbot />
+      </Suspense>
     </div>
   )
 }

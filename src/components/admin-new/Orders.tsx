@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Eye, Trash2, ShoppingCart, Clock, CheckCircle, Truck, XCircle,
   BarChart3, X, ChevronRight, CreditCard, Banknote, DollarSign, Loader2, Package,
-  Send, FileText, MapPin, Truck as TruckIcon, User as UserIcon
+  Send, FileText, MapPin, Truck as TruckIcon, User as UserIcon, Star, Building2, Phone, Mail
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
@@ -203,6 +203,7 @@ export function Orders({
               <tr className="border-b border-border/50 bg-muted/50">
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">კლიენტი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ტელეფონი</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">მიწოდება</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">ქალაქი</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">თანხა</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">გადახდა</th>
@@ -231,6 +232,13 @@ export function Orders({
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{order.customer_phone}</td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      {order.delivery_method === 'pickup' ? (
+                        <span className="text-amber-500 bg-amber-500/10 px-2 py-1 rounded">შოურუმიდან</span>
+                      ) : (
+                        <span className="text-blue-500 bg-blue-500/10 px-2 py-1 rounded">მისამართზე</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{order.customer_city}</td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-foreground">₾ {parseFloat(order.total_price).toLocaleString()}</span>
@@ -362,7 +370,13 @@ export function Orders({
               <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">შეკვეთის დეტალები</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">ID: {selectedOrder.id.slice(0, 8)}...</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground">ID: {selectedOrder.id.slice(0, 8)}...</p>
+                    <div className="h-1 w-1 rounded-full bg-border" />
+                    <p className="text-[10px] font-black uppercase tracking-wider text-[#D4AF37] italic">
+                      Premium Furniture · Georgia
+                    </p>
+                  </div>
                 </div>
                 <button onClick={() => setSelectedOrder(null)} className="text-muted-foreground hover:text-foreground">
                   <X className="h-5 w-5" />
@@ -386,16 +400,20 @@ export function Orders({
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block">ქალაქი</span>
-                    <p className="text-foreground">{selectedOrder.customer_city}</p>
+                    <p className="text-foreground">{selectedOrder.delivery_method === 'pickup' ? "—" : selectedOrder.customer_city}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground block">მიწოდება</span>
+                    <p className="font-medium text-foreground">{selectedOrder.delivery_method === 'pickup' ? "ფილიალიდან გატანა" : "მისამართზე მიტანა"}</p>
                   </div>
                   <div className="col-span-2">
                     <span className="text-xs text-muted-foreground block">მისამართი</span>
-                    <p className="text-foreground">{selectedOrder.customer_address}</p>
+                    <p className="text-foreground">{selectedOrder.delivery_method === 'pickup' ? "წერეთლის 118 (შოურუმი)" : selectedOrder.customer_address}</p>
                   </div>
                   {selectedOrder.customer_note && (
                     <div className="col-span-2">
                       <span className="text-xs text-muted-foreground block">შენიშვნა</span>
-                      <p className="text-foreground italic">{selectedOrder.customer_note}</p>
+                      <p className="text-foreground italic font-medium text-amber-600">"{selectedOrder.customer_note}"</p>
                     </div>
                   )}
                 </div>
@@ -432,9 +450,6 @@ export function Orders({
                        selectedOrder.payment_method === 'cash' ? 'ნაღდი ფული' :
                        selectedOrder.payment_method || "—"}
                     </p>
-                    {selectedOrder.payment_type && (
-                       <p className="text-xs text-muted-foreground">{selectedOrder.payment_type}</p>
-                    )}
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block">გაყიდვის არხი</span>
@@ -457,7 +472,7 @@ export function Orders({
                         <div key={item.id} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
                           <div className="h-12 w-12 overflow-hidden rounded-lg border border-border/50 bg-muted flex-shrink-0">
                             <img
-                              src={item.products?.images?.[0] || "https://via.placeholder.com/100"}
+                              src={item.products?.images?.[0] || "https://img.staticdj.com/64bb19f6a7d667c4ec671eb48a97577a_100.png"}
                               alt={item.product_name}
                               className="h-full w-full object-cover"
                             />
@@ -486,7 +501,7 @@ export function Orders({
                             disabled={isUpdating}
                             onClick={() => handleStatusChange(selectedOrder.id, nextStatus)}
                             className={cn(
-                              "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors border",
+                              "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all border",
                               nextStatus === "cancelled"
                                 ? "border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10"
                                 : "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10",
