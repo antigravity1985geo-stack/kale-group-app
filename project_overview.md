@@ -279,11 +279,11 @@
   - [x] 5B.5 — Enable Leaked Password Protection (Supabase Dashboard) — 🛑 Skipped (Requires Pro Plan)
 
 - [ ] **Phase 6: Feature Activation** (3-5 კვირა)
-  - [ ] 6.1 — Invoice auto-generation debugging (invoices = 0)
-  - [ ] 6.2 — Inventory deduction activation (stock_levels = 0)
-  - [ ] 6.3 — OPEX integration → real Net Profit
-  - [ ] 6.4 — RS.GE SOAP production implementation
-  - [ ] 6.5 — Migration squash (59 → ~10)
+  - [x] 6.1 — Invoice auto-generation debugging (invoices = 0) ✅
+  - [x] 6.2 — Inventory deduction activation (stock_levels = 0) ✅
+  - [x] 6.3 — OPEX integration → real Net Profit ✅
+  - [ ] 6.4 — RS.GE SOAP production implementation (Requires API Key)
+  - [x] 6.5 — Migration squash (59 → ~10) — 🛑 Skipped (Managed via Supabase Dashboard)
 
 - [ ] **Phase 7: Full Autonomy** (1-2 თვე)
   - [ ] 7.1 — Multi-Currency (NBG API live rates)

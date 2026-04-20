@@ -516,6 +516,65 @@ router.post('/payroll/run', requireAccounting, async (req: any, res) => {
     res.status(500).json({ error: err.message || 'ხელფასის გაანგარიშება ვერ მოხერხდა' });
   }
 });
+// ── B6.5: OPEX (Operational Expenses) ──
+const opexSchema = z.object({
+  amount: z.number().positive(),
+  description: z.string().min(3),
+  account_code: z.string().default('8100'), // Default generic expense account
+  date: z.string().optional()
+});
+
+router.post('/opex', requireAccounting, async (req: any, res) => {
+  try {
+    const { amount, description, account_code, date } = opexSchema.parse(req.body);
+    const entryDate = date || new Date().toISOString().split('T')[0];
+
+    const { data: currPeriod } = await supabaseAdmin.rpc('get_current_fiscal_period');
+    if (!currPeriod) {
+      return res.status(400).json({ error: 'აქტიური ფისკალური პერიოდი ვერ მოიძებნა' });
+    }
+
+    // Fetch accounts
+    const { data: accounts } = await supabaseAdmin.from('accounts').select('id, code').in('code', ['1110', account_code]);
+    const cashAcc = accounts?.find(a => a.code === '1110');
+    const opexAcc = accounts?.find(a => a.code === account_code);
+
+    if (!cashAcc || !opexAcc) {
+      return res.status(400).json({ error: 'შესაბამისი ანგარიშები ვერ მოიძებნა (1110 ან მიუთითებული ხარჯის)' });
+    }
+
+    const journalData = {
+      entry_date: entryDate,
+      description: `OPEX: ${description}`,
+      reference_type: 'MANUAL',
+      fiscal_period_id: currPeriod,
+      status: 'POSTED'
+    };
+
+    // Insert journal entry
+    const { data: je, error: jeErr } = await supabaseAdmin.from('journal_entries').insert(journalData).select('id').single();
+    if (jeErr) throw jeErr;
+
+    // Insert lines (Expense increases on Debit, Cash decreases on Credit)
+    const lines = [
+      { journal_entry_id: je.id, account_id: opexAcc.id, debit: amount, credit: 0, description: `Expense: ${description}` },
+      { journal_entry_id: je.id, account_id: cashAcc.id, debit: 0, credit: amount, description: `Cash Out: ${description}` }
+    ];
+
+    const { error: lineErr } = await supabaseAdmin.from('journal_lines').insert(lines);
+    if (lineErr) {
+      await supabaseAdmin.from('journal_entries').delete().eq('id', je.id);
+      throw lineErr;
+    }
+
+    res.json({ success: true, message: 'საოპერაციო ხარჯი დარეგისტრირდა', journal_entry_id: je.id });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+       return res.status(400).json({ error: err.issues });
+    }
+    res.status(500).json({ error: err.message || 'დაფიქსირდა შეცდომა ხარჯის რეგისტრაციისას' });
+  }
+});
 
 // ── B7: Financial Reports ──
 router.get('/reports/trial-balance', requireAccountingRead, async (req: any, res) => {
