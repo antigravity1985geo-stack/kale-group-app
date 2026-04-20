@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from "../services/supabase.service.js";
 import { genAI } from "../services/gemini.service.js";
 import { aiLimiter, aiImageLimiter } from "../middleware/rate-limit.middleware.js";
 import { requireAccountingRead } from "./accounting.routes.js";
+import { containsPromptInjection, sanitizeUserText } from "../services/promptGuard.service.js";
 
 const router = Router();
 
@@ -38,11 +39,11 @@ router.post("/chat", aiLimiter, async (req: any, res) => {
       return res.status(400).json({ error: "შეტყობინება ძალიან გრძელია ან ცარიელია." });
     }
 
-    const blockedKeywords = ['ignore', 'system prompt', 'instruction', 'override', 'bypass', 'forget'];
-    const msgLower = userMessage.toLowerCase();
-    if (blockedKeywords.some(kw => msgLower.includes(kw))) {
+    if (containsPromptInjection(userMessage)) {
+      console.warn('[AI Chat] Blocked potential prompt injection attempt');
       return res.status(400).json({ error: "თქვენი მოთხოვნა დაბლოკილია უსაფრთხოების მიზნით." });
     }
+    const safeUserMessage = sanitizeUserText(userMessage, 1000);
 
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "dummy-key-to-prevent-crash") {
       return res.status(500).json({ error: "API გასაღები არ არის დაყენებული (GEMINI_API_KEY)." });
@@ -89,7 +90,7 @@ router.post("/chat", aiLimiter, async (req: any, res) => {
       ...sanitizeHistory(history || []),
       {
         role: "user",
-        parts: [{ text: userMessage }]
+        parts: [{ text: safeUserMessage }]
       }
     ];
 
@@ -320,9 +321,13 @@ ${JSON.stringify((products || []).map((p: any) => ({
 4. იყავი მკაცრი, ზუსტი და პროფესიონალური.`
       : "შენ ხარ შიდა კონსულტანტის ასისტენტი. პასუხობ ქართულად.";
 
+    if (containsPromptInjection(userMessage)) {
+      return res.status(400).json({ error: "მოთხოვნა დაბლოკილია." });
+    }
+    const safeUserMessage = sanitizeUserText(userMessage, 1000);
     const contents = [
       ...sanitizeHistory(history || []),
-      { role: "user", parts: [{ text: userMessage }] }
+      { role: "user", parts: [{ text: safeUserMessage }] }
     ];
 
     const result = await genAI.models.generateContent({
