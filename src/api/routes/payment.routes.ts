@@ -3,6 +3,8 @@ import { supabaseAdmin } from "../services/supabase.service.js";
 import { 
   getBOGToken, 
   verifyBogCallback, 
+  verifyTbcCallback,
+  verifyCredoCallback,
   verifyPaymentExists, 
   processSuccessfulOrder,
   getTBCToken,
@@ -223,6 +225,9 @@ router.post("/tbc", async (req: any, res) => {
 
 router.post("/tbc/callback", async (req: any, res) => {
   try {
+    if (!verifyTbcCallback(req)) {
+      return res.status(403).json({ error: 'Invalid callback origin' });
+    }
     const { PayId, Status, Extra } = req.body;
 
     const paymentValid = await verifyPaymentExists(PayId, 'tbc');
@@ -309,6 +314,9 @@ router.post("/credo", async (req: any, res) => {
 
 router.post("/credo/callback", async (req: any, res) => {
   try {
+    if (!verifyCredoCallback(req)) {
+      return res.status(403).json({ error: 'Invalid callback origin' });
+    }
     const { application_id, status, merchant_order_id } = req.body;
 
     const paymentValid = await verifyPaymentExists(application_id, 'credo');

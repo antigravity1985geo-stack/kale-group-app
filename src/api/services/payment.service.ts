@@ -11,6 +11,32 @@ export function getClientIp(req: any): string {
   );
 }
 
+// ── Bank IP Allowlists (defense-in-depth pending API keys) ──
+const TBC_ALLOWED_IPS = (process.env.TBC_ALLOWED_IPS || "").split(",").map(s => s.trim()).filter(Boolean);
+const CREDO_ALLOWED_IPS = (process.env.CREDO_ALLOWED_IPS || "").split(",").map(s => s.trim()).filter(Boolean);
+
+export function verifyTbcCallback(req: any): boolean {
+  if (TBC_ALLOWED_IPS.length === 0) {
+    console.error('[TBC Callback] CRITICAL: TBC_ALLOWED_IPS not configured. Rejecting for safety.');
+    return false;
+  }
+  const ip = getClientIp(req);
+  const ok = TBC_ALLOWED_IPS.includes(ip);
+  if (!ok) console.error(`[TBC Callback] REJECTED: IP ${ip} not in allowlist`);
+  return ok;
+}
+
+export function verifyCredoCallback(req: any): boolean {
+  if (CREDO_ALLOWED_IPS.length === 0) {
+    console.error('[Credo Callback] CRITICAL: CREDO_ALLOWED_IPS not configured. Rejecting for safety.');
+    return false;
+  }
+  const ip = getClientIp(req);
+  const ok = CREDO_ALLOWED_IPS.includes(ip);
+  if (!ok) console.error(`[Credo Callback] REJECTED: IP ${ip} not in allowlist`);
+  return ok;
+}
+
 // BOG Webhook Verification
 export function verifyBogCallback(req: any): boolean {
   if (!process.env.BOG_CLIENT_SECRET) {
