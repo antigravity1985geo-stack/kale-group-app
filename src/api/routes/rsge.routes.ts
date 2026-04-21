@@ -4,6 +4,23 @@ import { requireAccounting, requireAccountingRead } from "./accounting.routes.js
 
 const router = Router();
 
+// GET /api/rs-ge/status — feature flag: is RS.ge integration in mock or live mode
+router.get('/status', requireAccountingRead, async (_req, res) => {
+  const hasCredentials = !!(
+    process.env.RS_USERNAME &&
+    process.env.RS_PASSWORD &&
+    process.env.RS_USER_ID &&
+    process.env.RS_COMPANY_ID
+  );
+  res.json({
+    mock_mode: !hasCredentials,
+    credentials_configured: hasCredentials,
+    message: hasCredentials
+      ? 'RS.ge ინტეგრაცია აქტიურია'
+      : 'RS.ge credentials არ არის კონფიგურირებული — ზედნადებები იქმნება მხოლოდ ლოკალურად',
+  });
+});
+
 // GET /api/rs-ge/waybills — List all outgoing waybills with order data
 router.get('/waybills', requireAccountingRead, async (req: any, res) => {
   try {

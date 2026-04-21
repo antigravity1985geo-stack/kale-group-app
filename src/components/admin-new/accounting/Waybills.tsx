@@ -92,6 +92,9 @@ export default function Waybills() {
   const [ordersLimit, setOrdersLimit] = useState(50);
   const [totalWaybills, setTotalWaybills] = useState(0);
 
+  // RS.ge integration status (mock vs live)
+  const [rsgeStatus, setRsgeStatus] = useState<{ mock_mode: boolean; message: string } | null>(null);
+
   // Safe fetch: never crashes on HTML error responses
   const safeFetch = async (url: string, options?: RequestInit) => {
     const res = await fetch(url, options);
@@ -108,7 +111,18 @@ export default function Waybills() {
     setIsLoading(true);
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
-      
+
+      // 0. Fetch RS.ge feature flag (mock_mode)
+      try {
+        const status = await safeFetch('/api/rs-ge/status', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setRsgeStatus(status);
+      } catch (e) {
+        // If the endpoint is unreachable, assume mock (fail-safe toward warning UI)
+        setRsgeStatus({ mock_mode: true, message: 'RS.ge სტატუსი უცნობია' });
+      }
+
       // 1. Fetch Outgoing Waybills
       let data: any = { waybills: [], total: 0 };
       try {
@@ -319,14 +333,33 @@ export default function Waybills() {
           <p className="text-sm text-muted-foreground">გამავალი და შემომავალი ტვირთების მართვა (Integration)</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={fetchData} 
+          <button
+            onClick={fetchData}
             className="flex items-center gap-2 rounded-xl border border-border/50 bg-background px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-all active:scale-95"
           >
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} /> განახლება
           </button>
         </div>
       </div>
+
+      {/* Mock-mode banner — shown when RS.ge credentials are not configured */}
+      {rsgeStatus?.mock_mode && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-amber-700 dark:text-amber-400">დემო რეჟიმი — RS.ge ინტეგრაცია არ არის აქტიური</h4>
+              <p className="text-sm text-amber-800/90 dark:text-amber-300/90 mt-1">
+                RS.ge-ს credentials (<code className="text-xs font-mono bg-amber-500/10 px-1 py-0.5 rounded">RS_USERNAME</code>,{' '}
+                <code className="text-xs font-mono bg-amber-500/10 px-1 py-0.5 rounded">RS_PASSWORD</code>,{' '}
+                <code className="text-xs font-mono bg-amber-500/10 px-1 py-0.5 rounded">RS_USER_ID</code>,{' '}
+                <code className="text-xs font-mono bg-amber-500/10 px-1 py-0.5 rounded">RS_COMPANY_ID</code>)
+                არ არის კონფიგურირებული. ზედნადებები იქმნება მხოლოდ ლოკალურ ბაზაში — <strong>RS.ge-ზე ფაქტიურად არ იგზავნება.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard 
@@ -520,6 +553,14 @@ export default function Waybills() {
                           <div className="flex items-center gap-2 bg-muted/30 p-2.5 rounded-xl border border-border/30 mb-4 group-hover:bg-primary/5 transition-colors">
                              <span className="text-[10px] font-black text-muted-foreground uppercase">RS.GE ID:</span>
                              <span className="text-xs font-black text-primary font-mono select-all decoration-dotted underline underline-offset-4 decoration-primary/30">{w.rs_waybill_id}</span>
+                             {w.rs_waybill_id.startsWith('WB-') && (
+                               <span
+                                 title="RS.ge credentials არ არის კონფიგურირებული — ID სიმულირებულია"
+                                 className="inline-flex items-center rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-600 ring-1 ring-inset ring-amber-500/20"
+                               >
+                                 SIMULATED
+                               </span>
+                             )}
                              <ExternalLink className="h-3 w-3 text-muted-foreground ml-auto group-hover:text-primary" />
                           </div>
                         )}
@@ -584,9 +625,17 @@ export default function Waybills() {
                      incomingWaybills.map(w => (
                        <tr key={w.id} className="group hover:bg-muted/30 transition-colors">
                           <td className="px-6 py-4">
-                             <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2 flex-wrap">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-mono text-xs font-bold text-foreground bg-muted px-1.5 py-0.5 rounded select-all">{w.rs_waybill_id}</span>
+                                {w.rs_waybill_id?.startsWith('WB-') && (
+                                  <span
+                                    title="RS.ge credentials არ არის კონფიგურირებული — ID სიმულირებულია"
+                                    className="inline-flex items-center rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-600 ring-1 ring-inset ring-amber-500/20"
+                                  >
+                                    SIMULATED
+                                  </span>
+                                )}
                              </div>
                           </td>
                           <td className="px-6 py-4">
