@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { supabase } from '../../../lib/supabase';
+import { safeFetch } from '../../../utils/safeFetch';
 
 // Premium Design Components
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
@@ -109,12 +110,10 @@ export default function Vat() {
     setIsUpdating(true);
     
     try {
-      const { error } = await supabase
-        .from('company_settings')
-        .update({ value: newVal })
-        .eq('key', 'vat_registered');
-      
-      if (error) throw error;
+      await safeFetch('/api/settings/vat_registered', {
+        method: 'PUT',
+        body: JSON.stringify({ value: newVal }),
+      });
       showToast(newVal ? 'დღგ-ს სტატუსი გააქტიურდა' : 'დღგ-ს სტატუსი გამოირთო', 'ok');
     } catch (err: any) {
       setIsVatRegistered(!newVal); // Rollback

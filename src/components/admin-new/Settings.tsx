@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Settings as SettingsIcon, ToggleLeft, ToggleRight, Percent, CreditCard, Loader2, Save, CheckCircle } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 
 interface CompanySetting {
   id: string
@@ -53,54 +54,27 @@ export function Settings() {
   const handleToggleVat = async () => {
     const newVal = !vatRegistered
     setVatRegistered(newVal)
-    const { error } = await supabase
-      .from("company_settings")
-      .update({ value: newVal })
-      .eq("key", "vat_registered")
-    if (error) {
+    try {
+      await safeFetch("/api/settings/vat_registered", {
+        method: "PUT",
+        body: JSON.stringify({ value: newVal }),
+      })
+    } catch (err: any) {
       setVatRegistered(!newVal) // Rollback
-      alert("შეცდომა: " + error.message)
+      alert("შეცდომა: " + err.message)
     }
   }
 
   const handleSaveInstallmentRate = async () => {
     setIsSaving(true)
     try {
-      // First try update
-      const { data: existing } = await supabase
-        .from("company_settings")
-        .select("id")
-        .eq("key", "installment_surcharge_rate")
-        .single()
-
-      let error
-      if (existing) {
-        // Row exists — update it (store as number in jsonb)
-        const res = await supabase
-          .from("company_settings")
-          .update({ value: installmentRate })
-          .eq("key", "installment_surcharge_rate")
-        error = res.error
-      } else {
-        // Row missing — insert it
-        const res = await supabase
-          .from("company_settings")
-          .insert({
-            key: "installment_surcharge_rate",
-            value: installmentRate,
-            description: "განვადების საკომისიოს პროცენტი (%). ნაგულისხმევად 5%",
-          })
-        error = res.error
-      }
-
-      if (error) {
-        alert("შეცდომა: " + error.message)
-      } else {
-        setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 2000)
-        // Re-fetch to confirm persisted value
-        await fetchSettings()
-      }
+      await safeFetch("/api/settings/installment_surcharge_rate", {
+        method: "PUT",
+        body: JSON.stringify({ value: installmentRate }),
+      })
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 2000)
+      await fetchSettings()
     } catch (err: any) {
       alert("შეცდომა: " + err.message)
     } finally {
