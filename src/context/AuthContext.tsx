@@ -36,24 +36,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /**
+   * Fetch profile with exponential backoff retry.
+   * Handles the race between Supabase Auth SIGNED_IN event and the
+   * server-side trigger that creates the profile row for new users.
+   * Attempts (ms): 0, 200, 400, 800, 1600, 3200 — total ~6.2s max wait.
+   */
   const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setProfile(null);
-        return;
+    const MAX_ATTEMPTS = 6;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, 200 * Math.pow(2, attempt - 1)));
       }
-      setProfile(data as Profile);
-    } catch (err) {
-      console.error('Profile fetch failed:', err);
-      setProfile(null);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (error) {
+          if (attempt === MAX_ATTEMPTS - 1) {
+            console.error('Error fetching profile (final attempt):', error);
+            setProfile(null);
+          }
+          continue;
+        }
+
+        if (data) {
+          setProfile(data as Profile);
+          return;
+        }
+        // data is null — trigger may not have run yet, retry
+      } catch (err) {
+        if (attempt === MAX_ATTEMPTS - 1) {
+          console.error('Profile fetch failed (final attempt):', err);
+          setProfile(null);
+        }
+      }
     }
+    // Exhausted retries without finding profile
+    setProfile(null);
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -89,12 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Small delay to allow trigger to create profile for new signups
-          if (event === 'SIGNED_IN') {
-            setTimeout(() => fetchProfile(newSession.user.id), 500);
-          } else {
-            await fetchProfile(newSession.user.id);
-          }
+          // fetchProfile has built-in retry-with-backoff for signup races
+          await fetchProfile(newSession.user.id);
         } else {
           setProfile(null);
         }
