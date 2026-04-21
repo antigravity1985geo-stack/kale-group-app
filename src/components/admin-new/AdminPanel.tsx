@@ -24,6 +24,7 @@ const AdminAIChatbot = React.lazy(() => import("@/src/components/admin-new/Admin
 import { supabase } from "@/src/lib/supabase"
 import { safeFetch } from "@/src/utils/safeFetch"
 import { useAuth } from "@/src/context/AuthContext"
+import { ProtectedRoute } from "@/src/components/ProtectedRoute"
 import type { Product, Category } from "@/src/types/product"
 
 const tabConfig: Record<string, { title: string; subtitle?: string; showSearch?: boolean; addLabel?: string }> = {
@@ -374,78 +375,122 @@ export function AdminPanel() {
 
     switch (activeTab) {
       case "statistics":
-        return <Dashboard orders={orders} products={products} />
+        return (
+          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+            <Dashboard orders={orders} products={products} />
+          </ProtectedRoute>
+        )
       case "products":
         return (
-          <Products
-            products={products}
-            categories={categories}
-            searchQuery={searchQuery}
-            onRefresh={handleRefresh}
-            canEdit={canEditProducts}
-            canDelete={canDeleteProducts}
-            canAdd={canAddProducts}
-            onAdd={handleOpenAddProduct}
-            onEdit={handleOpenEditProduct}
-            onDelete={handleDeleteProduct}
-            onSave={handleSaveProduct}
-            onImageUpload={handleImageUpload}
-            isModalOpen={isProductModalOpen}
-            setIsModalOpen={setIsProductModalOpen}
-            editingProduct={editingProduct}
-          />
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <Products
+              products={products}
+              categories={categories}
+              searchQuery={searchQuery}
+              onRefresh={handleRefresh}
+              canEdit={canEditProducts}
+              canDelete={canDeleteProducts}
+              canAdd={canAddProducts}
+              onAdd={handleOpenAddProduct}
+              onEdit={handleOpenEditProduct}
+              onDelete={handleDeleteProduct}
+              onSave={handleSaveProduct}
+              onImageUpload={handleImageUpload}
+              isModalOpen={isProductModalOpen}
+              setIsModalOpen={setIsProductModalOpen}
+              editingProduct={editingProduct}
+            />
+          </ProtectedRoute>
         )
       case "sales":
-        return <Sales products={products} onStopSale={handleStopSale} onEdit={handleOpenEditProduct} />
+        return (
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <Sales products={products} onStopSale={handleStopSale} onEdit={handleOpenEditProduct} />
+          </ProtectedRoute>
+        )
       case "categories":
         return (
-          <Categories
-            categories={categories}
-            products={products}
-            onRefresh={handleRefresh}
-            onAdd={handleOpenAddCategory}
-            onEdit={handleOpenEditCategory}
-            onDelete={handleDeleteCategory}
-            onSave={handleSaveCategory}
-            onImageUpload={handleImageUpload}
-            isModalOpen={isCategoryModalOpen}
-            setIsModalOpen={setIsCategoryModalOpen}
-            editingCategory={editingCategory}
-          />
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <Categories
+              categories={categories}
+              products={products}
+              onRefresh={handleRefresh}
+              onAdd={handleOpenAddCategory}
+              onEdit={handleOpenEditCategory}
+              onDelete={handleDeleteCategory}
+              onSave={handleSaveCategory}
+              onImageUpload={handleImageUpload}
+              isModalOpen={isCategoryModalOpen}
+              setIsModalOpen={setIsCategoryModalOpen}
+              editingCategory={editingCategory}
+            />
+          </ProtectedRoute>
         )
       case "orders":
         return (
-          <Orders
-            orders={orders}
-            searchQuery={searchQuery}
-            onRefresh={handleRefresh}
-            canDeleteOrders={canDeleteOrders}
-            onStatusUpdate={handleStatusUpdate}
-            onDeleteOrder={handleDeleteOrder}
-          />
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <Orders
+              orders={orders}
+              searchQuery={searchQuery}
+              onRefresh={handleRefresh}
+              canDeleteOrders={canDeleteOrders}
+              onStatusUpdate={handleStatusUpdate}
+              onDeleteOrder={handleDeleteOrder}
+            />
+          </ProtectedRoute>
         )
       case "showroom":
         return (
-          <POSModule
-            products={products}
-            onRefresh={handleRefresh}
-            consultantId={user?.id}
-          />
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <POSModule
+              products={products}
+              onRefresh={handleRefresh}
+              consultantId={user?.id}
+            />
+          </ProtectedRoute>
         )
       case "accounting":
-        return <Accounting />
+        return (
+          <ProtectedRoute allowed={["admin", "accountant"]}>
+            <Accounting />
+          </ProtectedRoute>
+        )
       case "manufacturing":
-        return <Manufacturing />
+        return (
+          <ProtectedRoute allowed={["admin"]}>
+            <Manufacturing />
+          </ProtectedRoute>
+        )
       case "team":
-        return <Team />
+        return (
+          <ProtectedRoute allowed={["admin"]}>
+            <Team />
+          </ProtectedRoute>
+        )
       case "messages":
-        return <Messages />
+        return (
+          <ProtectedRoute allowed={["admin", "consultant"]}>
+            <Messages />
+          </ProtectedRoute>
+        )
       case "settings":
-        return <Settings />
+        return (
+          <ProtectedRoute allowed={["admin"]}>
+            <Settings />
+          </ProtectedRoute>
+        )
       case "guide":
-        return <Guide />
+        return (
+          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+            <Guide />
+          </ProtectedRoute>
+        )
       default:
-        return <Dashboard orders={orders} products={products} />
+        return (
+          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+            <Dashboard orders={orders} products={products} />
+          </ProtectedRoute>
+        )
     }
   }
 
