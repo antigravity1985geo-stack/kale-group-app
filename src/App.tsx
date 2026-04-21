@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -9,14 +9,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/cart/CartDrawer';
-import HomePage from './pages/HomePage';
-import CheckoutPage from './pages/CheckoutPage';
-import PaymentSuccessPage from './pages/PaymentSuccessPage';
-import ProductPage from './pages/ProductPage';
-import AdminPanel from './AdminPanel';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
 import AIChatBot from './components/ui/AIChatBot';
 import ReloadPrompt from './components/ui/ReloadPrompt';
+
+// Lazy-loaded pages — each becomes its own chunk
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));
+const PaymentSuccessPage = React.lazy(() => import('./pages/PaymentSuccessPage'));
+const ProductPage = React.lazy(() => import('./pages/ProductPage'));
+const AdminPanel = React.lazy(() => import('./AdminPanel'));
+
+const RouteFallback = () => (
+  <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-900 animate-spin" />
+  </div>
+);
 
 function ScrollToTopManager() {
   const { pathname, hash } = useLocation();
@@ -50,16 +58,18 @@ function AppLayout() {
         <Toaster position="bottom-right" reverseOrder={false} />
         {!isAdminRoute && <Header onOpenWishlist={() => setIsWishlistOpen(true)} />}
         <main className="flex-1">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/payment/success" element={<PaymentSuccessPage />} />
-            <Route path="/product/:id" element={<ProductPage />} />
-            
-            {/* Admin Route (No generic Header/Footer) */}
-            <Route path="/admin" element={<AdminPanel />} />
-          </Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/payment/success" element={<PaymentSuccessPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
+
+              {/* Admin Route (No generic Header/Footer) */}
+              <Route path="/admin" element={<AdminPanel />} />
+            </Routes>
+          </Suspense>
         </main>
         {!isAdminRoute && <Footer />}
         
