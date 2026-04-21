@@ -6,6 +6,7 @@ import {
   List, Copy, CheckCircle, RefreshCw, X, Minus, ShoppingCart, ArrowRightLeft, DollarSign, ArrowDownRight
 } from "lucide-react"
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 import * as XLSX from "xlsx"
 import { cn } from "@/src/lib/utils"
 import { useAuth } from "@/src/context/AuthContext"
@@ -121,49 +122,34 @@ export function Manufacturing() {
         throw new Error("ერთი და იგივე ნედლეული რამდენჯერმე გაქვთ არჩეული. გთხოვთ გააერთიანოთ რაოდენობები.")
       }
 
-      let recipeId = editingRecipeId;
-
-      if (editingRecipeId) {
-        // Update existing recipe
-        const { error: recErr } = await supabase.from("production_recipes").update({
-          title: recipeForm.title,
-          finished_good_id: recipeForm.finished_good_id,
-          instructions: recipeForm.instructions,
-        }).eq("id", editingRecipeId)
-        
-        if (recErr) throw recErr
-
-        // Delete old ingredients (Cascade handles this on DB but explicitly cleaning up if needed)
-        const { error: delErr } = await supabase.from("recipe_ingredients").delete().eq("recipe_id", editingRecipeId)
-        if (delErr) throw delErr
-      } else {
-        // Insert new recipe
-        const { data: recData, error: recErr } = await supabase.from("production_recipes").insert({
-          title: recipeForm.title,
-          finished_good_id: recipeForm.finished_good_id,
-          instructions: recipeForm.instructions,
-          created_by: user?.id
-        }).select().single()
-        
-        if (recErr) throw recErr
-        recipeId = recData.id;
-      }
-
-      const validIngs = recipeIngredients
+      const ingredients = recipeIngredients
         .filter(i => i.raw_material_ref_id && i.quantity_required > 0)
         .map(i => ({
-          recipe_id: recipeId,
           raw_material_ref_id: i.raw_material_ref_id,
-          raw_material_id: i.raw_material_ref_id, 
+          raw_material_id: i.raw_material_ref_id,
           quantity_required: i.quantity_required,
           can_rotate: i.can_rotate ?? true,
           finished_length_mm: i.length_mm || null,
-          finished_width_mm: i.width_mm || null
+          finished_width_mm: i.width_mm || null,
         }))
 
-      if (validIngs.length > 0) {
-        const { error: ingErr } = await supabase.from("recipe_ingredients").insert(validIngs)
-        if (ingErr) throw ingErr
+      const payload = {
+        title: recipeForm.title,
+        finished_good_id: recipeForm.finished_good_id,
+        instructions: recipeForm.instructions,
+        ingredients,
+      }
+
+      if (editingRecipeId) {
+        await safeFetch(`/api/manufacturing/recipes/${editingRecipeId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
+      } else {
+        await safeFetch("/api/manufacturing/recipes", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
       }
 
       setIsRecipeModalOpen(false)
@@ -201,8 +187,7 @@ export function Manufacturing() {
   const handleDeleteRecipe = async (id: string) => {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ რეცეპტის წაშლა?")) return
     try {
-      const { error } = await supabase.from("production_recipes").delete().eq("id", id)
-      if (error) throw error
+      await safeFetch(`/api/manufacturing/recipes/${id}`, { method: "DELETE" })
       fetchData()
     } catch (err: any) {
       alert("შეცდომა წაშლისას: " + err.message)
@@ -231,13 +216,17 @@ export function Manufacturing() {
       }
 
       if (materialForm.id) {
-        const { error } = await supabase.from("raw_materials").update(payload).eq("id", materialForm.id)
-        if (error) throw error
+        await safeFetch(`/api/manufacturing/raw-materials/${materialForm.id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
       } else {
-        const { error } = await supabase.from("raw_materials").insert({ ...payload, created_at: new Date().toISOString() })
-        if (error) throw error
+        await safeFetch("/api/manufacturing/raw-materials", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
       }
-      
+
       setIsMaterialModalOpen(false)
       fetchData()
     } catch (err: any) {
@@ -253,9 +242,16 @@ export function Manufacturing() {
     setIsSaving(true)
     try {
       if (supplierForm.id) {
-         await supabase.from("suppliers").update(supplierForm).eq("id", supplierForm.id)
+        const { id, ...payload } = supplierForm
+        await safeFetch(`/api/manufacturing/suppliers/${id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
       } else {
-         await supabase.from("suppliers").insert(supplierForm)
+        await safeFetch("/api/manufacturing/suppliers", {
+          method: "POST",
+          body: JSON.stringify(supplierForm),
+        })
       }
       setIsSupplierModalOpen(false)
       fetchData()
@@ -273,42 +269,19 @@ export function Manufacturing() {
     
     setIsSaving(true)
     try {
-      // 1. Process inventory additions
-      for (const item of purchaseItems) {
-        if (!item.raw_material_id || item.input_qty <= 0) continue;
-        
-        const rawMat = rawMaterials.find(m => m.id === item.raw_material_id);
-        if (!rawMat) continue;
+      const items = purchaseItems
+        .filter((i: any) => i.raw_material_id && i.input_qty > 0)
+        .map((i: any) => ({
+          raw_material_id: i.raw_material_id,
+          input_qty: i.input_qty,
+          is_package_qty: !!i.is_package_qty,
+          total_cost: i.total_cost || 0,
+        }))
 
-        // Calculate exact base units to add
-        let addedBaseQty = item.input_qty;
-        if (item.is_package_qty && rawMat.package_unit && rawMat.units_per_package) {
-           addedBaseQty = item.input_qty * rawMat.units_per_package;
-        }
-
-        // Calculate new moving average unit cost if total_cost is provided
-        const prevQty = parseFloat(rawMat.quantity || 0);
-        const prevAvgCost = parseFloat(rawMat.unit_cost || 0);
-        const addedTotalValue = item.total_cost || 0;
-        
-        let newUnitCost = prevAvgCost;
-        if (addedTotalValue > 0) {
-           const prevTotalValue = prevQty * prevAvgCost;
-           const newTotalValue = prevTotalValue + addedTotalValue;
-           const newTotalQty = prevQty + addedBaseQty;
-           newUnitCost = newTotalValue / newTotalQty;
-        }
-
-        const newQty = prevQty + addedBaseQty;
-
-        // Update raw_materials
-        const { error } = await supabase.from("raw_materials").update({
-           quantity: newQty,
-           unit_cost: newUnitCost
-        }).eq("id", rawMat.id);
-
-        if (error) throw error;
-      }
+      await safeFetch('/api/manufacturing/raw-materials/purchase', {
+        method: 'POST',
+        body: JSON.stringify({ supplier_id: purchaseForm.supplier_id, items }),
+      })
 
       alert("შესყიდვა გატარდა! ნედლეულის მარაგები ავტომატურად განახლდა ცალობის / კვადრატულობის ლოგიკით.");
       setIsPurchaseModalOpen(false);
@@ -345,15 +318,17 @@ export function Manufacturing() {
         const data = XLSX.utils.sheet_to_json(ws)
 
         setIsSaving(true)
-        const payload = data.map((row: any) => ({
+        const items = data.map((row: any) => ({
           name: row["დასახელება"],
           unit: row["საზომი ერთეული"] || "მ²",
           quantity: row["რაოდენობა"] || 0,
           reorder_point: row["ნაშთის ლიმიტი"] || 5,
         }))
 
-        const { error } = await supabase.from("raw_materials").insert(payload)
-        if (error) throw error
+        await safeFetch("/api/manufacturing/raw-materials/bulk", {
+          method: "POST",
+          body: JSON.stringify({ items }),
+        })
 
         alert("ექსელიდან იმპორტი წარმატებულია!")
         fetchData()
