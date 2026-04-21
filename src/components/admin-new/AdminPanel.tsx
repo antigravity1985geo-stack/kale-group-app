@@ -24,9 +24,10 @@ const AdminAIChatbot = React.lazy(() => import("@/src/components/admin-new/Admin
 import { supabase } from "@/src/lib/supabase"
 import { safeFetch } from "@/src/utils/safeFetch"
 import { useAuth } from "@/src/context/AuthContext"
-import { ProtectedRoute } from "@/src/components/ProtectedRoute"
+import ProtectedRoute from "@/src/components/ProtectedRoute"
 import { ErrorBoundary } from "@/src/components/ui/ErrorBoundary"
 import type { Product, Category } from "@/src/types/product"
+import { RealtimeNotifications } from "@/src/components/admin-new/RealtimeNotifications"
 
 const tabConfig: Record<string, { title: string; subtitle?: string; showSearch?: boolean; addLabel?: string }> = {
   statistics: { title: "სტატისტიკა", subtitle: "მთავარი მიმოხილვა და მეტრიკები", showSearch: false },
@@ -377,13 +378,13 @@ export function AdminPanel() {
     switch (activeTab) {
       case "statistics":
         return (
-          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant", "accountant"]}>
             <Dashboard orders={orders} products={products} />
           </ProtectedRoute>
         )
       case "products":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <Products
               products={products}
               categories={categories}
@@ -405,13 +406,13 @@ export function AdminPanel() {
         )
       case "sales":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <Sales products={products} onStopSale={handleStopSale} onEdit={handleOpenEditProduct} />
           </ProtectedRoute>
         )
       case "categories":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <Categories
               categories={categories}
               products={products}
@@ -429,7 +430,7 @@ export function AdminPanel() {
         )
       case "orders":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <Orders
               orders={orders}
               searchQuery={searchQuery}
@@ -442,7 +443,7 @@ export function AdminPanel() {
         )
       case "showroom":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <POSModule
               products={products}
               onRefresh={handleRefresh}
@@ -452,43 +453,43 @@ export function AdminPanel() {
         )
       case "accounting":
         return (
-          <ProtectedRoute allowed={["admin", "accountant"]}>
+          <ProtectedRoute allowedRoles={["admin", "accountant"]}>
             <Accounting />
           </ProtectedRoute>
         )
       case "manufacturing":
         return (
-          <ProtectedRoute allowed={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <Manufacturing />
           </ProtectedRoute>
         )
       case "team":
         return (
-          <ProtectedRoute allowed={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <Team />
           </ProtectedRoute>
         )
       case "messages":
         return (
-          <ProtectedRoute allowed={["admin", "consultant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant"]}>
             <Messages />
           </ProtectedRoute>
         )
       case "settings":
         return (
-          <ProtectedRoute allowed={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <Settings />
           </ProtectedRoute>
         )
       case "guide":
         return (
-          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant", "accountant"]}>
             <Guide />
           </ProtectedRoute>
         )
       default:
         return (
-          <ProtectedRoute allowed={["admin", "consultant", "accountant"]}>
+          <ProtectedRoute allowedRoles={["admin", "consultant", "accountant"]}>
             <Dashboard orders={orders} products={products} />
           </ProtectedRoute>
         )
@@ -674,6 +675,7 @@ export function AdminPanel() {
       <Suspense fallback={null}>
         <AdminAIChatbot />
       </Suspense>
+      <RealtimeNotifications />
     </div>
   )
 }
