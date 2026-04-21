@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { supabase } from '../../../lib/supabase';
+import { safeFetch } from '../../../utils/safeFetch';
 import { useAuth } from '../../../context/AuthContext';
 
 // Premium Design Components
@@ -151,9 +152,11 @@ export default function Returns() {
        return;
     }
     try {
-      const { error } = await supabase.from('product_returns').insert([newReturn]);
-      if (error) throw error;
-      
+      await safeFetch('/api/returns', {
+        method: 'POST',
+        body: JSON.stringify(newReturn),
+      });
+
       showToast('დაბრუნების მოთხოვნა წარმატებით შეიქმნა', 'ok');
       setIsAdding(false);
       handleClearOrderSelection();

@@ -15,6 +15,7 @@ import aiRoutes from "./src/api/routes/ai.routes.js";
 import rsgeRoutes from "./src/api/routes/rsge.routes.js";
 import messagesRoutes from "./src/api/routes/messages.routes.js";
 import settingsRoutes from "./src/api/routes/settings.routes.js";
+import returnsRoutes from "./src/api/routes/returns.routes.js";
 
 // Optional fallback for Vercel CJS build vs ESM
 let currentFileName = "";
@@ -94,6 +95,7 @@ async function setupApp() {
   app.use("/api/rs-ge", rsgeRoutes);
   app.use("/api/messages", messagesRoutes);
   app.use("/api/settings", settingsRoutes);
+  app.use("/api/returns", returnsRoutes);
 
   // ── Global Error Handler (must be after all routes) ──
   app.use((err: any, req: any, res: any, next: any) => {
