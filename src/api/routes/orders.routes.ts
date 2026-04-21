@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { supabase, supabaseAdmin } from "../services/supabase.service.js";
 import { orderCreateLimiter } from "../middleware/rate-limit.middleware.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -112,6 +113,44 @@ router.post("/create", orderCreateLimiter, async (req: any, res) => {
     console.error("Order Creation Error:", error);
     res.status(500).json({ error: "შეკვეთის გაფორმებისას დაფიქსირდა შეცდომა." });
   }
+});
+
+// ── Admin-only: Order status update + accounting trigger ──
+const statusUpdateSchema = z.object({
+  status: z.enum(['pending', 'confirmed', 'processing', 'delivered', 'cancelled', 'completed', 'refunded']),
+  payment_method: z.string().optional(),
+});
+
+router.patch('/:id/status', requireAuth, requireAdmin, async (req: any, res) => {
+  const parsed = statusUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'არასწორი სტატუსი', details: parsed.error.issues });
+  }
+
+  const updatePayload: any = { status: parsed.data.status };
+  if (parsed.data.payment_method) updatePayload.payment_method = parsed.data.payment_method;
+
+  const { error } = await supabaseAdmin.from('orders').update(updatePayload).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Trigger accounting on delivered
+  let accountingResult: any = null;
+  if (parsed.data.status === 'delivered') {
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('process_order_sale', {
+      p_order_id: req.params.id,
+    });
+    if (rpcError) accountingResult = { success: false, error: rpcError.message };
+    else accountingResult = rpcResult;
+  }
+
+  res.json({ success: true, accounting: accountingResult });
+});
+
+// ── Admin-only: Order delete ──
+router.delete('/:id', requireAuth, requireAdmin, async (req: any, res) => {
+  const { error } = await supabaseAdmin.from('orders').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 export default router;

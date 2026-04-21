@@ -18,6 +18,8 @@ import settingsRoutes from "./src/api/routes/settings.routes.js";
 import returnsRoutes from "./src/api/routes/returns.routes.js";
 import fixedAssetsRoutes from "./src/api/routes/fixed-assets.routes.js";
 import procurementRoutes from "./src/api/routes/procurement.routes.js";
+import productsRoutes from "./src/api/routes/products.routes.js";
+import categoriesRoutes from "./src/api/routes/categories.routes.js";
 
 // Optional fallback for Vercel CJS build vs ESM
 let currentFileName = "";
@@ -100,6 +102,8 @@ async function setupApp() {
   app.use("/api/returns", returnsRoutes);
   app.use("/api/fixed-assets", fixedAssetsRoutes);
   app.use("/api/procurement", procurementRoutes);
+  app.use("/api/products", productsRoutes);
+  app.use("/api/categories", categoriesRoutes);
 
   // ── Global Error Handler (must be after all routes) ──
   app.use((err: any, req: any, res: any, next: any) => {

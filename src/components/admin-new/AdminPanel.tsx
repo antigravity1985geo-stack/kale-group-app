@@ -22,6 +22,7 @@ const Guide = React.lazy(() => import("@/src/components/admin-new/Guide").then(m
 const AdminAIChatbot = React.lazy(() => import("@/src/components/admin-new/AdminAIChatbot").then(m => ({ default: m.AdminAIChatbot })));
 
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 import { useAuth } from "@/src/context/AuthContext"
 import type { Product, Category } from "@/src/types/product"
 
@@ -207,18 +208,21 @@ export function AdminPanel() {
       colors: productData.colors || [],
     }
 
-    if (isEditing && editId) {
-      const { error } = await supabase.from("products").update(payload).eq("id", editId)
-      if (error) {
-        alert("შეცდომა განახლებისას: " + error.message)
-        return false
+    try {
+      if (isEditing && editId) {
+        await safeFetch(`/api/products/${editId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
+      } else {
+        await safeFetch("/api/products", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
       }
-    } else {
-      const { error } = await supabase.from("products").insert([payload])
-      if (error) {
-        alert("შეცდომა დამატებისას: " + error.message)
-        return false
-      }
+    } catch (err: any) {
+      alert((isEditing ? "შეცდომა განახლებისას: " : "შეცდომა დამატებისას: ") + err.message)
+      return false
     }
 
     await fetchData()
@@ -228,22 +232,22 @@ export function AdminPanel() {
 
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("ნამდვილად გსურთ პროდუქტის წაშლა?")) return
-    const { error } = await supabase.from("products").delete().eq("id", id)
-    if (error) {
-      alert("შეცდომა: " + error.message)
-      return
+    try {
+      await safeFetch(`/api/products/${id}`, { method: "DELETE" })
+      await fetchData()
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
     }
-    await fetchData()
   }
 
   const handleStopSale = async (id: string) => {
     if (!confirm("ნამდვილად გსურთ აქციის შეწყვეტა?")) return
-    const { error } = await supabase.from("products").update({ is_on_sale: false }).eq("id", id)
-    if (error) {
-      alert("შეცდომა: " + error.message)
-      return
+    try {
+      await safeFetch(`/api/products/${id}/stop-sale`, { method: "PATCH" })
+      await fetchData()
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
     }
-    await fetchData()
   }
 
   // ── Category CRUD ──
@@ -265,22 +269,19 @@ export function AdminPanel() {
 
     try {
       if (isEditing && editId) {
-        const { error: catError } = await supabase.from("categories").update({
-          name: catData.name,
-          image: catData.image
-        }).eq("id", editId)
-        if (catError) throw catError
-
-        // If name changed, update all products in this category
-        if (oldName && oldName !== catData.name) {
-          await supabase.from("products").update({ category: catData.name }).eq("category", oldName)
-        }
+        await safeFetch(`/api/categories/${editId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name: catData.name,
+            image: catData.image,
+            oldName: oldName,
+          }),
+        })
       } else {
-        const { error: catError } = await supabase.from("categories").insert([{
-          name: catData.name,
-          image: catData.image
-        }])
-        if (catError) throw catError
+        await safeFetch("/api/categories", {
+          method: "POST",
+          body: JSON.stringify({ name: catData.name, image: catData.image }),
+        })
       }
 
       await fetchData()
@@ -300,54 +301,42 @@ export function AdminPanel() {
       if (!confirm("ნამდვილად გსურთ კატეგორიის წაშლა?")) return
     }
 
-    const { error } = await supabase.from("categories").delete().eq("id", cat.id)
-    if (error) {
-      alert("შეცდომა: " + error.message)
-      return
+    try {
+      await safeFetch(`/api/categories/${cat.id}`, { method: "DELETE" })
+      await fetchData()
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
     }
-    await fetchData()
   }
 
   // ── Order Handlers ──
   const handleStatusUpdate = async (orderId: string, newStatus: string, paymentMethod?: string) => {
-    const updatePayload: any = { status: newStatus }
-    if (paymentMethod) updatePayload.payment_method = paymentMethod
+    try {
+      const result = await safeFetch<{ accounting?: any }>(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus, ...(paymentMethod ? { payment_method: paymentMethod } : {}) }),
+      })
 
-    const { error } = await supabase.from("orders").update(updatePayload).eq("id", orderId)
-    if (error) {
-      alert("შეცდომა სტატუსის შეცვლისას: " + error.message)
+      if (newStatus === "delivered" && result.accounting && result.accounting.success === false) {
+        alert("⚠️ " + (result.accounting.error || "ბუღალტრული გატარება ვერ მოხერხდა"))
+      }
+
+      await fetchData()
+      return true
+    } catch (err: any) {
+      alert("შეცდომა სტატუსის შეცვლისას: " + err.message)
       return false
     }
-
-    // If delivered, trigger accounting RPC
-    if (newStatus === "delivered") {
-      try {
-        const { data: rpcResult, error: rpcError } = await supabase.rpc("process_order_sale", {
-          p_order_id: orderId
-        })
-        if (rpcError) {
-          console.error("Accounting entry error:", rpcError)
-          alert("⚠️ შეკვეთა დასრულდა, მაგრამ ბუღალტრული გატარება ვერ მოხერხდა: " + rpcError.message)
-        } else if (rpcResult && !rpcResult.success) {
-          alert("⚠️ " + (rpcResult.error || "ბუღალტრული გატარება ვერ მოხერხდა"))
-        }
-      } catch (err) {
-        console.error("RPC call failed:", err)
-      }
-    }
-
-    await fetchData()
-    return true
   }
 
   const handleDeleteOrder = async (id: string) => {
     if (!confirm("ნამდვილად გსურთ შეკვეთის წაშლა?")) return
-    const { error } = await supabase.from("orders").delete().eq("id", id)
-    if (error) {
-      alert("შეცდომა: " + error.message)
-      return
+    try {
+      await safeFetch(`/api/orders/${id}`, { method: "DELETE" })
+      await fetchData()
+    } catch (err: any) {
+      alert("შეცდომა: " + err.message)
     }
-    await fetchData()
   }
 
   // ── Image Upload ──
