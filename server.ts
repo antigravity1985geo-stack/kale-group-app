@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 import helmet from "helmet";
 import cors from "cors";
 import "dotenv/config";
-import type {} from './src/api/types/express-augment.js';
 
 import { generalLimiter } from "./src/api/middleware/rate-limit.middleware.js";
 import authRoutes from "./src/api/routes/auth.routes.js";
