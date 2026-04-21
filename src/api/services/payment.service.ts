@@ -61,7 +61,16 @@ export function verifyBogCallback(req: any): boolean {
     const verifier = crypto.createVerify('RSA-SHA256');
     verifier.update(rawBody);
     verifier.end();
-    const ok = verifier.verify(pubKey.replace(/\\n/g, '\n'), signatureB64, 'base64');
+    
+    // verifier.verify will THROW an unhandled exception if pubKey is not valid PEM format
+    let ok = false;
+    try {
+      ok = verifier.verify(pubKey.replace(/\\n/g, '\n'), signatureB64, 'base64');
+    } catch (verifyErr) {
+      console.error('[BOG] Crypto verify error (likely invalid public key format):', verifyErr);
+      return false;
+    }
+
     if (!ok) console.warn('[BOG] RSA signature verification FAILED');
     return ok;
   } catch (err) {
