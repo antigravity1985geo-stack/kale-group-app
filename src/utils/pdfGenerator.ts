@@ -1,8 +1,10 @@
 /**
  * PDF Generator Utility for Kale Group ERP
  * Premium receipt design with full Georgian font support
+ * Note: jspdf (~350 kB) is dynamically imported inside generateOrderReceipt()
+ * so it is NOT bundled in the main chunk — only loaded on first PDF request.
  */
-import { jsPDF } from 'jspdf';
+import type { jsPDF } from 'jspdf';
 
 // Convert ArrayBuffer to Base64
 const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
@@ -28,7 +30,9 @@ const strokeRect = (doc: jsPDF, x: number, y: number, w: number, h: number, r: n
 };
 
 export const generateOrderReceipt = async (order: any, items: any[]) => {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  // Dynamically import jspdf (~350 kB) on first call
+  const { jsPDF: JsPDFClass } = await import('jspdf');
+  const doc = new JsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210; // page width
   const MARGIN = 15;
 

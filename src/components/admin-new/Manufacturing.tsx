@@ -7,7 +7,7 @@ import {
 } from "lucide-react"
 import { supabase } from "@/src/lib/supabase"
 import { safeFetch } from "@/src/utils/safeFetch"
-import * as XLSX from "xlsx"
+// xlsx is dynamically imported inside handlers (saves ~425 kB from initial bundle)
 import { cn } from "@/src/lib/utils"
 import { useAuth } from "@/src/context/AuthContext"
 import OffcutInventory from "./OffcutInventory"
@@ -295,7 +295,8 @@ export function Manufacturing() {
     }
   }
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = async () => {
+    const XLSX = await import("xlsx")
     const ws = XLSX.utils.json_to_sheet([
       { "დასახელება": "MDF თეთრი", "საზომი ერთეული": "მ²", "რაოდენობა": "", "ნაშთის ლიმიტი": 5 }
     ])
@@ -311,6 +312,7 @@ export function Manufacturing() {
     const reader = new FileReader()
     reader.onload = async (evt) => {
       try {
+        const XLSX = await import("xlsx")
         const bstr = evt.target?.result
         const wb = XLSX.read(bstr, { type: "binary" })
         const wsname = wb.SheetNames[0]
