@@ -13,6 +13,7 @@ import paymentRoutes from "./src/api/routes/payment.routes.js";
 import accountingRoutes from "./src/api/routes/accounting.routes.js";
 import aiRoutes from "./src/api/routes/ai.routes.js";
 import rsgeRoutes from "./src/api/routes/rsge.routes.js";
+import messagesRoutes from "./src/api/routes/messages.routes.js";
 
 // Optional fallback for Vercel CJS build vs ESM
 let currentFileName = "";
@@ -90,6 +91,7 @@ async function setupApp() {
   app.use("/api/accounting", accountingRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/rs-ge", rsgeRoutes);
+  app.use("/api/messages", messagesRoutes);
 
   // ── Global Error Handler (must be after all routes) ──
   app.use((err: any, req: any, res: any, next: any) => {

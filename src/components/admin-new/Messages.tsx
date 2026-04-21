@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Mail, MailOpen, Phone, User, Clock, Loader2, Trash2, MessageSquare } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 
 interface ContactMessage {
   id: string
@@ -35,24 +36,28 @@ export function Messages() {
 
   const toggleRead = async (msg: ContactMessage) => {
     const newRead = !msg.read
-    const { error } = await supabase
-      .from("contact_messages")
-      .update({ read: newRead })
-      .eq("id", msg.id)
-    if (!error) {
+    try {
+      await safeFetch(`/api/messages/${msg.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ read: newRead }),
+      })
       setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, read: newRead } : m))
       if (selectedMessage?.id === msg.id) {
         setSelectedMessage({ ...selectedMessage, read: newRead })
       }
+    } catch (err) {
+      console.error("Error toggling read:", err)
     }
   }
 
   const deleteMessage = async (id: string) => {
     if (!confirm("ნამდვილად გსურთ წაშლა?")) return
-    const { error } = await supabase.from("contact_messages").delete().eq("id", id)
-    if (!error) {
+    try {
+      await safeFetch(`/api/messages/${id}`, { method: "DELETE" })
       setMessages((prev) => prev.filter((m) => m.id !== id))
       if (selectedMessage?.id === id) setSelectedMessage(null)
+    } catch (err) {
+      console.error("Error deleting message:", err)
     }
   }
 
