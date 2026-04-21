@@ -3,7 +3,9 @@
 import "dotenv/config";
 import app, { setupPromise } from "../server.js";
 
-// Ensure routes are registered before Vercel starts handling requests
-await setupPromise;
-
-export default app;
+// Export an async handler to ensure routes are registered before handling requests
+// without using top-level await (which can break Vercel builds)
+export default async (req: any, res: any) => {
+  await setupPromise;
+  return app(req, res);
+};
