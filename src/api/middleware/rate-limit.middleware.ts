@@ -1,31 +1,75 @@
-import rateLimit from "express-rate-limit";
+import type { Request, Response, NextFunction } from "express";
 
-// ── General Rate Limiting: All API endpoints ──
-export const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 წუთი
-  max: 200,
-  message: { error: 'ძალიან ბევრი მოთხოვნა. გთხოვთ მოგვიანებით სცადოთ.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+let RatelimitClass: any = null;
+let RedisClass: any = null;
+let loadedOnce = false;
 
-// Rate Limiting for AI Chat Endpoint
-export const aiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs
-  message: { error: "დღიური ლიმიტი ამოიწურა, სცადეთ 15 წუთში" }
-});
+async function ensureLoaded() {
+  if (loadedOnce) return;
+  loadedOnce = true;
+  try {
+    const rl = await import("@upstash/ratelimit");
+    const rd = await import("@upstash/redis");
+    RatelimitClass = rl.Ratelimit;
+    RedisClass = rd.Redis;
+  } catch {}
+}
+void ensureLoaded();
 
-// Rate Limiting for AI Image Generation Endpoint
-export const aiImageLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: { error: "სურათების გენერაციის ლიმიტი ამოიწურა, სცადეთ 15 წუთში" }
-});
+function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  if (!RedisClass) return null;
+  try {
+    return new RedisClass({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  } catch { return null; }
+}
 
-// Rate Limiting for Order Creation
-export const orderCreateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Max 10 orders per 15 minutes per IP
-  message: { error: "ძალიან ბევრი შეკვეთა. სცადეთ 15 წუთში" }
-});
+function buildLimiter(limit: number, windowMs: number, prefix: string) {
+  const isProd = process.env.NODE_ENV === 'production';
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await ensureLoaded();
+    const redis = getRedis();
+
+    if (!redis || !RatelimitClass) {
+      if (isProd) {
+        console.error('[RateLimit] Upstash not configured — refusing request in production');
+        return res.status(503).json({
+          error: 'სერვისი დროებით მიუწვდომელია. გთხოვთ სცადოთ მოგვიანებით.',
+        });
+      }
+      return next();
+    }
+
+    const rl = new RatelimitClass({
+      redis,
+      limiter: RatelimitClass.slidingWindow(limit, `${windowMs} ms`),
+      analytics: false,
+      prefix: `kalegroup:${prefix}`,
+    });
+
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+    try {
+      const { success, remaining, reset } = await rl.limit(ip);
+      res.setHeader('X-RateLimit-Remaining', String(remaining));
+      res.setHeader('X-RateLimit-Reset', String(reset));
+      if (!success) {
+        return res.status(429).json({ error: 'ძალიან ბევრი მოთხოვნა. გთხოვთ მოგვიანებით სცადოთ.' });
+      }
+    } catch (err) {
+      console.warn('[RateLimit] Upstash error — allowing request through:', err);
+    }
+    next();
+  };
+}
+
+export const generalLimiter     = buildLimiter(200, 15 * 60 * 1000, 'general');
+export const aiLimiter          = buildLimiter(20,  15 * 60 * 1000, 'ai');
+export const aiImageLimiter     = buildLimiter(5,   15 * 60 * 1000, 'ai-image');
+export const orderCreateLimiter = buildLimiter(10,  15 * 60 * 1000, 'order-create');

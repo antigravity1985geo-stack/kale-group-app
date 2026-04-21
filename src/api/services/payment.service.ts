@@ -37,28 +37,35 @@ export function verifyCredoCallback(req: any): boolean {
   return ok;
 }
 
-// BOG Webhook Verification
+// BOG Webhook Verification (RSA-SHA256)
 export function verifyBogCallback(req: any): boolean {
-  if (!process.env.BOG_CLIENT_SECRET) {
-    console.error('[BOG Callback] CRITICAL: BOG_CLIENT_SECRET is not set. Rejecting callback for safety.');
+  const pubKey = process.env.BOG_PUBLIC_KEY;
+  if (!pubKey) {
+    console.error('[BOG] BOG_PUBLIC_KEY is not set — refusing to verify callback');
     return false;
   }
-  const signature = req.headers['callback-signature'] || req.headers['x-bog-signature'];
-  if (!signature) {
-    console.error('[BOG Callback] REJECTED: No signature header from IP:', getClientIp(req));
+
+  const signatureB64 = req.headers['callback-signature'] || req.headers['Callback-Signature'];
+  if (!signatureB64 || typeof signatureB64 !== 'string') {
+    console.warn('[BOG] Missing Callback-Signature header');
     return false;
   }
+
+  const rawBody: Buffer | undefined = req.rawBody;
+  if (!rawBody || !Buffer.isBuffer(rawBody)) {
+    console.error('[BOG] req.rawBody missing — server.ts verify() hook not wired');
+    return false;
+  }
+
   try {
-    const payload = JSON.stringify(req.body);
-    const expectedSig = crypto
-      .createHmac('sha256', process.env.BOG_CLIENT_SECRET)
-      .update(payload)
-      .digest('hex');
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'hex'),
-      Buffer.from(expectedSig, 'hex')
-    );
-  } catch {
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(rawBody);
+    verifier.end();
+    const ok = verifier.verify(pubKey.replace(/\\n/g, '\n'), signatureB64, 'base64');
+    if (!ok) console.warn('[BOG] RSA signature verification FAILED');
+    return ok;
+  } catch (err) {
+    console.error('[BOG] Signature verification error:', err);
     return false;
   }
 }

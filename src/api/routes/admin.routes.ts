@@ -52,7 +52,7 @@ router.post("/invite", async (req: any, res) => {
     if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const { error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: { role: role || 'consultant', invited_by: req.user.id },
-        redirectTo: `${process.env.VITE_SUPABASE_URL ? req.headers.origin : 'http://localhost:3000'}/admin`,
+        redirectTo: `${process.env.APP_URL || `${req.protocol}://${req.get('host')}`}/admin`,
       });
       
       if (authError) {

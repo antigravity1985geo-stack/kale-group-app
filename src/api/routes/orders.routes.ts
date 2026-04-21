@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabase, supabaseAdmin } from "../services/supabase.service.js";
 import { orderCreateLimiter } from "../middleware/rate-limit.middleware.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
+import { signOrderStatusToken, verifyOrderStatusToken } from '../utils/orderStatusToken.js';
 
 const router = Router();
 
@@ -108,7 +109,7 @@ router.post("/create", orderCreateLimiter, async (req: any, res) => {
 
     if (itemsError) throw itemsError;
 
-    res.json({ success: true, orderId: orderData.id, total_price: calculatedTotal });
+    res.json({ success: true, orderId: orderData.id, total_price: calculatedTotal, statusToken: signOrderStatusToken(orderData.id) });
   } catch (error: any) {
     console.error("Order Creation Error:", error);
     res.status(500).json({ error: "შეკვეთის გაფორმებისას დაფიქსირდა შეცდომა." });
@@ -139,8 +140,21 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req: any, res) => 
     const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('process_order_sale', {
       p_order_id: req.params.id,
     });
-    if (rpcError) accountingResult = { success: false, error: rpcError.message };
-    else accountingResult = rpcResult;
+    if (rpcError) {
+      const msg = String(rpcError.message || '');
+      const isIdempotencyHit =
+        msg.includes('journal_entries_ref_uniq') ||
+        msg.includes('duplicate key') ||
+        rpcError.code === '23505';
+      if (!isIdempotencyHit) {
+        accountingResult = { success: false, error: rpcError.message };
+      } else {
+        console.warn('[orders] idempotency hit for order', req.params.id);
+        accountingResult = { success: true, note: 'already_processed' };
+      }
+    } else {
+      accountingResult = rpcResult;
+    }
   }
 
   res.json({ success: true, accounting: accountingResult });
@@ -151,6 +165,25 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: any, res) => {
   const { error } = await supabaseAdmin.from('orders').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
+});
+
+// ── Public order status endpoint (token-gated, for anonymous customers) ──
+router.get('/:id/public-status', async (req, res) => {
+  const orderId = req.params.id;
+  const token = (req.query.t as string) || '';
+
+  if (!verifyOrderStatusToken(orderId, token)) {
+    return res.status(403).json({ error: 'Invalid or expired token.' });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .select('id, status, payment_status, total_price, currency, created_at, customer_first_name, customer_last_name')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (error || !data) return res.status(404).json({ error: 'Order not found.' });
+  return res.json(data);
 });
 
 export default router;

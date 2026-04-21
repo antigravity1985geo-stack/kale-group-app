@@ -19,7 +19,26 @@ const router = Router();
 
 router.post("/bog", async (req: any, res) => {
   try {
-    const { orderId, amount, redirectUrl } = req.body;
+    const { orderId, redirectUrl } = req.body;
+
+    // Server-side amount validation
+    const { data: orderRow, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('id, total_price, payment_status')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (orderErr || !orderRow) {
+      return res.status(404).json({ error: 'შეკვეთა ვერ მოიძებნა.' });
+    }
+    if (orderRow.payment_status === 'paid') {
+      return res.status(409).json({ error: 'ეს შეკვეთა უკვე გადახდილია.' });
+    }
+
+    const authoritativeAmount = Number(orderRow.total_price);
+    if (!Number.isFinite(authoritativeAmount) || authoritativeAmount <= 0) {
+      return res.status(400).json({ error: 'არასწორი თანხა შეკვეთაში.' });
+    }
 
     if (!process.env.BOG_CLIENT_ID || !process.env.BOG_CLIENT_SECRET) {
       return res.status(503).json({ error: 'BOG გადახდა დროებით მიუწვდომელია' });
@@ -45,8 +64,8 @@ router.post("/bog", async (req: any, res) => {
           external_order_id: orderId,
           purchase_units: {
             currency: 'GEL',
-            total_amount: amount,
-            basket: [{ quantity: 1, unit_price: amount, product_id: orderId }],
+            total_amount: authoritativeAmount,
+            basket: [{ quantity: 1, unit_price: authoritativeAmount, product_id: orderId }],
           },
           redirect_urls: {
             fail: `${safeRedirectUrl}/payment/success?orderId=${orderId}&status=failed`,
@@ -66,7 +85,7 @@ router.post("/bog", async (req: any, res) => {
       order_id: orderId,
       provider: 'bog',
       external_id: orderData.id,
-      amount,
+      amount: authoritativeAmount,
       status: 'pending',
     });
 
@@ -119,7 +138,26 @@ router.post("/bog/callback", async (req: any, res) => {
 
 router.post("/bog/installment", async (req: any, res) => {
   try {
-    const { orderId, amount } = req.body;
+    const { orderId } = req.body;
+
+    // Server-side amount validation
+    const { data: orderRow, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('id, total_price, payment_status')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (orderErr || !orderRow) {
+      return res.status(404).json({ error: 'შეკვეთა ვერ მოიძებნა.' });
+    }
+    if (orderRow.payment_status === 'paid') {
+      return res.status(409).json({ error: 'ეს შეკვეთა უკვე გადახდილია.' });
+    }
+
+    const authoritativeAmount = Number(orderRow.total_price);
+    if (!Number.isFinite(authoritativeAmount) || authoritativeAmount <= 0) {
+      return res.status(400).json({ error: 'არასწორი თანხა შეკვეთაში.' });
+    }
 
     if (!process.env.BOG_CLIENT_ID || !process.env.BOG_CLIENT_SECRET) {
       return res.status(503).json({ error: 'BOG განვადება დროებით მიუწვდომელია' });
@@ -141,7 +179,7 @@ router.post("/bog/installment", async (req: any, res) => {
         },
         body: JSON.stringify({
           external_order_id: orderId,
-          loan_amount: amount,
+          loan_amount: authoritativeAmount,
           campaign_id: process.env.BOG_CAMPAIGN_ID || null,
           callback_url: `${baseUrl}/api/pay/bog/callback`,
           redirect_url: `${baseUrl}/payment/success?orderId=${orderId}`,
@@ -155,7 +193,7 @@ router.post("/bog/installment", async (req: any, res) => {
       order_id: orderId,
       provider: 'bog',
       external_id: data.id || data.application_id,
-      amount,
+      amount: authoritativeAmount,
       payment_type: 'installment',
       status: 'pending',
     });

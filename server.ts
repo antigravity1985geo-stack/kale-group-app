@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import helmet from "helmet";
 import cors from "cors";
 import "dotenv/config";
+import type {} from './src/api/types/express-augment.js';
 
 import { generalLimiter } from "./src/api/middleware/rate-limit.middleware.js";
 import authRoutes from "./src/api/routes/auth.routes.js";
@@ -22,6 +23,8 @@ import productsRoutes from "./src/api/routes/products.routes.js";
 import categoriesRoutes from "./src/api/routes/categories.routes.js";
 import manufacturingRoutes from "./src/api/routes/manufacturing.routes.js";
 import posRoutes from "./src/api/routes/pos.routes.js";
+import cronRoutes from "./src/api/routes/cron.routes.js";
+import exchangeRatesRoutes from "./src/api/routes/exchange-rates.routes.js";
 
 // Optional fallback for Vercel CJS build vs ESM
 let currentFileName = "";
@@ -81,7 +84,12 @@ async function setupApp() {
     },
     credentials: true,
   }));
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf: Buffer) => {
+      req.rawBody = buf;
+    },
+  }));
 
   // ── General Rate Limiting: All API endpoints ──
   app.use('/api/', generalLimiter);
@@ -108,6 +116,8 @@ async function setupApp() {
   app.use("/api/categories", categoriesRoutes);
   app.use("/api/manufacturing", manufacturingRoutes);
   app.use("/api/pos", posRoutes);
+  app.use("/api/cron", cronRoutes);
+  app.use("/api/exchange-rates", exchangeRatesRoutes);
 
   // ── Global Error Handler (must be after all routes) ──
   app.use((err: any, req: any, res: any, next: any) => {
