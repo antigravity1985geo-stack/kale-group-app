@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { supabase } from '../../../lib/supabase';
+import { safeFetch } from '../../../utils/safeFetch';
 
 // Premium Design Components
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
@@ -100,19 +101,18 @@ export default function FixedAssets() {
     if (!form.name || !form.purchase_price) return;
     
     try {
-      const { error } = await supabase.from('fixed_assets').insert({
-        code: form.code || `FA-${Math.floor(Date.now()/1000)}`,
-        name: form.name,
-        category: form.category,
-        purchase_date: form.purchase_date,
-        purchase_price: Number(form.purchase_price),
-        lifespan_months: Number(form.lifespan_months),
-        accumulated_depreciation: 0,
-        status: 'ACTIVE'
+      await safeFetch('/api/fixed-assets', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: form.code || undefined,
+          name: form.name,
+          category: form.category,
+          purchase_date: form.purchase_date,
+          purchase_price: Number(form.purchase_price),
+          lifespan_months: Number(form.lifespan_months),
+        }),
       });
 
-      if (error) throw error;
-      
       showMsg('ძირითადი საშუალება წარმატებით დაემატა', 'ok');
       setShowForm(false);
       setForm({
@@ -129,59 +129,14 @@ export default function FixedAssets() {
   const runDepreciation = async () => {
     setDepreciating(true);
     try {
-      // 1. Get Open Fiscal Period
-      const { data: period } = await supabase.from('fiscal_periods').select('id').eq('status', 'OPEN').order('period_year', { ascending: false }).limit(1).single();
-      if (!period) throw new Error("ღია ფისკალური პერიოდი ვერ მოიძებნა");
-
-      const activeAssets = assets.filter(a => a.status === 'ACTIVE' && a.accumulated_depreciation < a.purchase_price);
-      if (activeAssets.length === 0) throw new Error("არ მოიძებნა ცვეთადი აქტივები");
-
-      let totalDepreciation = 0;
-      const updates = [];
-
-      for (const asset of activeAssets) {
-        const monthlyDepreciation = asset.purchase_price / asset.lifespan_months;
-        const remaining = asset.purchase_price - asset.accumulated_depreciation;
-        const toDepreciate = remaining < monthlyDepreciation ? remaining : monthlyDepreciation;
-        
-        if (toDepreciate > 0) {
-          totalDepreciation += toDepreciate;
-          updates.push({
-            id: asset.id,
-            accumulated_depreciation: asset.accumulated_depreciation + toDepreciate
-          });
-        }
-      }
-
-      if (updates.length > 0) {
-         const { data: accounts } = await supabase.from('accounts').select('id, code').in('code', ['7400', '2100']);
-         const expId = accounts?.find(a => a.code === '7400')?.id;
-         const accId = accounts?.find(a => a.code === '2100')?.id;
-
-         if (expId && accId) {
-            const { data: je, error: jeErr } = await supabase.from('journal_entries').insert({
-               entry_number: `DEP-${Math.floor(Date.now() / 1000)}`,
-               entry_date: new Date().toISOString().split('T')[0],
-               description: `ყოველთვიური ცვეთის დარიცხვა (${updates.length} აქტივი)`,
-               reference_type: 'DEPRECIATION',
-               fiscal_period_id: period.id,
-               status: 'POSTED'
-            }).select().single();
-
-            if (jeErr) throw jeErr;
-
-            await supabase.from('journal_lines').insert([
-               { journal_entry_id: je.id, account_id: expId, debit: totalDepreciation, credit: 0 },
-               { journal_entry_id: je.id, account_id: accId, debit: 0, credit: totalDepreciation },
-            ]);
-            
-            for (const upd of updates) {
-               await supabase.from('fixed_assets').update({ accumulated_depreciation: upd.accumulated_depreciation }).eq('id', upd.id);
-            }
-         }
-      }
-      
-      showMsg('ცვეთის დარიცხვა წარმატებით დასრულდა', 'ok');
+      const result = await safeFetch<{ assets_depreciated: number; total_depreciation: number }>(
+        '/api/fixed-assets/depreciation',
+        { method: 'POST' }
+      );
+      showMsg(
+        `ცვეთის დარიცხვა დასრულდა — ${result.assets_depreciated} აქტივი, ${result.total_depreciation.toFixed(2)} ₾`,
+        'ok'
+      );
       fetchAssets();
     } catch(e: any) {
       showMsg(e.message, 'err');
