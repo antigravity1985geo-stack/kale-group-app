@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react"
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   BarChart3, BookOpen, FileText, Package, Building2, Users, RotateCcw, Truck,
@@ -12,14 +12,23 @@ import {
 import { cn } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
 import { downloadExcel } from "@/src/lib/export"
-import Invoices from "./accounting/Invoices"
-import Inventory from "./accounting/Inventory"
-import Vat from "./accounting/Vat"
-import Hr from "./accounting/Hr"
-import Returns from "./accounting/Returns"
-import Waybills from "./accounting/Waybills"
-import FixedAssets from "./accounting/FixedAssets"
-import Taxes from "./accounting/Taxes"
+
+// Lazy-loaded sub-tabs (each becomes its own chunk — won't load until user opens that tab)
+const Invoices = lazy(() => import("./accounting/Invoices"))
+const Inventory = lazy(() => import("./accounting/Inventory"))
+const Vat = lazy(() => import("./accounting/Vat"))
+const Hr = lazy(() => import("./accounting/Hr"))
+const Returns = lazy(() => import("./accounting/Returns"))
+const Waybills = lazy(() => import("./accounting/Waybills"))
+const FixedAssets = lazy(() => import("./accounting/FixedAssets"))
+const Taxes = lazy(() => import("./accounting/Taxes"))
+
+const TabLoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center py-16">
+    <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+    <p className="text-muted-foreground text-xs">ქვე-მოდული იტვირთება...</p>
+  </div>
+)
 
 // ── Sub-tab config ──
 const accountingTabs = [
@@ -647,15 +656,17 @@ export function Accounting() {
             </motion.div>
           )}
 
-          {/* ═══════════════════ OTHER TABS ═══════════════════ */}
-          {activeTab === "invoices" && <Invoices />}
-          {activeTab === "inventory" && <Inventory />}
-          {activeTab === "vat" && <Vat />}
-          {activeTab === "hr" && <Hr />}
-          {activeTab === "returns" && <Returns />}
-          {activeTab === "waybills" && <Waybills />}
-          {activeTab === "fixed-assets" && <FixedAssets />}
-          {activeTab === "taxes" && <Taxes />}
+          {/* ═══════════════════ OTHER TABS (lazy-loaded) ═══════════════════ */}
+          <Suspense fallback={<TabLoadingFallback />}>
+            {activeTab === "invoices" && <Invoices />}
+            {activeTab === "inventory" && <Inventory />}
+            {activeTab === "vat" && <Vat />}
+            {activeTab === "hr" && <Hr />}
+            {activeTab === "returns" && <Returns />}
+            {activeTab === "waybills" && <Waybills />}
+            {activeTab === "fixed-assets" && <FixedAssets />}
+            {activeTab === "taxes" && <Taxes />}
+          </Suspense>
 
           {/* ═══════════════════ REPORTS ═══════════════════ */}
           {activeTab === "reports" && (
