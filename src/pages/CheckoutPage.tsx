@@ -114,13 +114,13 @@ export default function CheckoutPage() {
         payResponse = await fetch('/api/pay/bog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, redirectUrl: window.location.origin })
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, redirectUrl: window.location.origin, statusToken: data.statusToken })
         });
       } else if (bank === 'bog' && type === 'installment') {
         payResponse = await fetch('/api/pay/bog/installment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price })
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, statusToken: data.statusToken })
         });
       } else if (bank === 'tbc') {
         payResponse = await fetch('/api/pay/tbc', {
@@ -129,14 +129,15 @@ export default function CheckoutPage() {
           body: JSON.stringify({ 
             orderId: data.orderId, 
             amount: data.total_price,
-            methods: type === 'installment' ? [8] : [5]
+            methods: type === 'installment' ? [8] : [5],
+            statusToken: data.statusToken
           })
         });
       } else if (bank === 'credo' && type === 'installment') {
         payResponse = await fetch('/api/pay/credo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, items })
+          body: JSON.stringify({ orderId: data.orderId, amount: data.total_price, items, statusToken: data.statusToken })
         });
       }
 

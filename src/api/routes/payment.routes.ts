@@ -68,8 +68,8 @@ router.post("/bog", async (req: any, res) => {
             basket: [{ quantity: 1, unit_price: authoritativeAmount, product_id: orderId }],
           },
           redirect_urls: {
-            fail: `${safeRedirectUrl}/payment/success?orderId=${orderId}&status=failed`,
-            success: `${safeRedirectUrl}/payment/success?orderId=${orderId}`,
+            fail: `${safeRedirectUrl}/payment/success?orderId=${orderId}&status=failed&t=${encodeURIComponent(req.body.statusToken || '')}`,
+            success: `${safeRedirectUrl}/payment/success?orderId=${orderId}&t=${encodeURIComponent(req.body.statusToken || '')}`,
           },
         }),
       }
@@ -182,7 +182,7 @@ router.post("/bog/installment", async (req: any, res) => {
           loan_amount: authoritativeAmount,
           campaign_id: process.env.BOG_CAMPAIGN_ID || null,
           callback_url: `${baseUrl}/api/pay/bog/callback`,
-          redirect_url: `${baseUrl}/payment/success?orderId=${orderId}`,
+          redirect_url: `${baseUrl}/payment/success?orderId=${orderId}&t=${encodeURIComponent(req.body.statusToken || '')}`,
         }),
       }
     );
@@ -228,7 +228,7 @@ router.post("/tbc", async (req: any, res) => {
       },
       body: JSON.stringify({
         amount: { currency: 'GEL', total: amount, subTotal: amount, tax: 0, shipping: 0 },
-        returnurl: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+        returnurl: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}&t=${encodeURIComponent(req.body.statusToken || '')}`,
         extra: orderId,
         expirationMinutes: 30,
         methods,
@@ -327,8 +327,8 @@ router.post("/credo", async (req: any, res) => {
           price: i.price_at_purchase || i.price,
         })) || [],
         callback_url: `${credoBaseUrl}/api/pay/credo/callback`,
-        success_url: `${credoBaseUrl}/payment/success?orderId=${orderId}`,
-        fail_url: `${credoBaseUrl}/checkout?error=payment_failed`,
+        success_url: `${credoBaseUrl}/payment/success?orderId=${orderId}&t=${encodeURIComponent(req.body.statusToken || '')}`,
+        fail_url: `${credoBaseUrl}/checkout?error=payment_failed&t=${encodeURIComponent(req.body.statusToken || '')}`,
       }),
     });
 

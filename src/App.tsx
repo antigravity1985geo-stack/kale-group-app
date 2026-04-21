@@ -19,6 +19,7 @@ const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));
 const PaymentSuccessPage = React.lazy(() => import('./pages/PaymentSuccessPage'));
 const ProductPage = React.lazy(() => import('./pages/ProductPage'));
 const AdminPanel = React.lazy(() => import('./AdminPanel'));
+import ProtectedRoute from './components/ProtectedRoute';
 
 const RouteFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -67,7 +68,14 @@ function AppLayout() {
               <Route path="/product/:id" element={<ProductPage />} />
 
               {/* Admin Route (No generic Header/Footer) */}
-              <Route path="/admin" element={<AdminPanel />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'accountant', 'consultant']}>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Suspense>
         </main>

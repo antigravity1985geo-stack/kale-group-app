@@ -18,76 +18,46 @@ export default function PaymentSuccessPage() {
 
   // Poll the real payment_status from the database
   React.useEffect(() => {
-    if (!orderId) {
-      setPaymentState('error');
-      return;
-    }
+    if (!orderId) { setPaymentState('error'); return; }
+    if (urlStatus === 'failed') { setPaymentState('unpaid'); return; }
 
-    // If URL explicitly says failed, show immediately
-    if (urlStatus === 'failed') {
-      setPaymentState('unpaid');
-      return;
-    }
+    const token = searchParams.get('t') || searchParams.get('statusToken');
+    if (!token) { setPaymentState('error'); return; }
 
     let attempts = 0;
-    const maxAttempts = 10; // 10 attempts × 3s = 30 seconds max wait
-    
-    const checkPaymentStatus = async () => {
+    const maxAttempts = 10;
+
+    const checkStatus = async () => {
       try {
-        const { data: order, error } = await supabase
-          .from('orders')
-          .select('payment_status, status')
-          .eq('id', orderId)
-          .single();
-
-        if (error || !order) {
-          setPaymentState('error');
-          return;
-        }
-
-        if (order.payment_status === 'paid') {
+        const r = await fetch(
+          `/api/orders/${encodeURIComponent(orderId)}/public-status?t=${encodeURIComponent(token)}`
+        );
+        if (!r.ok) { setPaymentState('error'); return; }
+        const data = await r.json();
+        if (data.payment_status === 'paid') {
           setPaymentState('paid');
           return;
         }
-
-        // Not paid yet — maybe the bank callback hasn't arrived yet
         attempts++;
-        if (attempts >= maxAttempts) {
-          // After 30s of waiting, show unpaid state
-          setPaymentState('unpaid');
-          return;
-        }
-
-        // Continue polling
-        setTimeout(checkPaymentStatus, 3000);
-      } catch {
-        setPaymentState('error');
-      }
+        if (attempts >= maxAttempts) { setPaymentState('unpaid'); return; }
+        setTimeout(checkStatus, 3000);
+      } catch { setPaymentState('error'); }
     };
 
-    checkPaymentStatus();
-  }, [orderId, urlStatus]);
+    checkStatus();
+  }, [orderId, urlStatus, searchParams]);
 
   const handleDownloadReceipt = async () => {
     if (!orderId) return;
     setIsGenerating(true);
     try {
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-      
-      if (orderErr) throw orderErr;
-
-      const { data: items, error: itemsErr } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
-      
-      if (itemsErr) throw itemsErr;
-
-      await generateOrderReceipt(order, items || []);
+      const token = searchParams.get('t') || searchParams.get('statusToken') || '';
+      const r = await fetch(
+        `/api/orders/${encodeURIComponent(orderId)}/public-status?t=${encodeURIComponent(token)}`
+      );
+      if (!r.ok) throw new Error('Failed to fetch order');
+      const order = await r.json();
+      await generateOrderReceipt(order, []);
     } catch (err) {
       console.error('Error generating PDF:', err);
       alert(t('payment.receiptError'));
