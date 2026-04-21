@@ -8,7 +8,7 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [
-      react(), 
+      react(),
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
@@ -44,8 +44,39 @@ export default defineConfig(({mode}) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // File watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+    },
+    build: {
+      // Split vendor libs into stable cacheable chunks.
+      // When a dependency version is bumped, only that vendor chunk invalidates — users
+      // keep all other chunks in their browser cache.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-radix': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-select',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-label',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-slot',
+              '@radix-ui/react-tooltip',
+            ],
+            'vendor-charts': ['recharts'],
+            'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            'vendor-motion': ['motion', 'framer-motion'],
+            'vendor-supabase': ['@supabase/supabase-js'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 600,
     },
   };
 });
