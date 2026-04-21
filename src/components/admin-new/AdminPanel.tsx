@@ -25,6 +25,7 @@ import { supabase } from "@/src/lib/supabase"
 import { safeFetch } from "@/src/utils/safeFetch"
 import { useAuth } from "@/src/context/AuthContext"
 import { ProtectedRoute } from "@/src/components/ProtectedRoute"
+import { ErrorBoundary } from "@/src/components/ui/ErrorBoundary"
 import type { Product, Category } from "@/src/types/product"
 
 const tabConfig: Record<string, { title: string; subtitle?: string; showSearch?: boolean; addLabel?: string }> = {
@@ -638,14 +639,34 @@ export function AdminPanel() {
               <p className="text-muted-foreground text-sm">მონაცემები იტვირთება...</p>
             </div>
           ) : (
-            <Suspense fallback={
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-                <p className="text-muted-foreground text-sm">მოდული იტვირთება...</p>
-              </div>
-            }>
-              {renderContent()}
-            </Suspense>
+            <ErrorBoundary
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-12 h-12 mb-3 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">მოდულის ჩატვირთვისას მოხდა შეცდომა</h3>
+                  <p className="text-sm text-muted-foreground mt-2">გთხოვთ, სცადოთ სხვა ტაბის გახსნა ან გადატვირთოთ გვერდი.</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    განახლება
+                  </button>
+                </div>
+              }
+            >
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="text-muted-foreground text-sm">მოდული იტვირთება...</p>
+                </div>
+              }>
+                {renderContent()}
+              </Suspense>
+            </ErrorBoundary>
           )}
         </div>
       </main>
