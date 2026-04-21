@@ -6,6 +6,7 @@ import {
 } from "lucide-react"
 import { cn, isProductOnSale } from "@/src/lib/utils"
 import { supabase } from "@/src/lib/supabase"
+import { safeFetch } from "@/src/utils/safeFetch"
 import { createWaybillForOrder } from "@/src/services/rsge/rsge.service"
 import type { Product } from "@/src/types/product"
 
@@ -131,81 +132,48 @@ export function POSModule({ products, onRefresh, consultantId }: POSModuleProps)
 
     setIsProcessing(true)
     try {
-      // 1. Create order
-      const orderPayload = {
-        customer_first_name: customer.firstName,
-        customer_last_name: customer.lastName,
-        customer_phone: customer.phone,
-        customer_email: customer.email || null,
-        customer_address: customer.address || "შოურუმი",
-        customer_city: customer.city || "თბილისი",
-        customer_note: customer.note || null,
-        personal_id: customer.personalId || null,
-        total_price: cartTotal,
-        status: "delivered",
-        payment_status: "paid",
-        payment_method: customer.paymentMethod,
-        payment_type: customer.paymentType,
-        sale_source: "showroom",
-        consultant_id: consultantId || null,
+      // 1. Atomic POS sale: server creates order + items + triggers accounting
+      const saleResult = await safeFetch<{ order_id: string; accounting_error?: string | null }>(
+        "/api/pos/sale",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            customer,
+            items: cart.map((c) => ({
+              product_id: c.product.id,
+              quantity: c.quantity,
+            })),
+            consultant_id: consultantId || null,
+          }),
+        }
+      )
+
+      setCreatedOrderId(saleResult.order_id)
+
+      if (saleResult.accounting_error) {
+        console.error("Accounting RPC error:", saleResult.accounting_error)
       }
 
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .insert([orderPayload])
-        .select("id")
-        .single()
-
-      if (orderError) throw orderError
-      setCreatedOrderId(orderData.id)
-
-      // 2. Create order items
-      const items = cart.map((c) => {
-        const price = isProductOnSale(c.product) ? (c.product.sale_price || c.product.price) : c.product.price
-        return {
-          order_id: orderData.id,
-          product_id: c.product.id,
-          product_name: c.product.name,
-          quantity: c.quantity,
-          price_at_purchase: Number(price),
-          is_promotional_sale: isProductOnSale(c.product),
-        }
-      })
-
-      const { error: itemsError } = await supabase.from("order_items").insert(items)
-      if (itemsError) throw itemsError
-
-      // 2.5 Sync stock_levels via API
+      // 2. Sync stock_levels via existing inventory-adjustment API
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.access_token) {
-          for (const c of cart) {
-            const costParam = c.product.price ? Number(c.product.price) : 0
-            await fetch("/api/accounting/inventory/adjustment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-              body: JSON.stringify({
-                product_id: c.product.id,
-                quantity: c.quantity,
-                type: "SALE_OUT",
-                unit_cost: costParam,
-                notes: `POS გაყიდვა - შეკვეთა #${orderData.id}`
-              })
-            })
-          }
+        for (const c of cart) {
+          const costParam = c.product.price ? Number(c.product.price) : 0
+          await safeFetch("/api/accounting/inventory/adjustment", {
+            method: "POST",
+            body: JSON.stringify({
+              product_id: c.product.id,
+              quantity: c.quantity,
+              type: "SALE_OUT",
+              unit_cost: costParam,
+              notes: `POS გაყიდვა - შეკვეთა #${saleResult.order_id}`,
+            }),
+          })
         }
       } catch (stockErr) {
         console.error("Stock sync error:", stockErr)
       }
 
-      // 3. Trigger accounting for all POS payment methods
-      try {
-        await supabase.rpc("process_order_sale", { p_order_id: orderData.id })
-      } catch (err) {
-        console.error("Accounting RPC error:", err)
-      }
-
-      // 4. Success
+      // 3. Success
       setCheckoutSuccess(true)
       setCart([])
       setCustomer({
