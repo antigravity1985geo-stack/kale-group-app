@@ -13,6 +13,10 @@
 // ============================================================
 declare var process: any;
 
+// Gate verbose mock logs behind NODE_ENV (Vite tree-shakes in production build)
+const IS_DEV = typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production';
+const mockLog = (...args: any[]) => { if (IS_DEV) console.log(...args); };
+
 import type {
   RSGeCredentials,
   SOAPResponse,
@@ -87,7 +91,7 @@ export async function rsgeAuthenticate(
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 🔐 Authentication simulated');
+    mockLog('[RS.ge MOCK] 🔐 Authentication simulated');
     const fakeToken = `MOCK_TOKEN_${Date.now()}`;
     _sessionToken = fakeToken;
     _tokenExpiry = Date.now() + 3600_000; // 1 hour
@@ -171,7 +175,7 @@ export async function rsgeCreateInvoice(
       currency: payload.currency,
       createdAt: new Date().toISOString(),
     };
-    console.log('[RS.ge MOCK] 📄 CreateInvoice →', record);
+    mockLog('[RS.ge MOCK] 📄 CreateInvoice →', record);
     return { success: true, data: record };
   }
 
@@ -222,7 +226,7 @@ export async function rsgeSendInvoice(rsgeId: string): Promise<SOAPResponse<EInv
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 📨 SendInvoice →', rsgeId);
+    mockLog('[RS.ge MOCK] 📨 SendInvoice →', rsgeId);
     return {
       success: true,
       data: {
@@ -248,7 +252,7 @@ export async function rsgeCancelInvoice(
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] ❌ CancelInvoice →', rsgeId, reason);
+    mockLog('[RS.ge MOCK] ❌ CancelInvoice →', rsgeId, reason);
     return {
       success: true,
       data: { rsgeId, status: 'CANCELLED', statusMessage: reason },
@@ -266,7 +270,7 @@ export async function rsgeGetInvoiceStatus(rsgeId: string): Promise<SOAPResponse
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 🔄 GetInvoiceStatus →', rsgeId);
+    mockLog('[RS.ge MOCK] 🔄 GetInvoiceStatus →', rsgeId);
     return {
       success: true,
       data: { rsgeId, status: 'SENT' },
@@ -303,7 +307,7 @@ export async function rsgeCreateWaybill(
       totalAmount: payload.items.reduce((s, i) => s + i.totalPrice, 0),
       createdAt: new Date().toISOString(),
     };
-    console.log('[RS.ge MOCK] 🚚 CreateWaybill →', record);
+    mockLog('[RS.ge MOCK] 🚚 CreateWaybill →', record);
     return { success: true, data: record };
   }
 
@@ -319,7 +323,7 @@ export async function rsgeActivateWaybill(rsgeId: string): Promise<SOAPResponse<
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] ✅ ActivateWaybill →', rsgeId);
+    mockLog('[RS.ge MOCK] ✅ ActivateWaybill →', rsgeId);
     return { success: true, data: { rsgeId, status: 'ACTIVE' } };
   }
 
@@ -335,7 +339,7 @@ export async function rsgeCloseWaybill(rsgeId: string): Promise<SOAPResponse<{ r
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 🔒 CloseWaybill →', rsgeId);
+    mockLog('[RS.ge MOCK] 🔒 CloseWaybill →', rsgeId);
     return { success: true, data: { rsgeId, status: 'CLOSED' } };
   }
 
@@ -350,7 +354,7 @@ export async function rsgeDeleteWaybill(rsgeId: string): Promise<SOAPResponse<{ 
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 🗑️ DeleteWaybill →', rsgeId);
+    mockLog('[RS.ge MOCK] 🗑️ DeleteWaybill →', rsgeId);
     return { success: true, data: { rsgeId } };
   }
 
@@ -377,7 +381,7 @@ export async function rsgeSubmitVATReturn(
       netVAT: payload.netVAT,
       submittedAt: new Date().toISOString(),
     };
-    console.log('[RS.ge MOCK] 📊 SubmitVATReturn →', record);
+    mockLog('[RS.ge MOCK] 📊 SubmitVATReturn →', record);
     return { success: true, data: record };
   }
 
@@ -392,7 +396,7 @@ export async function rsgeGetVATReturnStatus(rsgeId: string): Promise<SOAPRespon
   await mockDelay();
 
   if (RSGE_CONFIG.MOCK_MODE) {
-    console.log('[RS.ge MOCK] 🔄 GetVATReturnStatus →', rsgeId);
+    mockLog('[RS.ge MOCK] 🔄 GetVATReturnStatus →', rsgeId);
     return {
       success: true,
       data: {
