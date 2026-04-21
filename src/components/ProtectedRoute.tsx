@@ -1,44 +1,27 @@
-import { ReactNode } from 'react';
-import { ShieldAlert, Loader2 } from 'lucide-react';
-import { useAuth } from '@/src/context/AuthContext';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-type Role = 'admin' | 'consultant' | 'accountant';
-
-interface ProtectedRouteProps {
-  allowed: Role[];
-  children: ReactNode;
-  fallback?: ReactNode;
+interface Props {
+  children: React.ReactNode;
+  allowedRoles?: Array<'admin' | 'accountant' | 'consultant'>;
 }
 
-/**
- * Declarative RBAC wrapper for admin sub-routes.
- * Shows fallback when profile role is not in the `allowed` list.
- * Defense-in-depth on top of sidebar tab filtering.
- */
-export function ProtectedRoute({ allowed, children, fallback }: ProtectedRouteProps) {
-  const { profile, isLoading } = useAuth();
+export default function ProtectedRoute({ children, allowedRoles }: Props) {
+  const { user, profile, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-        <p className="text-muted-foreground text-sm">იტვირთება...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-900 animate-spin" />
       </div>
     );
   }
 
-  if (!profile || !allowed.includes(profile.role as Role)) {
-    return (
-      fallback ?? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <ShieldAlert className="h-12 w-12 text-destructive/70 mb-4" />
-          <h3 className="text-lg font-semibold text-foreground">წვდომა შეზღუდულია</h3>
-          <p className="text-muted-foreground mt-2 text-sm">
-            თქვენ არ გაქვთ ამ განყოფილების ნახვის უფლება
-          </p>
-        </div>
-      )
-    );
+  if (!user) return <Navigate to="/" replace />;
+
+  if (allowedRoles && profile?.role && !allowedRoles.includes(profile.role as any)) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
