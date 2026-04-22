@@ -36,10 +36,7 @@ function buildLimiter(limit: number, windowMs: number, prefix: string) {
 
     if (!redis || !RatelimitClass) {
       if (isProd) {
-        console.error('[RateLimit] Upstash not configured — refusing request in production');
-        return res.status(503).json({
-          error: 'სერვისი დროებით მიუწვდომელია. გთხოვთ სცადოთ მოგვიანებით.',
-        });
+        console.warn('[RateLimit] Upstash not configured — rate limiting disabled. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.');
       }
       return next();
     }
