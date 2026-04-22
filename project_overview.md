@@ -233,6 +233,7 @@
 | **v4.8** | **2026-04-20** | **Backend Stability & DB Hygiene:** Fixed `requireAdmin` regression, eliminated `supabaseAdmin` silent fallback, sanitized AI chat history, added global error handler, secured auth endpoint leaked passwords, added 6 missing FK indexes, optimized RLS with `get_auth_uid()`, and deleted orphaned `accounting_entries` table. |
 | **v5.0** | **2026-04-21** | **Master Perfection Plan executed (Phases 1–6):** <br/>• **Security:** TBC/Credo IP allowlist, CSP `unsafe-inline` removed, multilingual (GE/RU/EN) prompt-injection guard, HMAC-SHA256 + `timingSafeEqual` on BOG <br/>• **Architecture:** 59 admin UI mutations migrated to 16 server API endpoints (all Zod-validated), 2 atomic RPCs (`adjust_inventory_atomic`, `payroll_run_atomic`), schema aligned with code, 5 unused tables dropped <br/>• **Defense-in-depth:** `ProtectedRoute` RBAC wrapper per admin tab, `ErrorBoundary` on lazy subtrees, AuthContext retry-with-backoff (removed 500ms setTimeout hack), production `console.log` gated <br/>• **Bundle:** main `index.js` **1,645 → 538 kB (-67%)**, Accounting **810 → 118 kB (-85%)**, PaymentSuccessPage **406 → 16 kB (-96%)**, xlsx/jspdf dynamic-imported, 7 manual vendor chunks for cacheable builds <br/>• **Honesty:** `/api/rs-ge/status` feature flag + `SIMULATED` badge + mock-mode banner in Waybills UI (clear indication when RS.ge credentials are not configured) <br/>• **Cleanup:** planning docs archived to `docs/archive/`, dead `.old` reference removed <br/>• **Verification:** `tsc --noEmit` ✅, `vite build` ✅, 0 admin client mutations, 0 hardcoded secrets, `.env` never committed, all admin routes gated by `requireAuth`+`requireAdmin`/`requireAccounting` |
 | **v6.0** | **2026-04-22** | **Production Hardening (Final Plan v2.0):** <br/>• **Security:** BOG RSA Callback Signature Hard-Fail, `order_items` და `contact_messages` RLS გამკაცრება <br/>• **Backend:** Raw body capture (RSA), Server-side amount validation, Idempotent accounting, `ProtectedRoute` RBAC ენფორსმენტი `/admin` <br/>• **Frontend:** StatusToken implementation (URL param tracking) <br/>• **Tests:** Playwright E2E ტესტები დაემატა BOG callback და RLS boundaries-სთვის <br/>• **Schema:** `journal_entries` და `payments` ცხრილებში Uniqueness constraints |
+| **v6.1** | **2026-04-22** | **Vercel Production Deployment Fixes:** <br/>• **CI/CD:** GitHub-ზე გამოტოვებული ფაილები commit-ებული — `RealtimeNotifications.tsx`, `cron.routes.ts`, `exchange-rates.routes.ts`, `invoice.service.ts`, `nbg.service.ts`, `currency.ts`, `useRealtime.ts`, E2E test fixtures, 3 migration SQL <br/>• **CI:** Playwright config-ში Firefox გამოთიშულია CI-ში (Chromium only) — E2E GitHub Actions workflow fix <br/>• **Auth:** `ProtectedRoute` გასწორდა — `/admin` ახლა საკუთარ login ფორმას აჩვენებს unauthenticated მომხმარებლისთვის (მანამდე redirects-ავდა `/`-ზე) <br/>• **Realtime:** `RealtimeNotifications` კომპონენტი + `useRealtime` hook — Admin Panel Realtime push notifications <br/>• **Verification:** `tsc --noEmit` ✅, `vite build` ✅, Vercel deploy ✅ (`b36100d`) |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 61 (2026-04-03 → 2026-04-16)
@@ -250,6 +251,7 @@
 - [x] **Phase 3:** ERP/Accounting Engine, Manufacturing, RMA, Audit ✅
 - [x] **Phase 4:** Security Hardening (RLS, Function Search Paths, API Key Isolation) ✅
 - [x] **Phase 8:** Production Hardening (v6.0 / Final Plan v2.0) ✅
+- [x] **Phase 9:** Vercel Production Deployment (v6.1) ✅
 
 ### ⏳ მიმდინარე / დაგეგმილი ფაზები
 
@@ -290,10 +292,11 @@
 
 - [ ] **Phase 7: Full Autonomy** (1-2 თვე)
   - [ ] 7.1 — Multi-Currency (NBG API live rates)
-  - [ ] 7.2 — E2E Tests (Playwright)
+  - [x] 7.2 — E2E Tests (Playwright) ✅ (BOG callback + RLS boundaries)
   - [x] 7.3 — AI Admin Assistant (Admin Intelligence — RBAC ✅ დასრულდა v4.5)
-  - [ ] 7.4 — Real-time Notifications (Supabase Realtime)
-  - [ ] 7.5 — Rate Limiting (Upstash Redis)
+  - [x] 7.4 — Real-time Notifications (Supabase Realtime) ✅ (`RealtimeNotifications.tsx` + `useRealtime.ts`)
+  - [x] 7.5 — Rate Limiting (Upstash Redis middleware ✅, Upstash credentials optional)
+  - [ ] 7.6 — RS.GE SOAP production credentials (Requires credentials from eservices.rs.ge)
 
 ---
 
@@ -355,4 +358,15 @@
 >
 > **v6.0 Production Hardening (2026-04-22):** წარმატებით დასრულდა `FINAL_EXECUTION_PLAN_v2.0` ყველა ფაზა. BOG Webhook უსაფრთხოება სრულად გამართულია RSA Signature-ით, RLS პოლიტიკები გამკაცრდა, Frontend-ზე დაინერგა orderStatusToken. ასევე, ამოღებულია open-insert `order_items`-დან. სისტემა სრულ მზადყოფნაშია პროდაქშენისთვის.
 >
-> **დარჩენილი არქიტექტურული ვალი:** ყველა არქიტექტურული ვალი აღმოიფხვრა. (შენიშვნა: Leaked Password Protection გამოტოვებულია, რადგან Supabase-ის უფასო (Free) ვერსიაზე არ არის ხელმისაწვდომი).
+> **v6.1 Vercel Deployment Stabilization (2026-04-22):** მოგვარდა Vercel Production-ის ყველა ბლოკერი. წინა AI-ს მიერ ლოკალურად შექმნილი, მაგრამ Git-ში ვერ ატვირთული 13 ფაილი commit-ებული და GitHub-ზე ატვირთული. `ProtectedRoute` გასწორდა — `/admin` route ახლა უმეზობლოდ მოითხოვს login-ს AdminPanel-ის საკუთარი ფორმის მეშვეობით (მანამდე უnauthenticated-ს redirect-ავდა homepage-ზე). GitHub Actions E2E workflow-ში Firefox გამოთიშულია (CI-ში არ ეყენება), Chromium only — ეს fix-ავდა GitHub Actions წითელ X-ს.
+>
+> **ლაივ გარემო (2026-04-22):** `https://kalegroup.vercel.app` — Production ✅ | `https://kalegroup.vercel.app/admin` — Admin Panel ✅ (Login ფორმით)
+>
+> **Vercel Environment Variables (Required):**
+> - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+> - `BOG_CLIENT_ID`, `BOG_CLIENT_SECRET`, `BOG_PUBLIC_KEY`
+> - `ORDER_STATUS_TOKEN_SECRET` (≥32 chars, generate: `openssl rand -base64 48`)
+> - `GEMINI_API_KEY`, `NODE_ENV=production`, `APP_URL`
+> - Optional: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`
+>
+> **დარჩენილი არქიტექტურული ვალი:** ყველა კრიტიკული ვალი აღმოიფხვრა. (შენიშვნა: Leaked Password Protection გამოტოვებულია, რადგან Supabase-ის უფასო (Free) ვერსიაზე არ არის ხელმისაწვდომი. RS.GE SOAP production credentials ჯერ მიღებული არ არის.)
