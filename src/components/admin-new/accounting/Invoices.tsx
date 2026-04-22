@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/src/lib/supabase';
 import { autoCreateAndSendEInvoice, syncInvoiceStatus } from '@/src/services/rsge/rsge.service';
 import { cn } from '@/src/lib/utils';
+import { convertToGel } from '@/src/utils/currency';
 
 const GEL = (v: number | string) => 
   new Intl.NumberFormat('ka-GE', { style: 'currency', currency: 'GEL' }).format(Number(v));
@@ -35,6 +36,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -125,6 +127,12 @@ export default function Invoices() {
           </h2>
           <p className="text-sm text-muted-foreground">გაყიდვების ინვოისების მართვა და RS.ge სინქრონიზაცია</p>
         </div>
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="px-4 py-2 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
+        >
+          + ახალი ინვოისი
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -230,6 +238,15 @@ export default function Invoices() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <CreateInvoiceModal 
+            onClose={() => setIsCreateModalOpen(false)} 
+            onSuccess={() => { setIsCreateModalOpen(false); fetchInvoices(); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -402,6 +419,130 @@ function DetailItem({ label, value, color }: any) {
     <div className="space-y-1">
       <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{label}</p>
       <p className={cn("text-sm text-foreground", color)}>{value || '–'}</p>
+    </div>
+  );
+}
+
+function CreateInvoiceModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+  const [customerName, setCustomerName] = useState('');
+  const [totalAmount, setTotalAmount] = useState('');
+  const [currency, setCurrency] = useState('GEL');
+  const [loading, setLoading] = useState(false);
+  const [gelAmount, setGelAmount] = useState<number | null>(null);
+  const [rate, setRate] = useState<number>(1);
+
+  useEffect(() => {
+    async function updateRate() {
+      if (!totalAmount) return;
+      if (currency === 'GEL') {
+        setGelAmount(Number(totalAmount));
+        setRate(1);
+        return;
+      }
+      try {
+        const amt = Number(totalAmount);
+        const resGel = await convertToGel(amt, currency);
+        setGelAmount(resGel);
+        setRate(resGel / amt);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    updateRate();
+  }, [totalAmount, currency]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName || !totalAmount) return;
+    setLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const vatRate = 0.18;
+      const amountNum = Number(totalAmount);
+      const subtotal = amountNum / (1 + vatRate);
+      const vatAmount = amountNum - subtotal;
+      
+      const subtotalGel = (gelAmount || amountNum) / (1 + vatRate);
+      const vatAmountGel = (gelAmount || amountNum) - subtotalGel;
+
+      const { error } = await supabase.from('invoices').insert({
+        invoice_type: 'B2C',
+        invoice_number: `INV-MAN-${Date.now().toString().slice(-6)}`,
+        customer_name: customerName,
+        invoice_date: new Date().toISOString().split('T')[0],
+        due_date: new Date().toISOString().split('T')[0],
+        subtotal: subtotal,
+        vat_rate: vatRate * 100,
+        vat_amount: vatAmount,
+        total_amount: amountNum,
+        currency,
+        exchange_rate: rate,
+        subtotal_gel: subtotalGel,
+        vat_amount_gel: vatAmountGel,
+        total_amount_gel: gelAmount || amountNum,
+        payment_method: 'cash',
+        payment_status: 'PENDING',
+        paid_amount: 0,
+      });
+      if (error) throw error;
+      onSuccess();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-card w-full max-w-md border border-border rounded-2xl shadow-xl overflow-hidden"
+      >
+        <div className="p-6 border-b border-border flex justify-between items-center bg-muted/20">
+          <h3 className="text-lg font-bold">ახალი ინვოისი</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <XCircle size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">კლიენტის სახელი</label>
+            <input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full bg-background border border-border rounded-xl px-3 py-2 outline-none focus:border-amber-500" />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">თანხა</label>
+              <input required type="number" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} className="w-full bg-background border border-border rounded-xl px-3 py-2 outline-none focus:border-amber-500" />
+            </div>
+            <div className="w-24">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">ვალუტა</label>
+              <select value={currency} onChange={e => setCurrency(e.target.value)} className="w-full bg-background border border-border rounded-xl px-3 py-2 outline-none focus:border-amber-500">
+                <option value="GEL">GEL</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="RUB">RUB</option>
+                <option value="TRY">TRY</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+          </div>
+          {currency !== 'GEL' && gelAmount !== null && (
+            <div className="text-xs text-amber-500 bg-amber-500/10 p-2 rounded-lg font-medium">
+              ≈ {GEL(gelAmount)} (კურსი: {rate.toFixed(4)})
+            </div>
+          )}
+          <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-medium border hover:bg-muted">გაუქმება</button>
+            <button type="submit" disabled={loading} className="px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-50">
+              {loading ? 'ინახება...' : 'შენახვა'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
     </div>
   );
 }

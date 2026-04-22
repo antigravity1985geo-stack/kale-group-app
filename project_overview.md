@@ -201,7 +201,7 @@
 
 | # | პრობლემა | სიმძიმე | შენიშვნა |
 |---|---------|---------|----------|
-| 1 | `orders` / `order_items` RLS — public INSERT | 🟢 OK | E-commerce-სთვის მიზანმიმართულია — ყველამ უნდა შეძლოს შეკვეთა |
+| 1 | `orders` / `order_items` RLS — public INSERT | ✅ Fixed | მოგვარდა v6.0-ში (Production Hardening) |
 | 2 | Auth Leaked Password Protection | 🟡 P1 | Supabase Dashboard-ში ჩასართავია (Auth → Settings) |
 | 3 | 30+ duplicate permissive RLS policies | 🟢 P2 | Performance — consolidation საჭირო |
 | 4 | TBC Bank API | ⏸️ სამომავლო | API Key ჯერ არ არის, ინტეგრაცია მოლოდინშია |
@@ -232,6 +232,7 @@
 | **v4.7** | **2026-04-20** | **Critical Security Fixes (Phase 1):** Dropped exposed `offcuts_backup_18042026`, secured `search_path` for SQL functions, fixed Mass Assignment in Employee CRUD with Zod, added AI Rate Limiting and Prompt Injection prevention |
 | **v4.8** | **2026-04-20** | **Backend Stability & DB Hygiene:** Fixed `requireAdmin` regression, eliminated `supabaseAdmin` silent fallback, sanitized AI chat history, added global error handler, secured auth endpoint leaked passwords, added 6 missing FK indexes, optimized RLS with `get_auth_uid()`, and deleted orphaned `accounting_entries` table. |
 | **v5.0** | **2026-04-21** | **Master Perfection Plan executed (Phases 1–6):** <br/>• **Security:** TBC/Credo IP allowlist, CSP `unsafe-inline` removed, multilingual (GE/RU/EN) prompt-injection guard, HMAC-SHA256 + `timingSafeEqual` on BOG <br/>• **Architecture:** 59 admin UI mutations migrated to 16 server API endpoints (all Zod-validated), 2 atomic RPCs (`adjust_inventory_atomic`, `payroll_run_atomic`), schema aligned with code, 5 unused tables dropped <br/>• **Defense-in-depth:** `ProtectedRoute` RBAC wrapper per admin tab, `ErrorBoundary` on lazy subtrees, AuthContext retry-with-backoff (removed 500ms setTimeout hack), production `console.log` gated <br/>• **Bundle:** main `index.js` **1,645 → 538 kB (-67%)**, Accounting **810 → 118 kB (-85%)**, PaymentSuccessPage **406 → 16 kB (-96%)**, xlsx/jspdf dynamic-imported, 7 manual vendor chunks for cacheable builds <br/>• **Honesty:** `/api/rs-ge/status` feature flag + `SIMULATED` badge + mock-mode banner in Waybills UI (clear indication when RS.ge credentials are not configured) <br/>• **Cleanup:** planning docs archived to `docs/archive/`, dead `.old` reference removed <br/>• **Verification:** `tsc --noEmit` ✅, `vite build` ✅, 0 admin client mutations, 0 hardcoded secrets, `.env` never committed, all admin routes gated by `requireAuth`+`requireAdmin`/`requireAccounting` |
+| **v6.0** | **2026-04-22** | **Production Hardening (Final Plan v2.0):** <br/>• **Security:** BOG RSA Callback Signature Hard-Fail, `order_items` და `contact_messages` RLS გამკაცრება <br/>• **Backend:** Raw body capture (RSA), Server-side amount validation, Idempotent accounting, `ProtectedRoute` RBAC ენფორსმენტი `/admin` <br/>• **Frontend:** StatusToken implementation (URL param tracking) <br/>• **Tests:** Playwright E2E ტესტები დაემატა BOG callback და RLS boundaries-სთვის <br/>• **Schema:** `journal_entries` და `payments` ცხრილებში Uniqueness constraints |
 
 #### მიგრაციების სტატისტიკა
 - **სულ მიგრაციები:** 61 (2026-04-03 → 2026-04-16)
@@ -248,6 +249,7 @@
 - [x] **Phase 2:** Payment Gateways (BOG, TBC, Credo) + Webhooks ✅
 - [x] **Phase 3:** ERP/Accounting Engine, Manufacturing, RMA, Audit ✅
 - [x] **Phase 4:** Security Hardening (RLS, Function Search Paths, API Key Isolation) ✅
+- [x] **Phase 8:** Production Hardening (v6.0 / Final Plan v2.0) ✅
 
 ### ⏳ მიმდინარე / დაგეგმილი ფაზები
 
@@ -350,5 +352,7 @@
 > **VAT/დღგ:** კომპანია ამჟამად არ არის დღგ-ს გადამხდელი — ფუნქცია ჩაშენებულია სამომავლოდ (company_settings toggle).
 >
 > **TBC Bank:** API ინტეგრაცია მოლოდინშია (API Key ჯერ არ არის მიღებული).
+>
+> **v6.0 Production Hardening (2026-04-22):** წარმატებით დასრულდა `FINAL_EXECUTION_PLAN_v2.0` ყველა ფაზა. BOG Webhook უსაფრთხოება სრულად გამართულია RSA Signature-ით, RLS პოლიტიკები გამკაცრდა, Frontend-ზე დაინერგა orderStatusToken. ასევე, ამოღებულია open-insert `order_items`-დან. სისტემა სრულ მზადყოფნაშია პროდაქშენისთვის.
 >
 > **დარჩენილი არქიტექტურული ვალი:** ყველა არქიტექტურული ვალი აღმოიფხვრა. (შენიშვნა: Leaked Password Protection გამოტოვებულია, რადგან Supabase-ის უფასო (Free) ვერსიაზე არ არის ხელმისაწვდომი).

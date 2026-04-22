@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { motion } from "framer-motion"
 import {
   BarChart3,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
+import { useRealtime } from "@/src/hooks/useRealtime"
 
 type UserRole = "admin" | "consultant" | "accountant"
 
@@ -50,8 +52,38 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeTab, onTabChange, userRole = "admin", onLogout }: SidebarProps) {
+  const [unreadOrders, setUnreadOrders] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+
+  // Subscribe to realtime events for badge counters
+  useRealtime('orders', 'INSERT', () => {
+    if (['admin', 'consultant'].includes(userRole)) {
+      setUnreadOrders(n => n + 1)
+    }
+  })
+  useRealtime('contact_messages', 'INSERT', () => {
+    if (['admin', 'consultant'].includes(userRole)) {
+      setUnreadMessages(n => n + 1)
+    }
+  })
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'orders') setUnreadOrders(0)
+    if (tab === 'messages') setUnreadMessages(0)
+    onTabChange(tab)
+  }
+
+  // Inject live badge counts
+  const itemsWithBadges = navItems.map(item => ({
+    ...item,
+    badge:
+      item.id === 'orders' && unreadOrders > 0 ? unreadOrders :
+      item.id === 'messages' && unreadMessages > 0 ? unreadMessages :
+      item.badge,
+  }))
+
   // Filter nav items based on user role
-  const visibleItems = navItems.filter(item => item.allowedRoles.includes(userRole))
+  const visibleItems = itemsWithBadges.filter(item => item.allowedRoles.includes(userRole))
 
   const roleColors = {
     admin: "bg-sidebar-primary/20 text-sidebar-primary border-sidebar-primary/30",
@@ -107,7 +139,7 @@ export function Sidebar({ activeTab, onTabChange, userRole = "admin", onLogout }
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 + index * 0.03, duration: 0.3 }}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => handleTabChange(item.id)}
               className={cn(
                 "group relative flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
                 activeTab === item.id
