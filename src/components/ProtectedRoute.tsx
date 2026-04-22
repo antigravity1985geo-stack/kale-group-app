@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext';
 interface Props {
   children: React.ReactNode;
   allowedRoles?: Array<'admin' | 'accountant' | 'consultant'>;
+  requireAuth?: boolean;
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: Props) {
+export default function ProtectedRoute({ children, allowedRoles, requireAuth = false }: Props) {
   const { user, profile, isLoading } = useAuth();
 
   if (isLoading) {
@@ -18,9 +19,11 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
     );
   }
 
-  if (!user) return <Navigate to="/" replace />;
+  // Only hard-block if requireAuth is explicitly set AND user is not logged in
+  if (requireAuth && !user) return <Navigate to="/" replace />;
 
-  if (allowedRoles && profile?.role && !allowedRoles.includes(profile.role as any)) {
+  // If logged in but wrong role → redirect home
+  if (user && allowedRoles && profile?.role && !allowedRoles.includes(profile.role as any)) {
     return <Navigate to="/" replace />;
   }
 
