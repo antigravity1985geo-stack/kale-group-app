@@ -1,22 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const getEnvVar = (key: string) => {
-  // Vite frontend (import.meta.env) takes priority — Vite statically replaces these at build time
+// Vite statically replaces `import.meta.env.VITE_*` during build.
+// Using dynamic keys like `import.meta.env[key]` breaks the bundler and results in undefined.
+const supabaseUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL
+  ? import.meta.env.VITE_SUPABASE_URL
   // @ts-ignore
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-    // @ts-ignore
-    return import.meta.env[key];
-  }
-  // Node.js backend fallback (server.ts uses its own createClient, but just in case)
+  : (typeof process !== 'undefined' && process.env ? process.env.VITE_SUPABASE_URL : '');
+
+const supabaseAnonKey = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY
+  ? import.meta.env.VITE_SUPABASE_ANON_KEY
   // @ts-ignore
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    // @ts-ignore
-    return process.env[key];
-  }
-  return '';
-};
+  : (typeof process !== 'undefined' && process.env ? process.env.VITE_SUPABASE_ANON_KEY : '');
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
