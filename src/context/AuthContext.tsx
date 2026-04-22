@@ -86,24 +86,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    // Get initial session — with 5-second timeout to prevent infinite spinner
+    // Get initial session.
+    // Safety: if getSession() hangs >5s (e.g. Supabase cold start), we release the
+    // loading state so the login form appears. getSession still resolves in the
+    // background and will set user+profile automatically via the auth state change listener.
     const initAuth = async () => {
+      let loadingReleased = false;
+      const releaseLoading = () => {
+        if (!loadingReleased) {
+          loadingReleased = true;
+          setIsLoading(false);
+        }
+      };
+
+      // Release loading after 5s max regardless of network
+      const timeoutId = setTimeout(releaseLoading, 5000);
+
       try {
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth init timeout')), 5000)
-        );
-        const sessionPromise = supabase.auth.getSession();
-        const { data: { session: currentSession } } = await Promise.race([sessionPromise, timeoutPromise]);
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        clearTimeout(timeoutId);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        
         if (currentSession?.user) {
           await fetchProfile(currentSession.user.id);
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error('Auth init error:', err);
       } finally {
-        setIsLoading(false);
+        releaseLoading();
       }
     };
 
