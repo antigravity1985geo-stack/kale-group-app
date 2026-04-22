@@ -86,10 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session — with 5-second timeout to prevent infinite spinner
     const initAuth = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth init timeout')), 5000)
+        );
+        const sessionPromise = supabase.auth.getSession();
+        const { data: { session: currentSession } } = await Promise.race([sessionPromise, timeoutPromise]);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
